@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"genkit-ai-service/internal/api"
 	"genkit-ai-service/internal/api/handler"
+	"genkit-ai-service/internal/api/middleware"
 	"genkit-ai-service/internal/api/routes"
 	"genkit-ai-service/internal/config"
 	"genkit-ai-service/internal/database"
@@ -109,48 +109,70 @@ func main() {
 	var aiService ai.AIService
 	var healthService health.Service
 	
-	if genkitClient != nil && db != nil {
+	// AI 服务只需要 Genkit 客户端
+	if genkitClient != nil {
 		aiService = initAIService(genkitClient, cfg, log)
+		log.Info("AI服务已启用", nil)
+	} else {
+		log.Warn("AI服务未启用（Genkit 客户端初始化失败）", nil)
+	}
+	
+	// 健康检查服务需要 Genkit 客户端和数据库
+	if genkitClient != nil && db != nil {
 		healthService = health.NewService(genkitClient, db, Version)
-		log.Info("AI服务和健康检查服务已启用", nil)
+		log.Info("健康检查服务已启用", nil)
 	} else {
-		log.Warn("AI服务和健康检查服务未启用（缺少必要依赖）", nil)
+		log.Warn("健康检查服务未启用（缺少数据库连接）", nil)
 	}
 
-	// 7. 初始化路由和处理器
-	var mux http.Handler
-	if aiService != nil && healthService != nil {
-		router := api.NewRouter(aiService, healthService, log)
-		mux = router.Handler()
-	} else {
-		// 只创建基础的 ServeMux
-		mux = http.NewServeMux()
-		log.Info("使用基础路由（仅模型提供商API）", nil)
-	}
-
+	// 7. 创建基础 ServeMux 并注册所有路由
+	serveMux := http.NewServeMux()
+	
 	// 8. 注册模型提供商API路由
 	providerHandler := handler.NewProviderHandler(providerService, log)
-	
-	// 获取 ServeMux 实例
-	var serveMux *http.ServeMux
-	if sm, ok := mux.(*http.ServeMux); ok {
-		serveMux = sm
-	} else {
-		// 如果 mux 不是 ServeMux，创建一个新的
-		serveMux = http.NewServeMux()
-		mux = serveMux
-	}
-	
 	routes.RegisterProviderRoutes(serveMux, providerHandler)
 	log.Info("模型提供商API路由已注册", nil)
 
-	// 注册 Swagger UI 路由
+	// 9. 注册 AI 服务路由（如果可用）
+	if aiService != nil {
+		chatHandler := handler.NewChatHandler(aiService, log)
+		abortHandler := handler.NewAbortHandler(aiService, log)
+		
+		serveMux.HandleFunc("POST /api/v1/chat", chatHandler.HandleChat)
+		serveMux.HandleFunc("POST /api/v1/chat/abort", abortHandler.HandleAbort)
+		
+		log.Info("AI对话路由已注册", logger.Fields{
+			"routes": []string{"/api/v1/chat", "/api/v1/chat/abort"},
+		})
+	} else {
+		log.Warn("AI对话路由未注册（AI服务不可用）", nil)
+	}
+	
+	// 10. 注册健康检查路由（如果可用）
+	if healthService != nil {
+		healthHandler := handler.NewHealthHandler(healthService, log)
+		serveMux.HandleFunc("GET /health", healthHandler.Handle)
+		log.Info("健康检查路由已注册", logger.Fields{
+			"routes": []string{"/health"},
+		})
+	} else {
+		log.Warn("健康检查路由未注册（健康检查服务不可用）", nil)
+	}
+
+	// 11. 注册 Swagger UI 路由
 	serveMux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	log.Info("Swagger UI 已启用", logger.Fields{
 		"url": fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
 	})
+	
+	// 12. 应用中间件（按顺序：Recovery -> Logger -> CORS）
+	var mux http.Handler = serveMux
+	corsConfig := middleware.DefaultCORS()
+	mux = corsConfig.Handler(mux)
+	mux = middleware.Logger(mux)
+	mux = middleware.Recovery(mux)
 
-	// 9. 创建 HTTP 服务器
+	// 13. 创建 HTTP 服务器
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
 		Handler:      mux,
@@ -159,7 +181,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 10. 启动服务器（在 goroutine 中）
+	// 14. 启动服务器（在 goroutine 中）
 	serverErrors := make(chan error, 1)
 	go func() {
 		log.Info("HTTP 服务器启动", logger.Fields{
@@ -168,11 +190,11 @@ func main() {
 		serverErrors <- server.ListenAndServe()
 	}()
 
-	// 11. 监听系统信号以实现优雅关闭
+	// 15. 监听系统信号以实现优雅关闭
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	// 12. 等待关闭信号或服务器错误
+	// 16. 等待关闭信号或服务器错误
 	select {
 	case err := <-serverErrors:
 		log.Error("服务器启动失败", logger.Fields{"error": err})
