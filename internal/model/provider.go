@@ -3,13 +3,13 @@ package model
 // Provider 提供商完整信息
 type Provider struct {
 	// 提供商ID（从文件夹名称获取）
-	ID string `yaml:"-" json:"id"`
+	ID string `yaml:"-" json:"id" example:"gemini"`
 	// 提供商标识
-	Provider string `yaml:"provider" json:"provider"`
+	Provider string `yaml:"provider" json:"provider" example:"gemini"`
 	// 多语言标签
-	Label map[string]string `yaml:"label" json:"label"`
+	Label map[string]string `yaml:"label" json:"label" example:"en_US:Google Gemini,zh_Hans:谷歌 Gemini"`
 	// 背景色
-	Background string `yaml:"background" json:"background"`
+	Background string `yaml:"background" json:"background" example:"#4285F4"`
 	// 小图标（多语言）
 	IconSmall map[string]string `yaml:"icon_small" json:"icon_small"`
 	// 大图标（多语言）
@@ -17,9 +17,9 @@ type Provider struct {
 	// 帮助信息
 	Help ProviderHelp `yaml:"help" json:"help"`
 	// 配置方法列表
-	ConfigurateMethods []string `yaml:"configurate_methods" json:"configurate_methods"`
+	ConfigurateMethods []string `yaml:"configurate_methods" json:"configurate_methods" example:"predefined-model,customizable-model"`
 	// 支持的模型类型列表
-	SupportedModelTypes []string `yaml:"supported_model_types" json:"supported_model_types"`
+	SupportedModelTypes []string `yaml:"supported_model_types" json:"supported_model_types" example:"llm,text-embedding"`
 	// 提供商凭证配置
 	ProviderCredentialSchema CredentialSchema `yaml:"provider_credential_schema" json:"provider_credential_schema"`
 	// 模型凭证配置

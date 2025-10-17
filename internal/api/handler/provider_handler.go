@@ -27,7 +27,14 @@ func NewProviderHandler(providerService service.ProviderService, logger logger.L
 }
 
 // GetProviders 处理 GET /providers 请求
-// 获取所有提供商列表
+// @Summary 获取所有提供商列表
+// @Description 获取系统中所有可用的模型提供商列表
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.ResponseData[[]model.Provider] "成功返回提供商列表"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /providers [get]
 func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
 	// 记录请求日志
 	h.logger.Info("收到获取提供商列表请求", map[string]interface{}{
@@ -57,7 +64,17 @@ func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProviderByID 处理 GET /providers/{providerId} 请求
-// 根据ID获取提供商详情
+// @Summary 获取提供商详情
+// @Description 根据提供商ID获取详细信息
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param providerId path string true "提供商ID" example(gemini)
+// @Success 200 {object} model.ResponseData[model.Provider] "成功返回提供商详情"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 404 {object} model.ErrorResponse "提供商不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /providers/{providerId} [get]
 func (h *ProviderHandler) GetProviderByID(w http.ResponseWriter, r *http.Request) {
 	// 获取路径参数
 	providerID := r.PathValue("providerId")
@@ -104,7 +121,17 @@ func (h *ProviderHandler) GetProviderByID(w http.ResponseWriter, r *http.Request
 }
 
 // GetProviderModels 处理 GET /providers/{providerId}/models 请求
-// 获取提供商的所有模型列表
+// @Summary 获取提供商的模型列表
+// @Description 获取指定提供商的所有可用模型列表
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param providerId path string true "提供商ID" example(gemini)
+// @Success 200 {object} model.ResponseData[[]model.Model] "成功返回模型列表"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 404 {object} model.ErrorResponse "提供商不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /providers/{providerId}/models [get]
 func (h *ProviderHandler) GetProviderModels(w http.ResponseWriter, r *http.Request) {
 	// 获取路径参数
 	providerID := r.PathValue("providerId")
@@ -152,7 +179,18 @@ func (h *ProviderHandler) GetProviderModels(w http.ResponseWriter, r *http.Reque
 }
 
 // GetProviderModel 处理 GET /providers/{providerId}/models/{modelId} 请求
-// 获取提供商的指定模型详情
+// @Summary 获取模型详情
+// @Description 获取指定提供商的指定模型的详细信息
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param providerId path string true "提供商ID" example(gemini)
+// @Param modelId path string true "模型ID" example(gemini-1.5-flash)
+// @Success 200 {object} model.ResponseData[model.Model] "成功返回模型详情"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 404 {object} model.ErrorResponse "提供商或模型不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /providers/{providerId}/models/{modelId} [get]
 func (h *ProviderHandler) GetProviderModel(w http.ResponseWriter, r *http.Request) {
 	// 获取路径参数
 	providerID := r.PathValue("providerId")
@@ -209,7 +247,18 @@ func (h *ProviderHandler) GetProviderModel(w http.ResponseWriter, r *http.Reques
 }
 
 // GetModelParameterRules 处理 GET /providers/{providerId}/models/{modelId}/parameter-rules 请求
-// 获取模型的参数规则
+// @Summary 获取模型参数规则
+// @Description 获取指定模型的所有参数配置规则
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param providerId path string true "提供商ID" example(gemini)
+// @Param modelId path string true "模型ID" example(gemini-1.5-flash)
+// @Success 200 {object} model.ResponseData[[]model.ParameterRule] "成功返回参数规则列表"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 404 {object} model.ErrorResponse "提供商或模型不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /providers/{providerId}/models/{modelId}/parameter-rules [get]
 func (h *ProviderHandler) GetModelParameterRules(w http.ResponseWriter, r *http.Request) {
 	// 获取路径参数
 	providerID := r.PathValue("providerId")

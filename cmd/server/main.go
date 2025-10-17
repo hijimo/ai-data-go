@@ -21,7 +21,28 @@ import (
 	"genkit-ai-service/internal/service/ai"
 	"genkit-ai-service/internal/service/health"
 	"genkit-ai-service/internal/storage"
+
+	_ "genkit-ai-service/docs" // Swagger 文档
+	httpSwagger "github.com/swaggo/http-swagger"
 )
+
+// @title Genkit AI Service API
+// @version 1.0.0
+// @description AI 模型提供商管理服务 API 文档
+// @description 提供模型提供商、模型信息和参数规则的查询接口
+
+// @contact.name API Support
+// @contact.email support@example.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
+
+// @tag.name providers
+// @tag.description 模型提供商管理接口
 
 const (
 	// Version 服务版本
@@ -116,6 +137,12 @@ func main() {
 	
 	routes.RegisterProviderRoutes(serveMux, providerHandler)
 	log.Info("模型提供商API路由已注册", nil)
+
+	// 注册 Swagger UI 路由
+	serveMux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+	log.Info("Swagger UI 已启用", logger.Fields{
+		"url": fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
+	})
 
 	// 9. 创建 HTTP 服务器
 	server := &http.Server{

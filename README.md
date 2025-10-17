@@ -110,6 +110,21 @@ go build -o bin/server cmd/server/main.go
 
 ## API 接口
 
+### 📚 API 文档
+
+项目已集成 Swagger UI，提供交互式 API 文档：
+
+**访问地址**: <http://localhost:8080/swagger/index.html>
+
+启动服务后，在浏览器中打开上述地址即可查看完整的 API 文档，包括：
+
+- 所有接口的详细说明
+- 请求参数和响应格式
+- 在线测试功能
+- 数据模型定义
+
+详细的 Swagger 使用指南请参考：[docs/swagger-guide.md](docs/swagger-guide.md)
+
 ### 模型提供商 API
 
 服务提供了一套完整的模型提供商查询接口：
@@ -173,6 +188,8 @@ GET /api/v1/health
 - **validator**: 参数验证
 - **godotenv**: 环境变量管理
 - **gopkg.in/yaml.v3**: YAML 配置解析
+- **swaggo/swag**: OpenAPI/Swagger 文档生成
+- **swaggo/http-swagger**: Swagger UI 集成
 
 ## 开发状态
 

@@ -1,0 +1,86 @@
+# Swagger 集成相关文件清单
+
+## 核心文件
+
+### 1. 依赖配置
+- go.mod (已更新，添加 Swagger 依赖)
+- go.sum (已更新)
+
+### 2. 主程序
+- cmd/server/main.go (已添加 Swagger 配置和路由)
+
+### 3. Handler 层
+- internal/api/handler/provider_handler.go (已添加 Swagger 注释)
+
+### 4. 模型层
+- internal/model/response.go (已添加 ErrorResponse 和示例值)
+- internal/model/model.go (已添加示例值)
+- internal/model/provider.go (已添加示例值)
+
+### 5. 生成的文档
+- docs/docs.go (Swagger 生成的 Go 代码)
+- docs/swagger.json (OpenAPI JSON 规范)
+- docs/swagger.yaml (OpenAPI YAML 规范)
+
+## 辅助文件
+
+### 6. 构建工具
+- Makefile (新建，包含 Swagger 相关命令)
+
+### 7. 测试脚本
+- test_swagger.sh (新建，Swagger 集成测试)
+- demo_swagger.sh (新建，Swagger 演示脚本)
+
+### 8. 文档
+- docs/swagger-guide.md (新建，完整使用指南)
+- docs/SWAGGER_QUICKSTART_CN.md (新建，快速开始指南)
+- SWAGGER_INTEGRATION_SUMMARY.md (新建，集成总结)
+- SWAGGER_CHECKLIST.md (新建，验证清单)
+- SWAGGER_FILES.txt (本文件，文件清单)
+- README.md (已更新，添加 Swagger 说明)
+
+## 文件统计
+
+- 修改的文件: 6 个
+- 新建的文件: 11 个
+- 生成的文件: 3 个
+- 总计: 20 个文件
+
+## 目录结构
+
+```
+genkit-ai-service/
+├── cmd/
+│   └── server/
+│       └── main.go ✏️ (已修改)
+├── internal/
+│   ├── api/
+│   │   └── handler/
+│   │       └── provider_handler.go ✏️ (已修改)
+│   └── model/
+│       ├── response.go ✏️ (已修改)
+│       ├── model.go ✏️ (已修改)
+│       └── provider.go ✏️ (已修改)
+├── docs/
+│   ├── docs.go 🆕 (生成)
+│   ├── swagger.json 🆕 (生成)
+│   ├── swagger.yaml 🆕 (生成)
+│   ├── swagger-guide.md 🆕 (新建)
+│   └── SWAGGER_QUICKSTART_CN.md 🆕 (新建)
+├── Makefile 🆕 (新建)
+├── test_swagger.sh 🆕 (新建)
+├── demo_swagger.sh 🆕 (新建)
+├── SWAGGER_INTEGRATION_SUMMARY.md 🆕 (新建)
+├── SWAGGER_CHECKLIST.md 🆕 (新建)
+├── SWAGGER_FILES.txt 🆕 (本文件)
+├── README.md ✏️ (已修改)
+├── go.mod ✏️ (已修改)
+└── go.sum ✏️ (已修改)
+```
+
+## 图例
+
+- ✏️ 已修改的文件
+- 🆕 新建的文件
+- (生成) Swagger 自动生成的文件
+

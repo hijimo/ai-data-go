@@ -1,0 +1,527 @@
+basePath: /api/v1
+definitions:
+  genkit-ai-service_internal_model.CredentialFormSchema:
+    properties:
+      default:
+        description: 默认值
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: 标签（多语言）
+        type: object
+      options:
+        description: 选项列表
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.FormOption'
+        type: array
+      placeholder:
+        additionalProperties:
+          type: string
+        description: 占位符（多语言）
+        type: object
+      required:
+        description: 是否必填
+        type: boolean
+      type:
+        description: 类型
+        type: string
+      variable:
+        description: 变量名
+        type: string
+    type: object
+  genkit-ai-service_internal_model.CredentialSchema:
+    properties:
+      credential_form_schemas:
+        description: 凭证表单配置列表
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.CredentialFormSchema'
+        type: array
+    type: object
+  genkit-ai-service_internal_model.ErrorResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 400
+        type: integer
+      message:
+        description: 响应信息
+        example: 请求参数错误
+        type: string
+    type: object
+  genkit-ai-service_internal_model.FormOption:
+    properties:
+      label:
+        additionalProperties:
+          type: string
+        description: 选项标签（多语言）
+        type: object
+      value:
+        description: 选项值
+        type: string
+    type: object
+  genkit-ai-service_internal_model.Model:
+    properties:
+      deprecated:
+        description: 是否已弃用
+        example: false
+        type: boolean
+      features:
+        description: 特性列表
+        example:
+        - tool-call
+        - multi-tool-call
+        - stream-tool-call
+        items:
+          type: string
+        type: array
+      label:
+        additionalProperties:
+          type: string
+        description: 多语言标签
+        example:
+          en_US: Gemini 1.5 Flash
+          zh_Hans: Gemini 1.5 Flash
+        type: object
+      model:
+        description: 模型标识
+        example: gemini-1.5-flash
+        type: string
+      model_properties:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ModelProperties'
+        description: 模型属性
+      model_type:
+        description: 模型类型（llm、tts、text_embedding等）
+        example: llm
+        type: string
+      parameter_rules:
+        description: 参数规则
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
+        type: array
+      pricing:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Pricing'
+        description: 定价信息
+    type: object
+  genkit-ai-service_internal_model.ModelProperties:
+    properties:
+      context_size:
+        description: 上下文大小
+        type: integer
+      mode:
+        description: 模式（chat、completion等）
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ModelTypeInfo:
+    properties:
+      position:
+        description: 位置文件路径
+        type: string
+      predefined:
+        description: 预定义模型列表
+        items:
+          type: string
+        type: array
+    type: object
+  genkit-ai-service_internal_model.ParameterRule:
+    properties:
+      default:
+        description: 默认值
+      help:
+        additionalProperties:
+          type: string
+        description: 帮助信息（多语言）
+        type: object
+      label:
+        additionalProperties:
+          type: string
+        description: 标签（多语言）
+        type: object
+      max:
+        description: 最大值
+      min:
+        description: 最小值
+      name:
+        description: 参数名称
+        example: temperature
+        type: string
+      options:
+        description: 选项列表
+        items:
+          type: string
+        type: array
+      required:
+        description: 是否必填
+        example: false
+        type: boolean
+      type:
+        description: 类型
+        example: float
+        type: string
+      use_template:
+        description: 使用的模板
+        example: temperature
+        type: string
+    type: object
+  genkit-ai-service_internal_model.Pricing:
+    properties:
+      currency:
+        description: 货币
+        type: string
+      input:
+        description: 输入价格
+        type: string
+      output:
+        description: 输出价格
+        type: string
+      unit:
+        description: 单位
+        type: string
+    type: object
+  genkit-ai-service_internal_model.Provider:
+    properties:
+      background:
+        description: 背景色
+        example: '#4285F4'
+        type: string
+      configurate_methods:
+        description: 配置方法列表
+        example:
+        - predefined-model
+        - customizable-model
+        items:
+          type: string
+        type: array
+      help:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ProviderHelp'
+        description: 帮助信息
+      icon_large:
+        additionalProperties:
+          type: string
+        description: 大图标（多语言）
+        type: object
+      icon_small:
+        additionalProperties:
+          type: string
+        description: 小图标（多语言）
+        type: object
+      id:
+        description: 提供商ID（从文件夹名称获取）
+        example: gemini
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: 多语言标签
+        example:
+          en_US: Google Gemini
+          zh_Hans: 谷歌 Gemini
+        type: object
+      model_credential_schema:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.CredentialSchema'
+        description: 模型凭证配置
+      models:
+        additionalProperties:
+          $ref: '#/definitions/genkit-ai-service_internal_model.ModelTypeInfo'
+        description: 模型类型配置
+        type: object
+      provider:
+        description: 提供商标识
+        example: gemini
+        type: string
+      provider_credential_schema:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.CredentialSchema'
+        description: 提供商凭证配置
+      supported_model_types:
+        description: 支持的模型类型列表
+        example:
+        - llm
+        - text-embedding
+        items:
+          type: string
+        type: array
+    type: object
+  genkit-ai-service_internal_model.ProviderHelp:
+    properties:
+      title:
+        additionalProperties:
+          type: string
+        description: 帮助标题（多语言）
+        type: object
+      url:
+        additionalProperties:
+          type: string
+        description: 帮助链接（多语言）
+        type: object
+    type: object
+  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: |-
+    AI 模型提供商管理服务 API 文档
+    提供模型提供商、模型信息和参数规则的查询接口
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Genkit AI Service API
+  version: 1.0.0
+paths:
+  /providers:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有可用的模型提供商列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回提供商列表
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取所有提供商列表
+      tags:
+      - providers
+  /providers/{providerId}:
+    get:
+      consumes:
+      - application/json
+      description: 根据提供商ID获取详细信息
+      parameters:
+      - description: 提供商ID
+        example: gemini
+        in: path
+        name: providerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回提供商详情
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 提供商不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取提供商详情
+      tags:
+      - providers
+  /providers/{providerId}/models:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定提供商的所有可用模型列表
+      parameters:
+      - description: 提供商ID
+        example: gemini
+        in: path
+        name: providerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回模型列表
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 提供商不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取提供商的模型列表
+      tags:
+      - providers
+  /providers/{providerId}/models/{modelId}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定提供商的指定模型的详细信息
+      parameters:
+      - description: 提供商ID
+        example: gemini
+        in: path
+        name: providerId
+        required: true
+        type: string
+      - description: 模型ID
+        example: gemini-1.5-flash
+        in: path
+        name: modelId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回模型详情
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 提供商或模型不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取模型详情
+      tags:
+      - providers
+  /providers/{providerId}/models/{modelId}/parameter-rules:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定模型的所有参数配置规则
+      parameters:
+      - description: 提供商ID
+        example: gemini
+        in: path
+        name: providerId
+        required: true
+        type: string
+      - description: 模型ID
+        example: gemini-1.5-flash
+        in: path
+        name: modelId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回参数规则列表
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 提供商或模型不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取模型参数规则
+      tags:
+      - providers
+schemes:
+- http
+- https
+swagger: "2.0"
+tags:
+- description: 模型提供商管理接口
+  name: providers
