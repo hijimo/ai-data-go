@@ -44,6 +44,12 @@ import (
 // @tag.name providers
 // @tag.description 模型提供商管理接口
 
+// @tag.name chat
+// @tag.description AI 对话接口
+
+// @tag.name health
+// @tag.description 健康检查接口
+
 const (
 	// Version 服务版本
 	Version = "1.0.0"

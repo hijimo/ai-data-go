@@ -43,3 +43,14 @@ type ErrorResponse struct {
 	// 响应信息
 	Message string `json:"message" example:"请求参数错误"`
 }
+
+// EmptyData 空数据结构（用于无数据返回的成功响应）
+type EmptyData struct{}
+
+// SuccessResponse 成功响应结构（无数据）
+type SuccessResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+}

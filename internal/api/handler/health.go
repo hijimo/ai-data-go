@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"genkit-ai-service/internal/logger"
+	_ "genkit-ai-service/internal/model" // 用于 Swagger 文档
 	"genkit-ai-service/internal/service/health"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
@@ -24,7 +25,23 @@ func NewHealthHandler(healthService health.Service, logger logger.Logger) *Healt
 	}
 }
 
+// HealthStatusResponse 健康状态响应（用于 Swagger）
+type HealthStatusResponse struct {
+	Code    int                  `json:"code" example:"200"`
+	Message string               `json:"message" example:"success"`
+	Data    *health.HealthStatus `json:"data"`
+}
+
 // Handle 处理健康检查请求
+// @Summary 健康检查
+// @Description 检查服务及其依赖项的健康状态
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} HealthStatusResponse "服务健康"
+// @Failure 500 {object} model.ErrorResponse "健康检查失败"
+// @Failure 503 {object} model.ErrorResponse "服务不健康"
+// @Router /health [get]
 func (h *HealthHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -29,7 +29,18 @@ func NewChatHandler(aiService ai.AIService, log logger.Logger) *ChatHandler {
 }
 
 // HandleChat 处理对话请求
-// POST /api/v1/chat
+// @Summary 发送对话消息
+// @Description 向 AI 发送消息并获取回复，支持会话上下文管理
+// @Tags chat
+// @Accept json
+// @Produce json
+// @Param request body model.ChatRequest true "对话请求"
+// @Success 200 {object} model.ResponseData[model.ChatResponse] "成功返回 AI 回复"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Failure 503 {object} model.ErrorResponse "AI 服务不可用"
+// @Router /chat [post]
 func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

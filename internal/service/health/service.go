@@ -25,10 +25,10 @@ type service struct {
 
 // HealthStatus 健康状态
 type HealthStatus struct {
-	Status       string                 `json:"status"`       // 整体状态：healthy, unhealthy
-	Version      string                 `json:"version"`      // 服务版本
-	Uptime       string                 `json:"uptime"`       // 运行时间
-	Dependencies map[string]string      `json:"dependencies"` // 依赖服务状态
+	Status       string            `json:"status" example:"healthy"`                                  // 整体状态：healthy, unhealthy
+	Version      string            `json:"version" example:"1.0.0"`                                   // 服务版本
+	Uptime       string            `json:"uptime" example:"2h30m15s"`                                 // 运行时间
+	Dependencies map[string]string `json:"dependencies" example:"genkit:connected,database:connected"` // 依赖服务状态
 }
 
 // NewService 创建新的健康检查服务

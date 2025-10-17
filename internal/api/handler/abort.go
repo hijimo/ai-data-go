@@ -29,7 +29,18 @@ func NewAbortHandler(aiService ai.AIService, log logger.Logger) *AbortHandler {
 }
 
 // HandleAbort 处理中止对话请求
-// POST /api/v1/chat/abort
+// @Summary 中止对话
+// @Description 中止指定会话的对话处理
+// @Tags chat
+// @Accept json
+// @Produce json
+// @Param request body model.AbortRequest true "中止请求"
+// @Success 200 {object} model.SuccessResponse "成功中止对话"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 404 {object} model.ErrorResponse "会话不存在"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /chat/abort [post]
 func (h *AbortHandler) HandleAbort(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

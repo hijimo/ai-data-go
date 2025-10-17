@@ -1,5 +1,73 @@
 basePath: /api/v1
 definitions:
+  genkit-ai-service_internal_model.AbortRequest:
+    properties:
+      sessionId:
+        description: 会话ID（必填）
+        example: session-123456
+        type: string
+    required:
+    - sessionId
+    type: object
+  genkit-ai-service_internal_model.ChatOptions:
+    properties:
+      maxTokens:
+        description: 最大token数
+        example: 2048
+        type: integer
+      temperature:
+        description: 温度值，控制输出的随机性（0-2）
+        example: 0.7
+        maximum: 2
+        minimum: 0
+        type: number
+      topK:
+        description: Top-K采样参数
+        example: 40
+        type: integer
+      topP:
+        description: Top-P采样参数（0-1）
+        example: 0.9
+        maximum: 1
+        minimum: 0
+        type: number
+    type: object
+  genkit-ai-service_internal_model.ChatRequest:
+    properties:
+      message:
+        description: 用户消息内容
+        example: 你好，请介绍一下你自己
+        type: string
+      options:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatOptions'
+        description: AI高级参数（可选）
+      sessionId:
+        description: 会话ID（可选）
+        example: session-123456
+        type: string
+    required:
+    - message
+    type: object
+  genkit-ai-service_internal_model.ChatResponse:
+    properties:
+      message:
+        description: AI生成的消息内容
+        example: 你好！我是一个 AI 助手...
+        type: string
+      model:
+        description: 使用的模型名称
+        example: gemini-1.5-flash
+        type: string
+      sessionId:
+        description: 会话ID
+        example: session-123456
+        type: string
+      usage:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
+        description: Token使用情况
+    type: object
   genkit-ai-service_internal_model.CredentialFormSchema:
     properties:
       default:
@@ -307,6 +375,21 @@ definitions:
         example: success
         type: string
     type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
   genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model:
     properties:
       code:
@@ -337,6 +420,66 @@ definitions:
         example: success
         type: string
     type: object
+  genkit-ai-service_internal_model.SuccessResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.Usage:
+    properties:
+      completionTokens:
+        description: 生成内容token数
+        example: 50
+        type: integer
+      promptTokens:
+        description: 提示词token数
+        example: 10
+        type: integer
+      totalTokens:
+        description: 总token数
+        example: 60
+        type: integer
+    type: object
+  genkit-ai-service_internal_service_health.HealthStatus:
+    properties:
+      dependencies:
+        additionalProperties:
+          type: string
+        description: 依赖服务状态
+        example:
+          database: connected
+          genkit: connected
+        type: object
+      status:
+        description: 整体状态：healthy, unhealthy
+        example: healthy
+        type: string
+      uptime:
+        description: 运行时间
+        example: 2h30m15s
+        type: string
+      version:
+        description: 服务版本
+        example: 1.0.0
+        type: string
+    type: object
+  internal_api_handler.HealthStatusResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/genkit-ai-service_internal_service_health.HealthStatus'
+      message:
+        example: success
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -351,6 +494,105 @@ info:
   title: Genkit AI Service API
   version: 1.0.0
 paths:
+  /chat:
+    post:
+      consumes:
+      - application/json
+      description: 向 AI 发送消息并获取回复，支持会话上下文管理
+      parameters:
+      - description: 对话请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genkit-ai-service_internal_model.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回 AI 回复
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "503":
+          description: AI 服务不可用
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 发送对话消息
+      tags:
+      - chat
+  /chat/abort:
+    post:
+      consumes:
+      - application/json
+      description: 中止指定会话的对话处理
+      parameters:
+      - description: 中止请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genkit-ai-service_internal_model.AbortRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功中止对话
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 中止对话
+      tags:
+      - chat
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: 检查服务及其依赖项的健康状态
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务健康
+          schema:
+            $ref: '#/definitions/internal_api_handler.HealthStatusResponse'
+        "500":
+          description: 健康检查失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "503":
+          description: 服务不健康
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 健康检查
+      tags:
+      - health
   /providers:
     get:
       consumes:
@@ -525,3 +767,7 @@ swagger: "2.0"
 tags:
 - description: 模型提供商管理接口
   name: providers
+- description: AI 对话接口
+  name: chat
+- description: 健康检查接口
+  name: health
