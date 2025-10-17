@@ -2,11 +2,12 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq" // PostgreSQL 驱动
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Database 数据库接口
@@ -17,8 +18,10 @@ type Database interface {
 	Close() error
 	// Ping 检查数据库连接
 	Ping(ctx context.Context) error
-	// GetDB 获取数据库实例
-	GetDB() *sql.DB
+	// GetDB 获取 GORM 数据库实例
+	GetDB() *gorm.DB
+	// AutoMigrate 自动迁移数据库表结构
+	AutoMigrate(models ...interface{}) error
 }
 
 // PostgresConfig PostgreSQL 配置
@@ -32,11 +35,12 @@ type PostgresConfig struct {
 	MaxOpenConns    int           // 最大打开连接数
 	MaxIdleConns    int           // 最大空闲连接数
 	ConnMaxLifetime time.Duration // 连接最大生命周期
+	LogLevel        string        // GORM 日志级别 (silent, error, warn, info)
 }
 
 // PostgresDatabase PostgreSQL 数据库实现
 type PostgresDatabase struct {
-	db     *sql.DB
+	db     *gorm.DB
 	config *PostgresConfig
 }
 
@@ -60,20 +64,33 @@ func (p *PostgresDatabase) Connect(ctx context.Context) error {
 		p.config.SSLMode,
 	)
 
+	// 配置 GORM
+	gormConfig := &gorm.Config{
+		Logger: logger.Default.LogMode(ParseLogLevel(string(p.config.LogLevel))),
+		NowFunc: func() time.Time {
+			return time.Now().Local()
+		},
+	}
+
 	// 打开数据库连接
-	db, err := sql.Open("postgres", dsn)
+	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		return fmt.Errorf("打开数据库连接失败: %w", err)
 	}
 
+	// 获取底层的 sql.DB 以配置连接池
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("获取底层数据库连接失败: %w", err)
+	}
+
 	// 配置连接池
-	db.SetMaxOpenConns(p.config.MaxOpenConns)
-	db.SetMaxIdleConns(p.config.MaxIdleConns)
-	db.SetConnMaxLifetime(p.config.ConnMaxLifetime)
+	sqlDB.SetMaxOpenConns(p.config.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(p.config.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(p.config.ConnMaxLifetime)
 
 	// 验证连接
-	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+	if err := sqlDB.PingContext(ctx); err != nil {
 		return fmt.Errorf("数据库连接验证失败: %w", err)
 	}
 
@@ -87,7 +104,12 @@ func (p *PostgresDatabase) Close() error {
 		return nil
 	}
 
-	if err := p.db.Close(); err != nil {
+	sqlDB, err := p.db.DB()
+	if err != nil {
+		return fmt.Errorf("获取底层数据库连接失败: %w", err)
+	}
+
+	if err := sqlDB.Close(); err != nil {
 		return fmt.Errorf("关闭数据库连接失败: %w", err)
 	}
 
@@ -101,14 +123,32 @@ func (p *PostgresDatabase) Ping(ctx context.Context) error {
 		return fmt.Errorf("数据库未连接")
 	}
 
-	if err := p.db.PingContext(ctx); err != nil {
+	sqlDB, err := p.db.DB()
+	if err != nil {
+		return fmt.Errorf("获取底层数据库连接失败: %w", err)
+	}
+
+	if err := sqlDB.PingContext(ctx); err != nil {
 		return fmt.Errorf("数据库连接检查失败: %w", err)
 	}
 
 	return nil
 }
 
-// GetDB 获取数据库实例
-func (p *PostgresDatabase) GetDB() *sql.DB {
+// GetDB 获取 GORM 数据库实例
+func (p *PostgresDatabase) GetDB() *gorm.DB {
 	return p.db
+}
+
+// AutoMigrate 自动迁移数据库表结构
+func (p *PostgresDatabase) AutoMigrate(models ...interface{}) error {
+	if p.db == nil {
+		return fmt.Errorf("数据库未连接")
+	}
+
+	if err := p.db.AutoMigrate(models...); err != nil {
+		return fmt.Errorf("数据库迁移失败: %w", err)
+	}
+
+	return nil
 }

@@ -1,14 +1,21 @@
 # 数据库连接管理
 
-本模块提供 PostgreSQL 数据库连接管理功能，支持连接池配置、健康检查和优雅关闭。
+本模块提供 PostgreSQL 数据库连接管理功能，使用 GORM 作为 ORM 框架，支持连接池配置、健康检查、自动迁移和优雅关闭。
 
 ## 功能特性
 
-- ✅ PostgreSQL 数据库连接管理
+- ✅ PostgreSQL 数据库连接管理（基于 GORM）
 - ✅ 连接池配置（最大连接数、空闲连接数、连接生命周期）
 - ✅ 健康检查（Ping）
+- ✅ 自动数据库迁移
+- ✅ 灵活的日志级别配置
 - ✅ 优雅关闭
 - ✅ 上下文支持（超时控制）
+
+## 依赖
+
+- `gorm.io/gorm` - GORM ORM 框架
+- `gorm.io/driver/postgres` - PostgreSQL 驱动
 
 ## 使用方法
 
@@ -37,6 +44,7 @@ func main() {
         MaxOpenConns:    25,
         MaxIdleConns:    5,
         ConnMaxLifetime: 5 * time.Minute,
+        LogLevel:        "warn", // silent, error, warn, info
     }
     
     // 创建数据库实例
@@ -53,6 +61,9 @@ func main() {
     if err := db.Ping(ctx); err != nil {
         log.Fatalf("数据库连接检查失败: %v", err)
     }
+    
+    // 获取 GORM 数据库实例
+    gormDB := db.GetDB()
     
     log.Println("数据库连接成功")
 }
@@ -89,6 +100,7 @@ func main() {
         MaxOpenConns:    cfg.Database.MaxOpenConns,
         MaxIdleConns:    cfg.Database.MaxIdleConns,
         ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
+        LogLevel:        cfg.Database.LogLevel,
     }
     
     // 连接数据库
@@ -104,48 +116,93 @@ func main() {
 }
 ```
 
-### 健康检查
+## 数据库迁移
+
+### 方式一：使用 AutoMigrate
 
 ```go
-func healthCheck(db database.Database) error {
-    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-    defer cancel()
-    
-    if err := db.Ping(ctx); err != nil {
-        return fmt.Errorf("数据库健康检查失败: %w", err)
-    }
-    
-    return nil
+// 定义模型
+type User struct {
+    ID        uint      `gorm:"primaryKey"`
+    Name      string    `gorm:"size:100;not null"`
+    Email     string    `gorm:"size:100;uniqueIndex;not null"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+// 执行迁移
+if err := db.AutoMigrate(&User{}); err != nil {
+    log.Fatal(err)
 }
 ```
 
-### 执行查询
+### 方式二：使用 Migrator
 
 ```go
-func queryUsers(db database.Database) error {
-    sqlDB := db.GetDB()
-    if sqlDB == nil {
-        return fmt.Errorf("数据库未连接")
-    }
-    
-    ctx := context.Background()
-    rows, err := sqlDB.QueryContext(ctx, "SELECT id, name FROM users")
-    if err != nil {
-        return fmt.Errorf("查询失败: %w", err)
-    }
-    defer rows.Close()
-    
-    for rows.Next() {
-        var id int
-        var name string
-        if err := rows.Scan(&id, &name); err != nil {
-            return fmt.Errorf("扫描行失败: %w", err)
-        }
-        fmt.Printf("用户: ID=%d, Name=%s\n", id, name)
-    }
-    
-    return rows.Err()
+// 创建迁移器
+migrator := database.NewMigrator(db)
+
+// 迁移多个模型
+if err := migrator.Migrate(
+    &User{},
+    &ChatSession{},
+    &Message{},
+); err != nil {
+    log.Fatal(err)
 }
+```
+
+### 方式三：使用迁移脚本
+
+1. 编辑 `scripts/migrate.go` 添加你的模型
+2. 运行迁移脚本：
+
+```bash
+go run scripts/migrate.go
+```
+
+## GORM 使用示例
+
+### 模型定义
+
+```go
+type User struct {
+    ID        uint           `gorm:"primaryKey"`
+    Name      string         `gorm:"size:100;not null"`
+    Email     string         `gorm:"size:100;uniqueIndex;not null"`
+    Age       int            `gorm:"default:0"`
+    Active    bool           `gorm:"default:true"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt gorm.DeletedAt `gorm:"index"` // 软删除
+}
+```
+
+### 常用操作
+
+```go
+gormDB := db.GetDB()
+
+// 创建
+user := User{Name: "张三", Email: "zhangsan@example.com"}
+gormDB.Create(&user)
+
+// 查询
+var user User
+gormDB.First(&user, 1) // 根据主键查询
+gormDB.Where("email = ?", "zhangsan@example.com").First(&user)
+
+// 更新
+gormDB.Model(&user).Update("name", "李四")
+gormDB.Model(&user).Updates(User{Name: "李四", Age: 30})
+
+// 删除
+gormDB.Delete(&user, 1) // 软删除
+gormDB.Unscoped().Delete(&user, 1) // 永久删除
+
+// 批量操作
+var users []User
+gormDB.Where("age > ?", 18).Find(&users)
 ```
 
 ## 配置说明
@@ -163,6 +220,16 @@ func queryUsers(db database.Database) error {
 | MaxOpenConns | int | 最大打开连接数 | 25 |
 | MaxIdleConns | int | 最大空闲连接数 | 5 |
 | ConnMaxLifetime | time.Duration | 连接最大生命周期 | 5m |
+| LogLevel | string | GORM 日志级别 | warn |
+
+### 日志级别
+
+GORM 支持以下日志级别（通过 `DB_LOG_LEVEL` 环境变量配置）：
+
+- `silent` - 不输出任何日志
+- `error` - 只输出错误日志
+- `warn` - 输出警告和错误日志（推荐用于生产环境）
+- `info` - 输出所有日志，包括 SQL 语句（推荐用于开发环境）
 
 ### 环境变量
 
@@ -178,6 +245,7 @@ DB_SSLMODE=disable
 DB_MAX_OPEN_CONNS=25
 DB_MAX_IDLE_CONNS=5
 DB_CONN_MAX_LIFETIME=5m
+DB_LOG_LEVEL=warn
 ```
 
 ## 接口定义
@@ -195,8 +263,11 @@ type Database interface {
     // Ping 检查数据库连接
     Ping(ctx context.Context) error
     
-    // GetDB 获取数据库实例
-    GetDB() *sql.DB
+    // GetDB 获取 GORM 数据库实例
+    GetDB() *gorm.DB
+    
+    // AutoMigrate 自动迁移数据库表结构
+    AutoMigrate(models ...interface{}) error
 }
 ```
 
@@ -217,9 +288,9 @@ if err := db.Ping(ctx); err != nil {
     log.Printf("健康检查错误: %v", err)
 }
 
-if err := db.Close(); err != nil {
-    // 错误信息格式: "关闭数据库连接失败: <原始错误>"
-    log.Printf("关闭连接错误: %v", err)
+if err := db.AutoMigrate(&User{}); err != nil {
+    // 错误信息格式: "数据库迁移失败: <原始错误>"
+    log.Printf("迁移错误: %v", err)
 }
 ```
 
@@ -270,36 +341,40 @@ for range ticker.C {
 }
 ```
 
-## 测试
+### 5. 使用软删除
 
-运行单元测试：
+```go
+type User struct {
+    ID        uint
+    Name      string
+    DeletedAt gorm.DeletedAt `gorm:"index"` // 启用软删除
+}
 
-```bash
-# 运行所有测试（跳过集成测试）
-go test -v ./internal/database/... -short
+// 软删除（记录不会真正删除）
+db.GetDB().Delete(&user)
 
-# 运行包括集成测试（需要 PostgreSQL 运行）
-go test -v ./internal/database/...
+// 查询时自动排除已软删除的记录
+db.GetDB().Find(&users)
 
-# 查看测试覆盖率
-go test -v ./internal/database/... -cover -short
+// 包含软删除的记录
+db.GetDB().Unscoped().Find(&users)
+
+// 永久删除
+db.GetDB().Unscoped().Delete(&user)
 ```
 
 ## 注意事项
 
 1. **密码安全**：不要在代码中硬编码数据库密码，使用环境变量
 2. **连接池配置**：根据应用负载和数据库资源合理配置连接池参数
-3. **错误处理**：始终检查并处理错误，特别是连接和查询错误
-4. **资源清理**：使用 `defer` 确保数据库连接和查询结果被正确关闭
-5. **上下文使用**：为所有数据库操作设置合理的超时时间
+3. **日志级别**：生产环境建议使用 `warn` 或 `error`，开发环境使用 `info`
+4. **错误处理**：始终检查并处理错误，特别是连接和查询错误
+5. **资源清理**：使用 `defer` 确保数据库连接被正确关闭
+6. **上下文使用**：为所有数据库操作设置合理的超时时间
+7. **迁移时机**：建议在应用启动时执行数据库迁移
+8. **模型定义**：合理使用 GORM 标签定义字段约束和索引
 
-## 未来扩展
+## 参考资料
 
-当前实现为基础版本，未来可以扩展以下功能：
-
-- 数据库迁移管理
-- 读写分离支持
-- 连接重试机制
-- 连接池监控指标
-- 慢查询日志
-- 事务管理辅助函数
+- [GORM 官方文档](https://gorm.io/zh_CN/docs/)
+- [GORM PostgreSQL 驱动](https://gorm.io/zh_CN/docs/connecting_to_the_database.html#PostgreSQL)

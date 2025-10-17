@@ -43,6 +43,7 @@ type DatabaseConfig struct {
 	MaxOpenConns    int           // 最大打开连接数
 	MaxIdleConns    int           // 最大空闲连接数
 	ConnMaxLifetime time.Duration // 连接最大生命周期
+	LogLevel        string        // GORM 日志级别 (silent, error, warn, info)
 }
 
 // LogConfig 日志配置
@@ -95,6 +96,7 @@ func Load() (*Config, error) {
 		MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 25),
 		MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 5),
 		ConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
+		LogLevel:        getEnv("DB_LOG_LEVEL", "warn"),
 	}
 
 	// 加载日志配置
@@ -178,6 +180,16 @@ func (c *Config) Validate() error {
 	
 	if c.Database.MaxIdleConns > c.Database.MaxOpenConns {
 		return fmt.Errorf("最大空闲连接数不能大于最大打开连接数")
+	}
+	
+	validDBLogLevels := map[string]bool{
+		"silent": true,
+		"error":  true,
+		"warn":   true,
+		"info":   true,
+	}
+	if !validDBLogLevels[c.Database.LogLevel] {
+		return fmt.Errorf("数据库日志级别必须是 silent, error, warn 或 info 之一")
 	}
 
 	// 验证日志配置

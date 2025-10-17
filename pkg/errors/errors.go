@@ -19,6 +19,11 @@ const (
 	CodeServiceUnavailable = 503 // 服务不可用
 	CodeAIServiceError     = 550 // AI 服务错误
 	CodeContextCancelled   = 551 // 上下文已取消
+	
+	// 模型提供商相关错误 560-569
+	CodeProviderNotFound = 560 // 提供商不存在
+	CodeModelNotFound    = 561 // 模型不存在
+	CodeLoadDataError    = 562 // 数据加载错误
 )
 
 // 错误消息常量
@@ -33,6 +38,9 @@ const (
 	MsgServiceUnavailable  = "服务不可用"
 	MsgAIServiceError      = "AI 服务错误"
 	MsgContextCancelled    = "请求已取消"
+	MsgProviderNotFound    = "提供商不存在"
+	MsgModelNotFound       = "模型不存在"
+	MsgLoadDataError       = "数据加载失败"
 )
 
 // AppError 自定义应用错误类型
@@ -119,4 +127,27 @@ func NewServiceUnavailableError(message string) *AppError {
 		message = MsgServiceUnavailable
 	}
 	return New(CodeServiceUnavailable, message)
+}
+
+// NewProviderNotFoundError 创建提供商不存在错误
+func NewProviderNotFoundError(providerID string) *AppError {
+	message := MsgProviderNotFound
+	if providerID != "" {
+		message = fmt.Sprintf("提供商 '%s' 不存在", providerID)
+	}
+	return New(CodeProviderNotFound, message)
+}
+
+// NewModelNotFoundError 创建模型不存在错误
+func NewModelNotFoundError(modelID string) *AppError {
+	message := MsgModelNotFound
+	if modelID != "" {
+		message = fmt.Sprintf("模型 '%s' 不存在", modelID)
+	}
+	return New(CodeModelNotFound, message)
+}
+
+// NewLoadDataError 创建数据加载错误
+func NewLoadDataError(err error) *AppError {
+	return Wrap(CodeLoadDataError, MsgLoadDataError, err)
 }
