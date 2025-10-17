@@ -51,6 +51,50 @@ cp .env.example .env
 
 编辑 `.env` 文件，填写必要的配置信息。
 
+#### 主要配置项
+
+- **SERVER_PORT**: 服务器端口（默认：8080）
+- **SERVER_HOST**: 服务器主机地址（默认：0.0.0.0）
+- **GENKIT_API_KEY**: Genkit API 密钥（必需）
+- **GENKIT_MODEL**: 默认使用的模型（默认：gemini-2.5-flash）
+- **MODELS_DIR**: 模型配置文件目录（默认：./models）
+- **DB_HOST**: 数据库主机（默认：localhost）
+- **DB_PORT**: 数据库端口（默认：5432）
+- **DB_USER**: 数据库用户名（默认：postgres）
+- **DB_PASSWORD**: 数据库密码
+- **DB_NAME**: 数据库名称（默认：genkit_ai_service）
+- **LOG_LEVEL**: 日志级别（默认：info）
+- **LOG_FORMAT**: 日志格式（默认：json）
+
+#### 模型配置目录
+
+服务启动时会从 `MODELS_DIR` 指定的目录加载所有模型提供商和模型的配置信息。目录结构应如下：
+
+```
+models/
+├── gemini/
+│   ├── provider/
+│   │   └── gemini.yaml
+│   └── models/
+│       ├── llm/
+│       │   ├── _position.yaml
+│       │   ├── gemini-2.5-flash.yaml
+│       │   └── ...
+│       └── text_embedding/
+│           └── ...
+└── tongyi/
+    ├── provider/
+    │   └── tongyi.yaml
+    └── models/
+        └── ...
+```
+
+如果需要使用自定义的模型配置目录，可以通过环境变量指定：
+
+```bash
+export MODELS_DIR=/path/to/your/models
+```
+
 ### 运行服务
 
 ```bash
@@ -64,6 +108,62 @@ go build -o bin/server cmd/server/main.go
 ./bin/server
 ```
 
+## API 接口
+
+### 模型提供商 API
+
+服务提供了一套完整的模型提供商查询接口：
+
+#### 1. 获取所有提供商列表
+
+```http
+GET /api/v1/providers
+```
+
+#### 2. 获取指定提供商详情
+
+```http
+GET /api/v1/providers/{providerId}
+```
+
+#### 3. 获取提供商的所有模型列表
+
+```http
+GET /api/v1/providers/{providerId}/models
+```
+
+#### 4. 获取指定模型详情
+
+```http
+GET /api/v1/providers/{providerId}/models/{modelId}
+```
+
+#### 5. 获取模型的参数规则
+
+```http
+GET /api/v1/providers/{providerId}/models/{modelId}/parameter-rules
+```
+
+### AI 对话 API
+
+#### 发送对话消息
+
+```http
+POST /api/v1/chat
+```
+
+#### 中止对话
+
+```http
+POST /api/v1/abort
+```
+
+### 健康检查
+
+```http
+GET /api/v1/health
+```
+
 ## 主要依赖
 
 - **Firebase Genkit**: AI 模型集成
@@ -72,6 +172,7 @@ go build -o bin/server cmd/server/main.go
 - **logrus**: 结构化日志
 - **validator**: 参数验证
 - **godotenv**: 环境变量管理
+- **gopkg.in/yaml.v3**: YAML 配置解析
 
 ## 开发状态
 

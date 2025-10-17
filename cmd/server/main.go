@@ -10,12 +10,17 @@ import (
 	"time"
 
 	"genkit-ai-service/internal/api"
+	"genkit-ai-service/internal/api/handler"
+	"genkit-ai-service/internal/api/routes"
 	"genkit-ai-service/internal/config"
 	"genkit-ai-service/internal/database"
 	"genkit-ai-service/internal/genkit"
+	"genkit-ai-service/internal/loader"
 	"genkit-ai-service/internal/logger"
+	"genkit-ai-service/internal/service"
 	"genkit-ai-service/internal/service/ai"
 	"genkit-ai-service/internal/service/health"
+	"genkit-ai-service/internal/storage"
 )
 
 const (
@@ -46,43 +51,82 @@ func main() {
 		"port":    cfg.Server.Port,
 	})
 
-	// 3. 初始化数据库连接
+	// 3. 初始化数据库连接（可选）
 	db, err := initDatabase(cfg, log)
 	if err != nil {
-		log.Error("初始化数据库失败", logger.Fields{"error": err})
-		os.Exit(1)
+		log.Warn("初始化数据库失败，AI服务将不可用", logger.Fields{"error": err})
+		db = nil
+	} else {
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Error("关闭数据库连接失败", logger.Fields{"error": err})
+			}
+		}()
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Error("关闭数据库连接失败", logger.Fields{"error": err})
-		}
-	}()
 
-	// 4. 初始化 Genkit 客户端
+	// 4. 初始化 Genkit 客户端（可选）
 	genkitClient, err := initGenkit(cfg, log)
 	if err != nil {
-		log.Error("初始化 Genkit 客户端失败", logger.Fields{"error": err})
+		log.Warn("初始化 Genkit 客户端失败，AI服务将不可用", logger.Fields{"error": err})
+		genkitClient = nil
+	}
+
+	// 5. 初始化模型提供商数据
+	providerService, err := initProviderService(cfg, log)
+	if err != nil {
+		log.Error("初始化模型提供商服务失败", logger.Fields{"error": err})
 		os.Exit(1)
 	}
 
-	// 5. 初始化服务
-	aiService := initAIService(genkitClient, cfg, log)
-	healthService := health.NewService(genkitClient, db, Version)
+	// 6. 初始化服务
+	var aiService ai.AIService
+	var healthService health.Service
+	
+	if genkitClient != nil && db != nil {
+		aiService = initAIService(genkitClient, cfg, log)
+		healthService = health.NewService(genkitClient, db, Version)
+		log.Info("AI服务和健康检查服务已启用", nil)
+	} else {
+		log.Warn("AI服务和健康检查服务未启用（缺少必要依赖）", nil)
+	}
 
-	// 6. 初始化路由和处理器
-	router := api.NewRouter(aiService, healthService, log)
-	handler := router.Handler()
+	// 7. 初始化路由和处理器
+	var mux http.Handler
+	if aiService != nil && healthService != nil {
+		router := api.NewRouter(aiService, healthService, log)
+		mux = router.Handler()
+	} else {
+		// 只创建基础的 ServeMux
+		mux = http.NewServeMux()
+		log.Info("使用基础路由（仅模型提供商API）", nil)
+	}
 
-	// 7. 创建 HTTP 服务器
+	// 8. 注册模型提供商API路由
+	providerHandler := handler.NewProviderHandler(providerService, log)
+	
+	// 获取 ServeMux 实例
+	var serveMux *http.ServeMux
+	if sm, ok := mux.(*http.ServeMux); ok {
+		serveMux = sm
+	} else {
+		// 如果 mux 不是 ServeMux，创建一个新的
+		serveMux = http.NewServeMux()
+		mux = serveMux
+	}
+	
+	routes.RegisterProviderRoutes(serveMux, providerHandler)
+	log.Info("模型提供商API路由已注册", nil)
+
+	// 9. 创建 HTTP 服务器
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
-		Handler:      handler,
+		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 8. 启动服务器（在 goroutine 中）
+	// 10. 启动服务器（在 goroutine 中）
 	serverErrors := make(chan error, 1)
 	go func() {
 		log.Info("HTTP 服务器启动", logger.Fields{
@@ -91,11 +135,11 @@ func main() {
 		serverErrors <- server.ListenAndServe()
 	}()
 
-	// 9. 监听系统信号以实现优雅关闭
+	// 11. 监听系统信号以实现优雅关闭
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	// 10. 等待关闭信号或服务器错误
+	// 12. 等待关闭信号或服务器错误
 	select {
 	case err := <-serverErrors:
 		log.Error("服务器启动失败", logger.Fields{"error": err})
@@ -221,4 +265,28 @@ func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Lo
 	log.Info("AI 服务初始化成功", nil)
 
 	return aiService
+}
+
+// initProviderService 初始化模型提供商服务
+func initProviderService(cfg *config.Config, log logger.Logger) (service.ProviderService, error) {
+	log.Info("初始化模型提供商服务...", nil)
+
+	// 1. 创建内存存储实例
+	store := storage.NewMemoryStore()
+
+	// 2. 创建数据加载器
+	modelLoader := loader.NewModelLoader(store, log)
+
+	// 3. 执行数据加载
+	// 使用配置中的模型目录路径（已包含默认值）
+	if err := modelLoader.LoadAll(cfg.Models.Dir); err != nil {
+		return nil, fmt.Errorf("加载模型数据失败: %w", err)
+	}
+
+	// 4. 创建服务层实例
+	providerService := service.NewProviderService(store)
+
+	log.Info("模型提供商服务初始化成功", nil)
+
+	return providerService, nil
 }

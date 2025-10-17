@@ -118,3 +118,42 @@ func (m *mockGenkitClient) SetModel(model ai.Model) {
 func (m *mockGenkitClient) Close() error {
 	return nil
 }
+
+func (m *mockGenkitClient) InitializeModel(ctx context.Context) error {
+	return nil
+}
+
+// TestInitProviderService 测试模型提供商服务初始化
+func TestInitProviderService(t *testing.T) {
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, os.Stdout)
+
+	t.Run("模型提供商服务初始化 - 目录不存在", func(t *testing.T) {
+		cfg := &config.Config{
+			Models: config.ModelsConfig{
+				Dir: "/nonexistent/directory",
+			},
+		}
+
+		_, err := initProviderService(cfg, log)
+		if err == nil {
+			t.Error("期望返回错误，但得到 nil")
+		}
+	})
+
+	t.Run("模型提供商服务初始化 - 使用默认目录", func(t *testing.T) {
+		cfg := &config.Config{
+			Models: config.ModelsConfig{
+				Dir: "./models",
+			},
+		}
+
+		service, err := initProviderService(cfg, log)
+		// 如果 models 目录存在且有有效数据，应该成功
+		// 如果不存在，会返回错误
+		if err != nil {
+			t.Logf("模型提供商服务初始化失败（如果 models 目录不存在是预期的）: %v", err)
+		} else if service == nil {
+			t.Error("期望返回服务实例，但得到 nil")
+		}
+	})
+}

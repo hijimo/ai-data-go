@@ -16,6 +16,7 @@ type Config struct {
 	Database DatabaseConfig
 	Log      LogConfig
 	Session  SessionConfig
+	Models   ModelsConfig
 }
 
 // ServerConfig 服务器配置
@@ -56,6 +57,11 @@ type LogConfig struct {
 type SessionConfig struct {
 	Timeout         time.Duration // 会话超时时间
 	CleanupInterval time.Duration // 会话清理间隔
+}
+
+// ModelsConfig 模型配置
+type ModelsConfig struct {
+	Dir string // 模型配置文件目录
 }
 
 // Load 从环境变量加载配置
@@ -109,6 +115,11 @@ func Load() (*Config, error) {
 	config.Session = SessionConfig{
 		Timeout:         getEnvDuration("SESSION_TIMEOUT", 30*time.Minute),
 		CleanupInterval: getEnvDuration("SESSION_CLEANUP_INTERVAL", 5*time.Minute),
+	}
+
+	// 加载模型配置
+	config.Models = ModelsConfig{
+		Dir: getEnv("MODELS_DIR", "./models"),
 	}
 
 	// 验证配置
@@ -218,6 +229,11 @@ func (c *Config) Validate() error {
 	
 	if c.Session.CleanupInterval <= 0 {
 		return fmt.Errorf("会话清理间隔必须大于0")
+	}
+
+	// 验证模型配置
+	if c.Models.Dir == "" {
+		return fmt.Errorf("模型目录不能为空")
 	}
 
 	return nil

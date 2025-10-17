@@ -48,6 +48,11 @@ func TestLoad(t *testing.T) {
 	if config.Database.Host != "localhost" {
 		t.Errorf("期望数据库主机为 localhost, 实际为 %s", config.Database.Host)
 	}
+
+	// 验证模型配置（使用默认值）
+	if config.Models.Dir != "./models" {
+		t.Errorf("期望模型目录为 ./models, 实际为 %s", config.Models.Dir)
+	}
 }
 
 func TestValidate_MissingAPIKey(t *testing.T) {
@@ -119,6 +124,112 @@ func TestValidate_InvalidTemperature(t *testing.T) {
 	err := config.Validate()
 	if err == nil {
 		t.Error("期望验证失败，但验证通过了")
+	}
+}
+
+func TestModelsConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		envValue    string
+		expected    string
+		description string
+	}{
+		{
+			name:        "使用环境变量指定的模型目录",
+			envValue:    "/custom/models/path",
+			expected:    "/custom/models/path",
+			description: "当设置 MODELS_DIR 环境变量时，应使用该值",
+		},
+		{
+			name:        "使用默认模型目录",
+			envValue:    "",
+			expected:    "./models",
+			description: "当未设置 MODELS_DIR 环境变量时，应使用默认值 ./models",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 设置必需的环境变量
+			os.Setenv("SERVER_PORT", "8080")
+			os.Setenv("GENKIT_API_KEY", "test-key")
+			os.Setenv("DB_HOST", "localhost")
+			os.Setenv("DB_PORT", "5432")
+			os.Setenv("DB_USER", "postgres")
+			os.Setenv("DB_NAME", "test_db")
+
+			// 设置测试的模型目录环境变量
+			if tt.envValue != "" {
+				os.Setenv("MODELS_DIR", tt.envValue)
+			} else {
+				os.Unsetenv("MODELS_DIR")
+			}
+
+			defer func() {
+				// 清理环境变量
+				os.Unsetenv("SERVER_PORT")
+				os.Unsetenv("GENKIT_API_KEY")
+				os.Unsetenv("DB_HOST")
+				os.Unsetenv("DB_PORT")
+				os.Unsetenv("DB_USER")
+				os.Unsetenv("DB_NAME")
+				os.Unsetenv("MODELS_DIR")
+			}()
+
+			config, err := Load()
+			if err != nil {
+				t.Fatalf("加载配置失败: %v", err)
+			}
+
+			if config.Models.Dir != tt.expected {
+				t.Errorf("%s: 期望模型目录为 %s, 实际为 %s", tt.description, tt.expected, config.Models.Dir)
+			}
+		})
+	}
+}
+
+func TestValidate_EmptyModelsDir(t *testing.T) {
+	config := &Config{
+		Server: ServerConfig{
+			Port: "8080",
+			Host: "0.0.0.0",
+		},
+		Genkit: GenkitConfig{
+			APIKey:             "test-key",
+			Model:              "gemini-2.5-flash",
+			DefaultTemperature: 0.7,
+			DefaultMaxTokens:   2000,
+		},
+		Database: DatabaseConfig{
+			Host:         "localhost",
+			Port:         "5432",
+			User:         "postgres",
+			DBName:       "test_db",
+			MaxOpenConns: 25,
+			MaxIdleConns: 5,
+			LogLevel:     "warn",
+		},
+		Log: LogConfig{
+			Level:  "info",
+			Format: "json",
+		},
+		Session: SessionConfig{
+			Timeout:         30 * time.Minute,
+			CleanupInterval: 5 * time.Minute,
+		},
+		Models: ModelsConfig{
+			Dir: "", // 空的模型目录
+		},
+	}
+
+	err := config.Validate()
+	if err == nil {
+		t.Error("期望验证失败（模型目录为空），但验证通过了")
+	}
+
+	expectedErrMsg := "模型目录不能为空"
+	if err.Error() != expectedErrMsg {
+		t.Errorf("期望错误消息为 '%s', 实际为 '%s'", expectedErrMsg, err.Error())
 	}
 }
 
