@@ -130,19 +130,20 @@ func (s *genkitService) AbortChat(ctx context.Context, sessionID string) error {
 	// 检查会话是否存在
 	sessionCtx, exists := s.contextManager.GetSession(sessionID)
 	if !exists {
-		s.logger.WarnContext(ctx, "会话不存在", logger.Fields{
+		// 会话不存在，视为幂等操作，直接返回成功
+		s.logger.InfoContext(ctx, "会话不存在，无需中止", logger.Fields{
 			"sessionId": sessionID,
 		})
-		return errors.NewNotFoundError(fmt.Sprintf("会话不存在: %s", sessionID))
+		return nil
 	}
 
 	// 检查会话是否已经完成
 	if sessionCtx.Err() != nil {
-		s.logger.WarnContext(ctx, "会话已完成或已取消", logger.Fields{
+		// 会话已完成或已取消，视为幂等操作，直接返回成功
+		s.logger.InfoContext(ctx, "会话已完成或已取消，无需中止", logger.Fields{
 			"sessionId": sessionID,
-			"error":     sessionCtx.Err().Error(),
 		})
-		return errors.NewBadRequestError("会话已完成或已取消")
+		return nil
 	}
 
 	// 取消会话

@@ -138,8 +138,9 @@ func main() {
 		chatHandler := handler.NewChatHandler(aiService, log)
 		abortHandler := handler.NewAbortHandler(aiService, log)
 		
-		serveMux.HandleFunc("POST /api/v1/chat", chatHandler.HandleChat)
+		// 注意：必须先注册更具体的路径，再注册通用路径
 		serveMux.HandleFunc("POST /api/v1/chat/abort", abortHandler.HandleAbort)
+		serveMux.HandleFunc("POST /api/v1/chat", chatHandler.HandleChat)
 		
 		log.Info("AI对话路由已注册", logger.Fields{
 			"routes": []string{"/api/v1/chat", "/api/v1/chat/abort"},
@@ -151,9 +152,9 @@ func main() {
 	// 10. 注册健康检查路由（如果可用）
 	if healthService != nil {
 		healthHandler := handler.NewHealthHandler(healthService, log)
-		serveMux.HandleFunc("GET /health", healthHandler.Handle)
+		serveMux.HandleFunc("GET /api/v1/health", healthHandler.Handle)
 		log.Info("健康检查路由已注册", logger.Fields{
-			"routes": []string{"/health"},
+			"routes": []string{"/api/v1/health"},
 		})
 	} else {
 		log.Warn("健康检查路由未注册（健康检查服务不可用）", nil)
