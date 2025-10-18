@@ -24,6 +24,19 @@ const (
 	CodeProviderNotFound = 560 // 提供商不存在
 	CodeModelNotFound    = 561 // 模型不存在
 	CodeLoadDataError    = 562 // 数据加载错误
+
+	// 会话相关错误 570-579
+	CodeSessionNotFound      = 570 // 会话不存在
+	CodeSessionAccessDenied  = 571 // 无权访问会话
+	CodeSessionAlreadyExists = 572 // 会话已存在
+
+	// 消息相关错误 580-589
+	CodeMessageNotFound     = 580 // 消息不存在
+	CodeMessageAccessDenied = 581 // 无权访问消息
+	CodeMessageSendFailed   = 582 // 消息发送失败
+
+	// 摘要相关错误 590-599
+	CodeSummaryGenerationFailed = 590 // 摘要生成失败
 )
 
 // 错误消息常量
@@ -41,6 +54,12 @@ const (
 	MsgProviderNotFound    = "提供商不存在"
 	MsgModelNotFound       = "模型不存在"
 	MsgLoadDataError       = "数据加载失败"
+	MsgSessionNotFound          = "会话不存在"
+	MsgSessionAccessDenied      = "无权访问会话"
+	MsgMessageNotFound          = "消息不存在"
+	MsgMessageAccessDenied      = "无权访问消息"
+	MsgMessageSendFailed        = "消息发送失败"
+	MsgSummaryGenerationFailed  = "摘要生成失败"
 )
 
 // AppError 自定义应用错误类型
@@ -150,4 +169,42 @@ func NewModelNotFoundError(modelID string) *AppError {
 // NewLoadDataError 创建数据加载错误
 func NewLoadDataError(err error) *AppError {
 	return Wrap(CodeLoadDataError, MsgLoadDataError, err)
+}
+
+// NewSessionNotFoundError 创建会话不存在错误
+func NewSessionNotFoundError(sessionID string) *AppError {
+	message := MsgSessionNotFound
+	if sessionID != "" {
+		message = fmt.Sprintf("会话 '%s' 不存在", sessionID)
+	}
+	return New(CodeSessionNotFound, message)
+}
+
+// NewSessionAccessDeniedError 创建会话访问拒绝错误
+func NewSessionAccessDeniedError() *AppError {
+	return New(CodeSessionAccessDenied, MsgSessionAccessDenied)
+}
+
+// NewMessageNotFoundError 创建消息不存在错误
+func NewMessageNotFoundError(messageID string) *AppError {
+	message := MsgMessageNotFound
+	if messageID != "" {
+		message = fmt.Sprintf("消息 '%s' 不存在", messageID)
+	}
+	return New(CodeMessageNotFound, message)
+}
+
+// NewMessageAccessDeniedError 创建消息访问拒绝错误
+func NewMessageAccessDeniedError() *AppError {
+	return New(CodeMessageAccessDenied, MsgMessageAccessDenied)
+}
+
+// NewMessageSendFailedError 创建消息发送失败错误
+func NewMessageSendFailedError(err error) *AppError {
+	return Wrap(CodeMessageSendFailed, MsgMessageSendFailed, err)
+}
+
+// NewSummaryGenerationFailedError 创建摘要生成失败错误
+func NewSummaryGenerationFailedError(err error) *AppError {
+	return Wrap(CodeSummaryGenerationFailed, MsgSummaryGenerationFailed, err)
 }

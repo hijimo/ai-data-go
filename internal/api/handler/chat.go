@@ -30,7 +30,7 @@ func NewChatHandler(aiService ai.AIService, log logger.Logger) *ChatHandler {
 
 // HandleChat 处理对话请求
 // @Summary 发送对话消息
-// @Description 向 AI 发送消息并获取回复，支持会话上下文管理
+// @Description 向 AI 发送消息并获取回复，支持通过 messageId 继续对话
 // @Tags chat
 // @Accept json
 // @Produce json
@@ -62,7 +62,7 @@ func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	// 3. 记录请求日志
 	h.logger.Info("收到对话请求", logger.Fields{
 		"message":    req.Message,
-		"sessionId":  req.SessionID,
+		"messageId":  req.MessageID,
 		"hasOptions": req.Options != nil,
 	})
 

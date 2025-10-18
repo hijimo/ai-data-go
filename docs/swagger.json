@@ -22,7 +22,7 @@
     "paths": {
         "/chat": {
             "post": {
-                "description": "向 AI 发送消息并获取回复，支持会话上下文管理",
+                "description": "向 AI 发送消息并获取回复，支持通过 messageId 继续对话",
                 "consumes": [
                     "application/json"
                 ],
@@ -80,7 +80,7 @@
         },
         "/chat/abort": {
             "post": {
-                "description": "中止指定会话的对话处理",
+                "description": "中止指定消息的对话处理",
                 "consumes": [
                     "application/json"
                 ],
@@ -116,6 +116,496 @@
                         }
                     },
                     "404": {
+                        "description": "消息不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/messages/{id}": {
+            "get": {
+                "description": "根据消息ID获取消息的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "获取消息详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "消息ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回消息详情",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "消息不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/messages/{id}/abort": {
+            "post": {
+                "description": "中止指定消息的AI生成过程",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "中止消息生成",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "消息ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功中止消息生成",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "消息不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions": {
+            "get": {
+                "description": "获取用户的会话列表，支持分页和过滤",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "获取会话列表",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否置顶",
+                        "name": "isPinned",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否归档",
+                        "name": "isArchived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "模型名称",
+                        "name": "modelName",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回会话列表",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建一个新的聊天会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "创建新会话",
+                "parameters": [
+                    {
+                        "description": "创建会话请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.CreateSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功创建会话",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/search": {
+            "get": {
+                "description": "根据关键词搜索会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "搜索会话",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "搜索关键词",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回搜索结果",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{id}": {
+            "get": {
+                "description": "根据会话ID获取会话的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "获取会话详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回会话详情",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "软删除指定的会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "删除会话",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功删除会话",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "更新会话的标题、配置等信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "更新会话",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新会话请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UpdateSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功更新会话",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
                         "description": "会话不存在",
                         "schema": {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
@@ -123,6 +613,282 @@
                     },
                     "422": {
                         "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{id}/archive": {
+            "post": {
+                "description": "归档或取消归档指定的会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "归档会话",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否归档",
+                        "name": "archived",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功更新归档状态",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{id}/messages": {
+            "get": {
+                "description": "获取指定会话的消息历史，支持分页",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "获取消息历史",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回消息历史",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "在指定会话中发送消息并获取AI回复",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "发送消息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "发送消息请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SendMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功发送消息",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/sessions/{id}/pin": {
+            "post": {
+                "description": "置顶或取消置顶指定的会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "置顶会话",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "会话ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否置顶",
+                        "name": "pinned",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功更新置顶状态",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "无权访问",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "会话不存在",
                         "schema": {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
                         }
@@ -425,13 +1191,13 @@
         "genkit-ai-service_internal_model.AbortRequest": {
             "type": "object",
             "required": [
-                "sessionId"
+                "messageId"
             ],
             "properties": {
-                "sessionId": {
-                    "description": "会话ID（必填）",
+                "messageId": {
+                    "description": "消息ID（必填）",
                     "type": "string",
-                    "example": "session-123456"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         },
@@ -475,6 +1241,11 @@
                     "type": "string",
                     "example": "你好，请介绍一下你自己"
                 },
+                "messageId": {
+                    "description": "消息ID（可选，用于继续对话）",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
                 "options": {
                     "description": "AI高级参数（可选）",
                     "allOf": [
@@ -482,11 +1253,6 @@
                             "$ref": "#/definitions/genkit-ai-service_internal_model.ChatOptions"
                         }
                     ]
-                },
-                "sessionId": {
-                    "description": "会话ID（可选）",
-                    "type": "string",
-                    "example": "session-123456"
                 }
             }
         },
@@ -515,6 +1281,51 @@
                             "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
                         }
                     ]
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.CreateSessionRequest": {
+            "type": "object",
+            "required": [
+                "modelName",
+                "title"
+            ],
+            "properties": {
+                "meta": {
+                    "description": "元数据（可选）",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "modelName": {
+                    "description": "模型名称",
+                    "type": "string",
+                    "maxLength": 128,
+                    "example": "gpt-4"
+                },
+                "systemPrompt": {
+                    "description": "系统提示词（可选）",
+                    "type": "string",
+                    "example": "你是一个有帮助的AI助手"
+                },
+                "temperature": {
+                    "description": "温度参数（可选，0-2）",
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": 0,
+                    "example": 0.7
+                },
+                "title": {
+                    "description": "会话标题",
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "我的第一个会话"
+                },
+                "topP": {
+                    "description": "TopP参数（可选，0-1）",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "example": 0.9
                 }
             }
         },
@@ -600,6 +1411,31 @@
                 "value": {
                     "description": "选项值",
                     "type": "string"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessagePreview": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "消息内容",
+                    "type": "string",
+                    "example": "你好"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "id": {
+                    "description": "消息ID",
+                    "type": "string",
+                    "example": "msg-123456"
+                },
+                "role": {
+                    "description": "角色",
+                    "type": "string",
+                    "example": "user"
                 }
             }
         },
@@ -695,6 +1531,70 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -891,6 +1791,24 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.ResponseData-any": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model": {
             "type": "object",
             "properties": {
@@ -1026,6 +1944,226 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.SendMessageRequest": {
+            "type": "object",
+            "required": [
+                "message",
+                "sessionId"
+            ],
+            "properties": {
+                "message": {
+                    "description": "消息内容",
+                    "type": "string",
+                    "example": "你好，请介绍一下你自己"
+                },
+                "options": {
+                    "description": "AI高级参数（可选）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatOptions"
+                        }
+                    ]
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "id": {
+                    "description": "会话ID",
+                    "type": "string",
+                    "example": "session-123456"
+                },
+                "isArchived": {
+                    "description": "是否归档",
+                    "type": "boolean",
+                    "example": false
+                },
+                "isPinned": {
+                    "description": "是否置顶",
+                    "type": "boolean",
+                    "example": false
+                },
+                "lastMessage": {
+                    "description": "最后一条消息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessagePreview"
+                        }
+                    ]
+                },
+                "messageCount": {
+                    "description": "消息数量",
+                    "type": "integer",
+                    "example": 10
+                },
+                "meta": {
+                    "description": "元数据",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "modelName": {
+                    "description": "模型名称",
+                    "type": "string",
+                    "example": "gpt-4"
+                },
+                "systemPrompt": {
+                    "description": "系统提示词",
+                    "type": "string",
+                    "example": "你是一个有帮助的AI助手"
+                },
+                "temperature": {
+                    "description": "温度参数",
+                    "type": "number",
+                    "example": 0.7
+                },
+                "title": {
+                    "description": "会话标题",
+                    "type": "string",
+                    "example": "我的第一个会话"
+                },
+                "topP": {
+                    "description": "TopP参数",
+                    "type": "number",
+                    "example": 0.9
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "userId": {
+                    "description": "用户ID",
+                    "type": "string",
+                    "example": "user-123456"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.SuccessResponse": {
             "type": "object",
             "properties": {
@@ -1038,6 +2176,42 @@
                     "description": "响应信息",
                     "type": "string",
                     "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.UpdateSessionRequest": {
+            "type": "object",
+            "properties": {
+                "modelName": {
+                    "description": "模型名称（可选）",
+                    "type": "string",
+                    "maxLength": 128,
+                    "example": "gpt-4-turbo"
+                },
+                "systemPrompt": {
+                    "description": "系统提示词（可选）",
+                    "type": "string",
+                    "example": "你是一个专业的编程助手"
+                },
+                "temperature": {
+                    "description": "温度参数（可选，0-2）",
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": 0,
+                    "example": 0.8
+                },
+                "title": {
+                    "description": "会话标题（可选）",
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "更新后的标题"
+                },
+                "topP": {
+                    "description": "TopP参数（可选，0-1）",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "example": 0.95
                 }
             }
         },
@@ -1089,6 +2263,86 @@
                     "description": "服务版本",
                     "type": "string",
                     "example": "1.0.0"
+                }
+            }
+        },
+        "genkit-ai-service_internal_service_session.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "integer"
+                }
+            }
+        },
+        "genkit-ai-service_internal_service_session.MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "meta": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "role": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "integer"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "tokens": {
+                    "type": "integer"
+                },
+                "toolCalls": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "genkit-ai-service_internal_service_session.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "aiMessage": {
+                    "$ref": "#/definitions/genkit-ai-service_internal_service_session.Message"
+                },
+                "messageId": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "usage": {
+                    "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
+                },
+                "userMessage": {
+                    "$ref": "#/definitions/genkit-ai-service_internal_service_session.Message"
                 }
             }
         },

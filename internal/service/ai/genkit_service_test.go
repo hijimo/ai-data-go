@@ -168,10 +168,10 @@ func TestChat_WithExistingSession(t *testing.T) {
 
 	sessionID := resp1.SessionID
 
-	// 第二次对话，使用相同会话
+	// 第二次对话，使用相同会话（通过消息ID）
 	req2 := &model.ChatRequest{
 		Message:   "再见",
-		SessionID: sessionID,
+		MessageID: sessionID,
 	}
 
 	resp2, err := service.Chat(context.Background(), req2)
@@ -277,17 +277,18 @@ func TestAbortChat_Success(t *testing.T) {
 	}
 }
 
-// TestAbortChat_SessionNotFound 测试中止不存在的会话
-func TestAbortChat_SessionNotFound(t *testing.T) {
+// TestAbortChat_MessageNotFound 测试中止不存在的消息
+func TestAbortChat_MessageNotFound(t *testing.T) {
 	client := &mockGenkitClient{}
 	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
 	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
 
 	service := NewGenkitService(client, contextManager, log)
 
-	err := service.AbortChat(context.Background(), "non-existent-session")
-	if err == nil {
-		t.Fatal("期望返回错误")
+	// 中止不存在的消息应该返回 nil（幂等操作）
+	err := service.AbortChat(context.Background(), "non-existent-message")
+	if err != nil {
+		t.Fatalf("期望返回 nil，实际返回错误: %v", err)
 	}
 }
 

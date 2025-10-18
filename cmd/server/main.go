@@ -17,9 +17,11 @@ import (
 	"genkit-ai-service/internal/genkit"
 	"genkit-ai-service/internal/loader"
 	"genkit-ai-service/internal/logger"
+	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/internal/service"
 	"genkit-ai-service/internal/service/ai"
 	"genkit-ai-service/internal/service/health"
+	"genkit-ai-service/internal/service/session"
 	"genkit-ai-service/internal/storage"
 
 	_ "genkit-ai-service/docs" // Swagger 文档
@@ -132,6 +134,22 @@ func main() {
 	providerHandler := handler.NewProviderHandler(providerService, log)
 	routes.RegisterProviderRoutes(serveMux, providerHandler)
 	log.Info("模型提供商API路由已注册", nil)
+
+	// 8.1 注册会话管理路由（如果数据库可用）
+	if db != nil && aiService != nil {
+		sessionHandler, messageHandler := initSessionHandlers(db, aiService, cfg, log)
+		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler)
+		log.Info("会话管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/chat/sessions",
+				"/api/v1/chat/sessions/{id}",
+				"/api/v1/chat/sessions/{id}/messages",
+				"/api/v1/chat/messages/{id}",
+			},
+		})
+	} else {
+		log.Warn("会话管理路由未注册（数据库或AI服务不可用）", nil)
+	}
 
 	// 9. 注册 AI 服务路由（如果可用）
 	if aiService != nil {
@@ -261,7 +279,39 @@ func initDatabase(cfg *config.Config, log logger.Logger) (database.Database, err
 		"host": cfg.Database.Host,
 	})
 
+	// 执行数据库迁移
+	if err := runDatabaseMigrations(db, log); err != nil {
+		return nil, fmt.Errorf("数据库迁移失败: %w", err)
+	}
+
 	return db, nil
+}
+
+// runDatabaseMigrations 执行数据库迁移
+func runDatabaseMigrations(db database.Database, log logger.Logger) error {
+	log.Info("开始执行数据库迁移...", nil)
+
+	// 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+	if gormDB == nil {
+		return fmt.Errorf("无法获取数据库实例")
+	}
+
+	// 执行会话管理相关的迁移
+	if err := database.RunSessionMigrations(gormDB); err != nil {
+		log.Error("会话管理迁移失败", logger.Fields{"error": err})
+		return fmt.Errorf("会话管理迁移失败: %w", err)
+	}
+
+	log.Info("数据库迁移完成", logger.Fields{
+		"migrations": []string{
+			"chat_sessions",
+			"chat_messages",
+			"chat_summaries",
+		},
+	})
+
+	return nil
 }
 
 // initGenkit 初始化 Genkit 客户端
@@ -345,4 +395,43 @@ func initProviderService(cfg *config.Config, log logger.Logger) (service.Provide
 	log.Info("模型提供商服务初始化成功", nil)
 
 	return providerService, nil
+}
+
+// initSessionHandlers 初始化会话管理相关的处理器
+func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (*handler.SessionHandler, *handler.MessageHandler) {
+	log.Info("初始化会话管理服务...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+
+	// 2. 创建 Repository 层实例
+	sessionRepo := repository.NewSessionRepository(gormDB)
+	messageRepo := repository.NewMessageRepository(gormDB)
+	summaryRepo := repository.NewSummaryRepository(gormDB)
+
+	// 3. 创建 Service 层实例
+	// 3.1 创建 SessionService
+	sessionService := session.NewSessionService(sessionRepo, messageRepo)
+	
+	// 3.2 创建 SummaryService
+	summaryService := session.NewSummaryService(summaryRepo, messageRepo, sessionRepo, aiService, cfg, log)
+	
+	// 3.3 创建 MessageService
+	messageService := session.NewMessageService(gormDB, sessionRepo, messageRepo, aiService, log)
+	
+	// 注意：SummaryService 已初始化但当前未直接使用，
+	// 它可以在未来的功能中被 MessageService 或其他服务调用
+	_ = summaryService
+
+	// 4. 创建 Handler 层实例
+	sessionHandler := handler.NewSessionHandler(sessionService, log)
+	messageHandler := handler.NewMessageHandler(messageService, log)
+
+	log.Info("会话管理服务初始化成功", logger.Fields{
+		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository"},
+		"services":     []string{"SessionService", "MessageService", "SummaryService"},
+		"handlers":     []string{"SessionHandler", "MessageHandler"},
+	})
+
+	return sessionHandler, messageHandler
 }

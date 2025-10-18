@@ -18,7 +18,7 @@ import (
 type mockAIService struct {
 	chatFunc       func(ctx context.Context, req *model.ChatRequest) (*model.ChatResponse, error)
 	chatStreamFunc func(ctx context.Context, req *model.ChatRequest) (<-chan model.StreamChunk, error)
-	abortChatFunc  func(ctx context.Context, sessionID string) error
+	abortChatFunc  func(ctx context.Context, messageID string) error
 }
 
 func (m *mockAIService) Chat(ctx context.Context, req *model.ChatRequest) (*model.ChatResponse, error) {
@@ -35,9 +35,9 @@ func (m *mockAIService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 	return nil, nil
 }
 
-func (m *mockAIService) AbortChat(ctx context.Context, sessionID string) error {
+func (m *mockAIService) AbortChat(ctx context.Context, messageID string) error {
 	if m.abortChatFunc != nil {
-		return m.abortChatFunc(ctx, sessionID)
+		return m.abortChatFunc(ctx, messageID)
 	}
 	return nil
 }

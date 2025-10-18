@@ -2,12 +2,12 @@ basePath: /api/v1
 definitions:
   genkit-ai-service_internal_model.AbortRequest:
     properties:
-      sessionId:
-        description: 会话ID（必填）
-        example: session-123456
+      messageId:
+        description: 消息ID（必填）
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     required:
-    - sessionId
+    - messageId
     type: object
   genkit-ai-service_internal_model.ChatOptions:
     properties:
@@ -38,14 +38,14 @@ definitions:
         description: 用户消息内容
         example: 你好，请介绍一下你自己
         type: string
+      messageId:
+        description: 消息ID（可选，用于继续对话）
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
       options:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.ChatOptions'
         description: AI高级参数（可选）
-      sessionId:
-        description: 会话ID（可选）
-        example: session-123456
-        type: string
     required:
     - message
     type: object
@@ -67,6 +67,42 @@ definitions:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
         description: Token使用情况
+    type: object
+  genkit-ai-service_internal_model.CreateSessionRequest:
+    properties:
+      meta:
+        additionalProperties: true
+        description: 元数据（可选）
+        type: object
+      modelName:
+        description: 模型名称
+        example: gpt-4
+        maxLength: 128
+        type: string
+      systemPrompt:
+        description: 系统提示词（可选）
+        example: 你是一个有帮助的AI助手
+        type: string
+      temperature:
+        description: 温度参数（可选，0-2）
+        example: 0.7
+        maximum: 2
+        minimum: 0
+        type: number
+      title:
+        description: 会话标题
+        example: 我的第一个会话
+        maxLength: 255
+        type: string
+      topP:
+        description: TopP参数（可选，0-1）
+        example: 0.9
+        maximum: 1
+        minimum: 0
+        type: number
+    required:
+    - modelName
+    - title
     type: object
   genkit-ai-service_internal_model.CredentialFormSchema:
     properties:
@@ -126,6 +162,25 @@ definitions:
         type: object
       value:
         description: 选项值
+        type: string
+    type: object
+  genkit-ai-service_internal_model.MessagePreview:
+    properties:
+      content:
+        description: 消息内容
+        example: 你好
+        type: string
+      createdAt:
+        description: 创建时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      id:
+        description: 消息ID
+        example: msg-123456
+        type: string
+      role:
+        description: 角色
+        example: user
         type: string
     type: object
   genkit-ai-service_internal_model.Model:
@@ -192,6 +247,54 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
     type: object
   genkit-ai-service_internal_model.ParameterRule:
     properties:
@@ -327,6 +430,19 @@ definitions:
         description: 帮助链接（多语言）
         type: object
     type: object
+  genkit-ai-service_internal_model.ResponseData-any:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
   genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model:
     properties:
       code:
@@ -420,6 +536,158 @@ definitions:
         example: success
         type: string
     type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+    type: object
+  genkit-ai-service_internal_model.SendMessageRequest:
+    properties:
+      message:
+        description: 消息内容
+        example: 你好，请介绍一下你自己
+        type: string
+      options:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatOptions'
+        description: AI高级参数（可选）
+      sessionId:
+        description: 会话ID
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - message
+    - sessionId
+    type: object
+  genkit-ai-service_internal_model.SessionResponse:
+    properties:
+      createdAt:
+        description: 创建时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      id:
+        description: 会话ID
+        example: session-123456
+        type: string
+      isArchived:
+        description: 是否归档
+        example: false
+        type: boolean
+      isPinned:
+        description: 是否置顶
+        example: false
+        type: boolean
+      lastMessage:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.MessagePreview'
+        description: 最后一条消息
+      messageCount:
+        description: 消息数量
+        example: 10
+        type: integer
+      meta:
+        additionalProperties: true
+        description: 元数据
+        type: object
+      modelName:
+        description: 模型名称
+        example: gpt-4
+        type: string
+      systemPrompt:
+        description: 系统提示词
+        example: 你是一个有帮助的AI助手
+        type: string
+      temperature:
+        description: 温度参数
+        example: 0.7
+        type: number
+      title:
+        description: 会话标题
+        example: 我的第一个会话
+        type: string
+      topP:
+        description: TopP参数
+        example: 0.9
+        type: number
+      updatedAt:
+        description: 更新时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      userId:
+        description: 用户ID
+        example: user-123456
+        type: string
+    type: object
   genkit-ai-service_internal_model.SuccessResponse:
     properties:
       code:
@@ -430,6 +698,35 @@ definitions:
         description: 响应信息
         example: 操作成功
         type: string
+    type: object
+  genkit-ai-service_internal_model.UpdateSessionRequest:
+    properties:
+      modelName:
+        description: 模型名称（可选）
+        example: gpt-4-turbo
+        maxLength: 128
+        type: string
+      systemPrompt:
+        description: 系统提示词（可选）
+        example: 你是一个专业的编程助手
+        type: string
+      temperature:
+        description: 温度参数（可选，0-2）
+        example: 0.8
+        maximum: 2
+        minimum: 0
+        type: number
+      title:
+        description: 会话标题（可选）
+        example: 更新后的标题
+        maxLength: 255
+        type: string
+      topP:
+        description: TopP参数（可选，0-1）
+        example: 0.95
+        maximum: 1
+        minimum: 0
+        type: number
     type: object
   genkit-ai-service_internal_model.Usage:
     properties:
@@ -469,6 +766,59 @@ definitions:
         example: 1.0.0
         type: string
     type: object
+  genkit-ai-service_internal_service_session.Message:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      sequence:
+        type: integer
+    type: object
+  genkit-ai-service_internal_service_session.MessageDetailResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      meta:
+        additionalProperties: true
+        type: object
+      role:
+        type: string
+      sequence:
+        type: integer
+      sessionId:
+        type: string
+      tokens:
+        type: integer
+      toolCalls:
+        additionalProperties: true
+        type: object
+    type: object
+  genkit-ai-service_internal_service_session.MessageResponse:
+    properties:
+      aiMessage:
+        $ref: '#/definitions/genkit-ai-service_internal_service_session.Message'
+      messageId:
+        type: string
+      model:
+        type: string
+      sessionId:
+        type: string
+      usage:
+        $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
+      userMessage:
+        $ref: '#/definitions/genkit-ai-service_internal_service_session.Message'
+    type: object
   internal_api_handler.HealthStatusResponse:
     properties:
       code:
@@ -498,7 +848,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 向 AI 发送消息并获取回复，支持会话上下文管理
+      description: 向 AI 发送消息并获取回复，支持通过 messageId 继续对话
       parameters:
       - description: 对话请求
         in: body
@@ -536,7 +886,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 中止指定会话的对话处理
+      description: 中止指定消息的对话处理
       parameters:
       - description: 中止请求
         in: body
@@ -556,7 +906,7 @@ paths:
           schema:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
         "404":
-          description: 会话不存在
+          description: 消息不存在
           schema:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
         "422":
@@ -570,6 +920,521 @@ paths:
       summary: 中止对话
       tags:
       - chat
+  /chat/messages/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据消息ID获取消息的详细信息
+      parameters:
+      - description: 消息ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回消息详情
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 消息不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取消息详情
+      tags:
+      - messages
+  /chat/messages/{id}/abort:
+    post:
+      consumes:
+      - application/json
+      description: 中止指定消息的AI生成过程
+      parameters:
+      - description: 消息ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功中止消息生成
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 消息不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 中止消息生成
+      tags:
+      - messages
+  /chat/sessions:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户的会话列表，支持分页和过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        minimum: 1
+        name: pageNo
+        required: true
+        type: integer
+      - default: 20
+        description: 每页大小
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        required: true
+        type: integer
+      - description: 是否置顶
+        in: query
+        name: isPinned
+        type: boolean
+      - description: 是否归档
+        in: query
+        name: isArchived
+        type: boolean
+      - description: 模型名称
+        in: query
+        name: modelName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回会话列表
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取会话列表
+      tags:
+      - sessions
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的聊天会话
+      parameters:
+      - description: 创建会话请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genkit-ai-service_internal_model.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功创建会话
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 创建新会话
+      tags:
+      - sessions
+  /chat/sessions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 软删除指定的会话
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除会话
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 删除会话
+      tags:
+      - sessions
+    get:
+      consumes:
+      - application/json
+      description: 根据会话ID获取会话的详细信息
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回会话详情
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取会话详情
+      tags:
+      - sessions
+    patch:
+      consumes:
+      - application/json
+      description: 更新会话的标题、配置等信息
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 更新会话请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genkit-ai-service_internal_model.UpdateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新会话
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 更新会话
+      tags:
+      - sessions
+  /chat/sessions/{id}/archive:
+    post:
+      consumes:
+      - application/json
+      description: 归档或取消归档指定的会话
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 是否归档
+        in: query
+        name: archived
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新归档状态
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 归档会话
+      tags:
+      - sessions
+  /chat/sessions/{id}/messages:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定会话的消息历史，支持分页
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        minimum: 1
+        name: pageNo
+        required: true
+        type: integer
+      - default: 50
+        description: 每页大小
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回消息历史
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 获取消息历史
+      tags:
+      - messages
+    post:
+      consumes:
+      - application/json
+      description: 在指定会话中发送消息并获取AI回复
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 发送消息请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/genkit-ai-service_internal_model.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功发送消息
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 发送消息
+      tags:
+      - messages
+  /chat/sessions/{id}/pin:
+    post:
+      consumes:
+      - application/json
+      description: 置顶或取消置顶指定的会话
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 是否置顶
+        in: query
+        name: pinned
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功更新置顶状态
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 置顶会话
+      tags:
+      - sessions
+  /chat/sessions/search:
+    get:
+      consumes:
+      - application/json
+      description: 根据关键词搜索会话
+      parameters:
+      - description: 搜索关键词
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        minimum: 1
+        name: pageNo
+        required: true
+        type: integer
+      - default: 20
+        description: 每页大小
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回搜索结果
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 搜索会话
+      tags:
+      - sessions
   /health:
     get:
       consumes:

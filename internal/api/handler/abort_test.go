@@ -16,7 +16,7 @@ import (
 
 // mockAIServiceForAbort 用于测试的 mock AI 服务
 type mockAIServiceForAbort struct {
-	abortChatFunc func(ctx context.Context, sessionID string) error
+	abortChatFunc func(ctx context.Context, messageID string) error
 }
 
 func (m *mockAIServiceForAbort) Chat(ctx context.Context, req *model.ChatRequest) (*model.ChatResponse, error) {
@@ -27,9 +27,9 @@ func (m *mockAIServiceForAbort) ChatStream(ctx context.Context, req *model.ChatR
 	return nil, nil
 }
 
-func (m *mockAIServiceForAbort) AbortChat(ctx context.Context, sessionID string) error {
+func (m *mockAIServiceForAbort) AbortChat(ctx context.Context, messageID string) error {
 	if m.abortChatFunc != nil {
-		return m.abortChatFunc(ctx, sessionID)
+		return m.abortChatFunc(ctx, messageID)
 	}
 	return nil
 }
@@ -37,11 +37,11 @@ func (m *mockAIServiceForAbort) AbortChat(ctx context.Context, sessionID string)
 func TestAbortHandler_HandleAbort_Success(t *testing.T) {
 	// 创建 mock 服务
 	mockService := &mockAIServiceForAbort{
-		abortChatFunc: func(ctx context.Context, sessionID string) error {
-			if sessionID == "test-session-123" {
+		abortChatFunc: func(ctx context.Context, messageID string) error {
+			if messageID == "550e8400-e29b-41d4-a716-446655440000" {
 				return nil
 			}
-			return errors.NewNotFoundError("会话不存在")
+			return errors.NewNotFoundError("消息不存在")
 		},
 	}
 
@@ -51,7 +51,7 @@ func TestAbortHandler_HandleAbort_Success(t *testing.T) {
 
 	// 创建请求
 	reqBody := model.AbortRequest{
-		SessionID: "test-session-123",
+		MessageID: "550e8400-e29b-41d4-a716-446655440000",
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/chat/abort", bytes.NewReader(body))
@@ -82,11 +82,11 @@ func TestAbortHandler_HandleAbort_Success(t *testing.T) {
 	}
 }
 
-func TestAbortHandler_HandleAbort_SessionNotFound(t *testing.T) {
+func TestAbortHandler_HandleAbort_MessageNotFound(t *testing.T) {
 	// 创建 mock 服务
 	mockService := &mockAIServiceForAbort{
-		abortChatFunc: func(ctx context.Context, sessionID string) error {
-			return errors.NewNotFoundError("会话不存在或已完成")
+		abortChatFunc: func(ctx context.Context, messageID string) error {
+			return errors.NewNotFoundError("消息不存在或已完成")
 		},
 	}
 
@@ -96,7 +96,7 @@ func TestAbortHandler_HandleAbort_SessionNotFound(t *testing.T) {
 
 	// 创建请求
 	reqBody := model.AbortRequest{
-		SessionID: "non-existent-session",
+		MessageID: "550e8400-e29b-41d4-a716-446655440001",
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/chat/abort", bytes.NewReader(body))
@@ -123,7 +123,7 @@ func TestAbortHandler_HandleAbort_SessionNotFound(t *testing.T) {
 	}
 }
 
-func TestAbortHandler_HandleAbort_MissingSessionID(t *testing.T) {
+func TestAbortHandler_HandleAbort_MissingMessageID(t *testing.T) {
 	// 创建 mock 服务
 	mockService := &mockAIServiceForAbort{}
 
@@ -131,9 +131,9 @@ func TestAbortHandler_HandleAbort_MissingSessionID(t *testing.T) {
 	log := logger.New(logger.ErrorLevel, logger.JSONFormat, io.Discard)
 	handler := NewAbortHandler(mockService, log)
 
-	// 创建请求（缺少 sessionId）
+	// 创建请求（缺少 messageId）
 	reqBody := model.AbortRequest{
-		SessionID: "",
+		MessageID: "",
 	}
 	body, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/chat/abort", bytes.NewReader(body))

@@ -30,14 +30,14 @@ func NewAbortHandler(aiService ai.AIService, log logger.Logger) *AbortHandler {
 
 // HandleAbort 处理中止对话请求
 // @Summary 中止对话
-// @Description 中止指定会话的对话处理
+// @Description 中止指定消息的对话处理
 // @Tags chat
 // @Accept json
 // @Produce json
 // @Param request body model.AbortRequest true "中止请求"
 // @Success 200 {object} model.SuccessResponse "成功中止对话"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
-// @Failure 404 {object} model.ErrorResponse "会话不存在"
+// @Failure 404 {object} model.ErrorResponse "消息不存在"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /chat/abort [post]
@@ -61,14 +61,14 @@ func (h *AbortHandler) HandleAbort(w http.ResponseWriter, r *http.Request) {
 
 	// 3. 记录请求日志
 	h.logger.Info("收到中止对话请求", logger.Fields{
-		"sessionId": req.SessionID,
+		"messageId": req.MessageID,
 	})
 
 	// 4. 调用 AI 服务中止对话
-	err := h.aiService.AbortChat(ctx, req.SessionID)
+	err := h.aiService.AbortChat(ctx, req.MessageID)
 	if err != nil {
 		h.logger.Error("中止对话失败", logger.Fields{
-			"sessionId": req.SessionID,
+			"messageId": req.MessageID,
 			"error":     err,
 		})
 
@@ -83,7 +83,7 @@ func (h *AbortHandler) HandleAbort(w http.ResponseWriter, r *http.Request) {
 
 	// 5. 记录成功日志
 	h.logger.Info("对话已成功中止", logger.Fields{
-		"sessionId": req.SessionID,
+		"messageId": req.MessageID,
 	})
 
 	// 6. 构建并返回成功响应

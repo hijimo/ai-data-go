@@ -3,6 +3,9 @@ package database
 import (
 	"fmt"
 
+	"genkit-ai-service/internal/database/migrations"
+
+	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
@@ -46,4 +49,10 @@ func (m *Migrator) Migrate(models ...interface{}) error {
 	}
 
 	return nil
+}
+
+// RunSessionMigrations 执行会话管理相关的数据库迁移
+// 这个函数会创建 chat_sessions、chat_messages 和 chat_summaries 表及其索引
+func RunSessionMigrations(db *gorm.DB) error {
+	return migrations.RunSessionMigrations(db)
 }

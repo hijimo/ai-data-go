@@ -55,8 +55,12 @@ type LogConfig struct {
 
 // SessionConfig 会话配置
 type SessionConfig struct {
-	Timeout         time.Duration // 会话超时时间
-	CleanupInterval time.Duration // 会话清理间隔
+	Timeout          time.Duration // 会话超时时间
+	CleanupInterval  time.Duration // 会话清理间隔
+	SummaryThreshold int           // 摘要生成阈值（消息数量）
+	DefaultPageSize  int           // 默认分页大小
+	MaxPageSize      int           // 最大分页大小
+	MaxTitleLength   int           // 会话标题最大长度
 }
 
 // ModelsConfig 模型配置
@@ -113,8 +117,12 @@ func Load() (*Config, error) {
 
 	// 加载会话配置
 	config.Session = SessionConfig{
-		Timeout:         getEnvDuration("SESSION_TIMEOUT", 30*time.Minute),
-		CleanupInterval: getEnvDuration("SESSION_CLEANUP_INTERVAL", 5*time.Minute),
+		Timeout:          getEnvDuration("SESSION_TIMEOUT", 30*time.Minute),
+		CleanupInterval:  getEnvDuration("SESSION_CLEANUP_INTERVAL", 5*time.Minute),
+		SummaryThreshold: getEnvInt("SESSION_SUMMARY_THRESHOLD", 50),
+		DefaultPageSize:  getEnvInt("SESSION_DEFAULT_PAGE_SIZE", 20),
+		MaxPageSize:      getEnvInt("SESSION_MAX_PAGE_SIZE", 100),
+		MaxTitleLength:   getEnvInt("SESSION_MAX_TITLE_LENGTH", 255),
 	}
 
 	// 加载模型配置
@@ -229,6 +237,26 @@ func (c *Config) Validate() error {
 	
 	if c.Session.CleanupInterval <= 0 {
 		return fmt.Errorf("会话清理间隔必须大于0")
+	}
+	
+	if c.Session.SummaryThreshold <= 0 {
+		return fmt.Errorf("摘要生成阈值必须大于0")
+	}
+	
+	if c.Session.DefaultPageSize <= 0 {
+		return fmt.Errorf("默认分页大小必须大于0")
+	}
+	
+	if c.Session.MaxPageSize <= 0 {
+		return fmt.Errorf("最大分页大小必须大于0")
+	}
+	
+	if c.Session.MaxPageSize < c.Session.DefaultPageSize {
+		return fmt.Errorf("最大分页大小不能小于默认分页大小")
+	}
+	
+	if c.Session.MaxTitleLength <= 0 {
+		return fmt.Errorf("会话标题最大长度必须大于0")
 	}
 
 	// 验证模型配置

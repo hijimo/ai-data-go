@@ -461,3 +461,8 @@ func getCaller(skip int) string {
 	
 	return fmt.Sprintf("%s:%d", file, line)
 }
+
+// NewTestLogger 创建用于测试的日志记录器（输出到 io.Discard）
+func NewTestLogger() Logger {
+	return New(DebugLevel, TextFormat, io.Discard)
+}

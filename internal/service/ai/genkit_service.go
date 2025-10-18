@@ -41,13 +41,13 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 	var sessionID string
 	var sessionCtx context.Context
 
-	if req.SessionID != "" {
-		// 使用现有会话
-		sessionID = req.SessionID
+	if req.MessageID != "" {
+		// 使用现有会话（通过消息ID）
+		sessionID = req.MessageID
 		existingCtx, exists := s.contextManager.GetSession(sessionID)
 		if !exists {
 			s.logger.WarnContext(ctx, "会话不存在，创建新会话", logger.Fields{
-				"requestedSessionId": req.SessionID,
+				"requestedMessageId": req.MessageID,
 			})
 			sessionID, sessionCtx, _ = s.contextManager.CreateSession(ctx)
 		} else {
@@ -122,17 +122,17 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 }
 
 // AbortChat 中止对话
-func (s *genkitService) AbortChat(ctx context.Context, sessionID string) error {
+func (s *genkitService) AbortChat(ctx context.Context, messageID string) error {
 	s.logger.InfoContext(ctx, "尝试中止对话", logger.Fields{
-		"sessionId": sessionID,
+		"messageId": messageID,
 	})
 
 	// 检查会话是否存在
-	sessionCtx, exists := s.contextManager.GetSession(sessionID)
+	sessionCtx, exists := s.contextManager.GetSession(messageID)
 	if !exists {
 		// 会话不存在，视为幂等操作，直接返回成功
 		s.logger.InfoContext(ctx, "会话不存在，无需中止", logger.Fields{
-			"sessionId": sessionID,
+			"messageId": messageID,
 		})
 		return nil
 	}
@@ -141,23 +141,23 @@ func (s *genkitService) AbortChat(ctx context.Context, sessionID string) error {
 	if sessionCtx.Err() != nil {
 		// 会话已完成或已取消，视为幂等操作，直接返回成功
 		s.logger.InfoContext(ctx, "会话已完成或已取消，无需中止", logger.Fields{
-			"sessionId": sessionID,
+			"messageId": messageID,
 		})
 		return nil
 	}
 
 	// 取消会话
-	err := s.contextManager.CancelSession(sessionID)
+	err := s.contextManager.CancelSession(messageID)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "取消会话失败", logger.Fields{
-			"sessionId": sessionID,
+			"messageId": messageID,
 			"error":     err.Error(),
 		})
 		return errors.NewInternalError(err)
 	}
 
 	s.logger.InfoContext(ctx, "会话已成功中止", logger.Fields{
-		"sessionId": sessionID,
+		"messageId": messageID,
 	})
 
 	return nil

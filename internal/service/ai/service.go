@@ -33,8 +33,8 @@ type AIService interface {
 	// 取消正在进行的对话请求
 	// 参数:
 	//   ctx: 上下文
-	//   sessionID: 要中止的会话ID
+	//   messageID: 要中止的消息ID
 	// 返回:
-	//   error: 错误信息，如果会话不存在或已完成则返回错误
-	AbortChat(ctx context.Context, sessionID string) error
+	//   error: 错误信息，如果消息不存在或已完成则返回错误
+	AbortChat(ctx context.Context, messageID string) error
 }
