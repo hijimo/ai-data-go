@@ -9,6 +9,8 @@
 *.dylib
 *.test
 *.out
+server
+bin/server
 
 # Go 工作区文件
 go.work

@@ -1,0 +1,22 @@
+model: o1-preview
+label:
+  zh_Hans: o1-preview
+  en_US: o1-preview
+model_type: llm
+features:
+  - agent-thought
+model_properties:
+  mode: chat
+  context_size: 128000
+parameter_rules:
+  - name: max_completion_tokens
+    use_template: max_tokens
+    type: int
+    default: 512
+    min: 1
+    max: 32768
+pricing:
+  input: '15.00'
+  output: '60.00'
+  unit: '0.000001'
+  currency: USD

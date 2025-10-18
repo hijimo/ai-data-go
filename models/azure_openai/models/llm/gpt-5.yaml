@@ -1,0 +1,76 @@
+model: gpt-5
+label:
+  zh_Hans: gpt-5
+  en_US: gpt-5
+model_type: llm
+features:
+  - agent-thought
+  - multi-tool-call
+  - stream-tool-call
+  - vision
+  - structured-output
+model_properties:
+  mode: chat
+  context_size: 272000
+parameter_rules:
+  - name: response_format
+    label:
+      zh_Hans: 回复格式
+      en_US: response_format
+    type: string
+    help:
+      zh_Hans: 指定模型必须输出的格式
+      en_US: specifying the format that the model must output
+    required: false
+    options:
+      - text
+      - json_object
+      - json_schema
+  - name: json_schema
+    label:
+      zh_Hans: JSON Schema
+      en_US: JSON Schema
+    type: text
+    help:
+      zh_Hans: 设置返回的json schema，llm将按照它返回
+      en_US: Set a response json schema will ensure LLM to adhere it.
+    required: false
+  - name: reasoning_effort
+    label:
+      zh_Hans: 推理工作
+      en_US: reasoning_effort
+    type: string
+    help:
+      zh_Hans: 限制推理模型的推理工作
+      en_US: constrains effort on reasoning for reasoning models
+    required: false
+    options:
+      - minimal
+      - low
+      - medium
+      - high
+  - name: verbosity
+    label:
+      zh_Hans: 详细程度
+      en_US: verbosity
+    type: string
+    help:
+      zh_Hans: 约束模型响应的详细程度。较低的值将产生更简洁的响应，而较高的值将产生更详细的响应。支持的值包括low、medium和high
+      en_US: Constrains the verbosity of the model's response. Lower values will result in more concise responses, while higher values will result in more verbose responses. Currently supported values are low, medium, and high
+    required: false
+    options:
+      - low
+      - medium
+      - high
+    default: medium
+  - name: max_completion_tokens
+    use_template: max_tokens
+    type: int
+    default: 4096
+    min: 1
+    max: 128000
+pricing:
+  input: '1.25'
+  output: '10'
+  unit: '0.000001'
+  currency: USD
