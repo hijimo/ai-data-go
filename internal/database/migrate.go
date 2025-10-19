@@ -56,3 +56,10 @@ func (m *Migrator) Migrate(models ...interface{}) error {
 func RunSessionMigrations(db *gorm.DB) error {
 	return migrations.RunSessionMigrations(db)
 }
+
+// RunAuthMigrations 执行认证相关的数据库迁移
+// 这个函数会创建 tenants、users、refresh_tokens 和 auth_audit 表及其索引
+func RunAuthMigrations(db *gorm.DB) error {
+	migration := migrations.NewAuthMigration(db)
+	return migration.Up()
+}

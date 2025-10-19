@@ -95,17 +95,42 @@ models/
 export MODELS_DIR=/path/to/your/models
 ```
 
+### 初始化认证系统
+
+在首次运行服务前，需要初始化认证系统：
+
+```bash
+# 完整初始化（推荐）
+make auth-setup
+
+# 或分步执行
+make auth-migrate  # 执行数据库迁移
+make auth-init     # 初始化默认租户和管理员
+```
+
+默认管理员账户：
+
+- 邮箱: `admin@example.com`
+- 密码: `Admin@123456`
+
+⚠️ **重要**: 首次登录后请立即修改默认密码！
+
+详细说明请参考：
+
+- [认证系统快速参考](docs/AUTH_QUICK_REFERENCE.md)
+- [认证系统完整指南](docs/AUTH_SETUP.md)
+
 ### 运行服务
 
 ```bash
 go run cmd/server/main.go
 ```
 
-或编译后运行：
+或使用 Makefile：
 
 ```bash
-go build -o bin/server cmd/server/main.go
-./bin/server
+make run    # 编译并运行
+make dev    # 开发模式（生成文档并运行）
 ```
 
 ## API 接口
@@ -124,6 +149,55 @@ go build -o bin/server cmd/server/main.go
 - 数据模型定义
 
 详细的 Swagger 使用指南请参考：[docs/swagger-guide.md](docs/swagger-guide.md)
+
+### 认证 API
+
+系统提供完整的多租户用户管理与 JWT 身份认证功能：
+
+#### 用户认证
+
+```http
+POST   /api/v1/auth/register          # 用户注册
+POST   /api/v1/auth/login             # 用户登录
+POST   /api/v1/auth/refresh           # 刷新 Token
+POST   /api/v1/auth/logout            # 用户注销
+POST   /api/v1/auth/change-password   # 修改密码
+GET    /api/v1/auth/me                # 获取当前用户信息
+```
+
+#### 租户管理（需要管理员权限）
+
+```http
+POST   /api/v1/tenants                # 创建租户
+GET    /api/v1/tenants                # 列出租户
+GET    /api/v1/tenants/:id            # 获取租户详情
+PUT    /api/v1/tenants/:id            # 更新租户
+DELETE /api/v1/tenants/:id            # 删除租户
+```
+
+#### 用户管理（需要租户管理员权限）
+
+```http
+POST   /api/v1/users                  # 创建用户
+GET    /api/v1/users                  # 列出用户
+GET    /api/v1/users/:id              # 获取用户详情
+PUT    /api/v1/users/:id              # 更新用户
+DELETE /api/v1/users/:id              # 删除用户
+```
+
+**认证方式**: 使用 Bearer Token 进行身份验证
+
+```bash
+# 示例：使用 Token 访问 API
+curl -X GET http://localhost:8080/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "X-Tenant-ID: YOUR_TENANT_ID"
+```
+
+更多详情请参考：
+
+- [认证系统快速参考](docs/AUTH_QUICK_REFERENCE.md)
+- [认证系统完整指南](docs/AUTH_SETUP.md)
 
 ### 模型提供商 API
 

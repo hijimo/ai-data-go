@@ -20,6 +20,1057 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/auth/change-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改当前用户的密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "修改密码",
+                "parameters": [
+                    {
+                        "description": "修改密码请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "修改成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证或旧密码错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "使用邮箱和密码登录系统",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "认证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "注销用户并撤销 Refresh Token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "用户注销",
+                "parameters": [
+                    {
+                        "description": "注销请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.LogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "注销成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token 无效",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取当前登录用户的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "获取当前用户信息",
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "description": "使用 Refresh Token 获取新的 Access Token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "刷新访问令牌",
+                "parameters": [
+                    {
+                        "description": "刷新请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "刷新成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token 无效或已过期",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "description": "注册新用户账户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "description": "注册请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "注册成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取租户列表，支持分页（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "获取租户列表",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新的租户（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "创建租户",
+                "parameters": [
+                    {
+                        "description": "创建租户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.CreateTenantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据租户ID获取租户详细信息（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "获取租户详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新租户信息（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "更新租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新租户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.UpdateTenantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除指定的租户（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户管理"
+                ],
+                "summary": "删除租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取当前租户下的用户列表，支持分页（需要租户管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户列表",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "在指定租户下创建新用户（需要租户管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "创建用户",
+                "parameters": [
+                    {
+                        "description": "创建用户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据用户ID获取用户详细信息（需要租户管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新用户信息（需要租户管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新用户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新用户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除指定的用户（需要租户管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "删除用户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/chat": {
             "post": {
                 "description": "向 AI 发送消息并获取回复，支持通过 messageId 继续对话",
@@ -1414,6 +2465,39 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "description": "访问令牌",
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "expiresIn": {
+                    "description": "过期时间（秒）",
+                    "type": "integer",
+                    "example": 3600
+                },
+                "refreshToken": {
+                    "description": "刷新令牌",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "tokenType": {
+                    "description": "令牌类型",
+                    "type": "string",
+                    "example": "Bearer"
+                },
+                "user": {
+                    "description": "用户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                        }
+                    ]
+                }
+            }
+        },
         "genkit-ai-service_internal_model.MessagePreview": {
             "type": "object",
             "properties": {
@@ -1542,6 +2626,70 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
                     }
                 },
                 "pageNo": {
@@ -1898,6 +3046,29 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model": {
             "type": "object",
             "properties": {
@@ -1967,6 +3138,52 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse": {
             "type": "object",
             "properties": {
@@ -2026,6 +3243,52 @@
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User"
                         }
                     ]
                 },
@@ -2179,6 +3442,50 @@
                 }
             }
         },
+        "genkit-ai-service_internal_model.Tenant": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "创建者用户ID",
+                    "type": "string"
+                },
+                "domain": {
+                    "description": "租户域名，用于子域识别",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "租户ID",
+                    "type": "string"
+                },
+                "isDeleted": {
+                    "description": "软删除标记",
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "description": "租户元数据",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "description": "租户名称",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "租户状态：true=启用，false=禁用",
+                    "type": "boolean"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.UpdateSessionRequest": {
             "type": "object",
             "properties": {
@@ -2232,6 +3539,77 @@
                     "description": "总token数",
                     "type": "integer",
                     "example": 60
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.User": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "创建者用户ID",
+                    "type": "string"
+                },
+                "displayName": {
+                    "description": "显示名称",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "用户邮箱",
+                    "type": "string"
+                },
+                "emailVerified": {
+                    "description": "邮箱是否已验证",
+                    "type": "boolean"
+                },
+                "id": {
+                    "description": "用户ID",
+                    "type": "string"
+                },
+                "isActive": {
+                    "description": "账户是否激活",
+                    "type": "boolean"
+                },
+                "isAdmin": {
+                    "description": "是否为管理员",
+                    "type": "boolean"
+                },
+                "isDeleted": {
+                    "description": "软删除标记",
+                    "type": "boolean"
+                },
+                "lastLoginAt": {
+                    "description": "最后登录时间",
+                    "type": "string"
+                },
+                "meta": {
+                    "description": "用户元数据",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "phone": {
+                    "description": "手机号码",
+                    "type": "string"
+                },
+                "roles": {
+                    "description": "用户角色列表，如 [\"user\",\"admin\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "tenantId": {
+                    "description": "所属租户ID",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
                 }
             }
         },
@@ -2346,6 +3724,101 @@
                 }
             }
         },
+        "internal_api_handler.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "newpassword123"
+                },
+                "oldPassword": {
+                    "type": "string",
+                    "example": "oldpassword123"
+                }
+            }
+        },
+        "internal_api_handler.CreateTenantRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "createdBy": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "domain": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "example.com"
+                },
+                "metadata": {
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "example": "示例租户"
+                }
+            }
+        },
+        "internal_api_handler.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "tenantId"
+            ],
+            "properties": {
+                "createdBy": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "张三"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "isAdmin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "meta": {
+                    "type": "object"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "password123"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"user\"]"
+                    ]
+                },
+                "tenantId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
         "internal_api_handler.HealthStatusResponse": {
             "type": "object",
             "properties": {
@@ -2361,9 +3834,166 @@
                     "example": "success"
                 }
             }
+        },
+        "internal_api_handler.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                },
+                "tenantId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_api_handler.LogoutRequest": {
+            "type": "object",
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_api_handler.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_api_handler.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "tenantId"
+            ],
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "example": "张三"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "password123"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "tenantId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_api_handler.UpdateTenantRequest": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "updated.com"
+                },
+                "metadata": {
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "example": "更新后的租户名"
+                },
+                "status": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "internal_api_handler.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "example": "李四"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "newemail@example.com"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "isAdmin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "meta": {
+                    "type": "object"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "13900139000"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"user\"",
+                        "\"moderator\"]"
+                    ]
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "输入 \"Bearer {token}\" 格式的 JWT 令牌进行身份认证",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     },
     "tags": [
+        {
+            "description": "用户认证相关接口（注册、登录、Token 刷新、注销等）",
+            "name": "认证"
+        },
+        {
+            "description": "租户管理接口（需要管理员权限）",
+            "name": "租户管理"
+        },
+        {
+            "description": "用户管理接口（需要租户管理员权限）",
+            "name": "用户管理"
+        },
         {
             "description": "模型提供商管理接口",
             "name": "providers"

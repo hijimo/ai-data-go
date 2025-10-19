@@ -1,4 +1,4 @@
-.PHONY: help build run test clean swagger swagger-install
+.PHONY: help build run test clean swagger swagger-install auth-migrate auth-init auth-setup
 
 # 默认目标
 help:
@@ -10,6 +10,9 @@ help:
 	@echo "  make swagger         - 生成 Swagger 文档"
 	@echo "  make swagger-install - 安装 Swagger 工具"
 	@echo "  make dev             - 开发模式（生成文档并运行）"
+	@echo "  make auth-migrate    - 执行认证系统数据库迁移"
+	@echo "  make auth-init       - 初始化默认租户和管理员"
+	@echo "  make auth-setup      - 完整认证系统初始化（迁移+初始化）"
 
 # 编译项目
 build:
@@ -58,3 +61,19 @@ swagger:
 dev: swagger build
 	@echo "启动开发服务器..."
 	@./bin/server
+
+# 执行认证系统数据库迁移
+auth-migrate:
+	@echo "执行认证系统数据库迁移..."
+	@go run scripts/auth_migrate.go
+
+# 初始化默认租户和管理员
+auth-init:
+	@echo "初始化默认租户和管理员..."
+	@go run scripts/init_auth.go
+
+# 完整认证系统初始化（迁移+初始化）
+auth-setup: auth-migrate auth-init
+	@echo ""
+	@echo "✅ 认证系统初始化完成！"
+	@echo "📖 查看使用说明: docs/AUTH_SETUP.md"

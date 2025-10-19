@@ -17,6 +17,8 @@ type Config struct {
 	Log      LogConfig
 	Session  SessionConfig
 	Models   ModelsConfig
+	Auth     AuthConfig
+	Redis    RedisConfig
 }
 
 // ServerConfig 服务器配置
@@ -66,6 +68,32 @@ type SessionConfig struct {
 // ModelsConfig 模型配置
 type ModelsConfig struct {
 	Dir string // 模型配置文件目录
+}
+
+// AuthConfig 认证配置
+type AuthConfig struct {
+	JWTSecret              string        // JWT 签名密钥
+	JWTIssuer              string        // JWT 签发者
+	JWTAudience            string        // JWT 受众
+	AccessTokenTTL         time.Duration // Access Token 生命周期
+	RefreshTokenTTL        time.Duration // Refresh Token 生命周期
+	BcryptCost             int           // Bcrypt cost factor
+	MaxLoginAttempts       int           // 最大登录尝试次数
+	LoginAttemptWindow     time.Duration // 登录尝试时间窗口
+	PasswordMinLength      int           // 密码最小长度
+	EnableRefreshRotation  bool          // 是否启用 Refresh Token 轮换
+	TenantIdentifyStrategy string        // 租户识别策略：header, subdomain, path, cookie
+	TokenCleanupInterval   time.Duration // Token 清理间隔
+	EnableTokenBlacklist   bool          // 是否启用 Token 黑名单
+}
+
+// RedisConfig Redis 配置
+type RedisConfig struct {
+	Host     string // Redis 主机
+	Port     string // Redis 端口
+	Password string // Redis 密码
+	DB       int    // Redis 数据库编号
+	Enabled  bool   // 是否启用 Redis
 }
 
 // Load 从环境变量加载配置
@@ -128,6 +156,32 @@ func Load() (*Config, error) {
 	// 加载模型配置
 	config.Models = ModelsConfig{
 		Dir: getEnv("MODELS_DIR", "./models"),
+	}
+
+	// 加载认证配置
+	config.Auth = AuthConfig{
+		JWTSecret:              getEnv("JWT_SECRET", ""),
+		JWTIssuer:              getEnv("JWT_ISSUER", "genkit-ai-service"),
+		JWTAudience:            getEnv("JWT_AUDIENCE", "genkit-api"),
+		AccessTokenTTL:         getEnvDuration("ACCESS_TOKEN_TTL", 60*time.Minute),
+		RefreshTokenTTL:        getEnvDuration("REFRESH_TOKEN_TTL", 30*24*time.Hour),
+		BcryptCost:             getEnvInt("BCRYPT_COST", 12),
+		MaxLoginAttempts:       getEnvInt("MAX_LOGIN_ATTEMPTS", 5),
+		LoginAttemptWindow:     getEnvDuration("LOGIN_ATTEMPT_WINDOW", 15*time.Minute),
+		PasswordMinLength:      getEnvInt("PASSWORD_MIN_LENGTH", 8),
+		EnableRefreshRotation:  getEnvBool("ENABLE_REFRESH_ROTATION", true),
+		TenantIdentifyStrategy: getEnv("TENANT_IDENTIFY_STRATEGY", "header"),
+		TokenCleanupInterval:   getEnvDuration("TOKEN_CLEANUP_INTERVAL", 1*time.Hour),
+		EnableTokenBlacklist:   getEnvBool("ENABLE_TOKEN_BLACKLIST", true),
+	}
+
+	// 加载 Redis 配置
+	config.Redis = RedisConfig{
+		Host:     getEnv("REDIS_HOST", "localhost"),
+		Port:     getEnv("REDIS_PORT", "6379"),
+		Password: getEnv("REDIS_PASSWORD", ""),
+		DB:       getEnvInt("REDIS_DB", 0),
+		Enabled:  getEnvBool("REDIS_ENABLED", true),
 	}
 
 	// 验证配置
@@ -264,6 +318,57 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("模型目录不能为空")
 	}
 
+	// 验证认证配置
+	if c.Auth.JWTSecret == "" {
+		return fmt.Errorf("JWT 签名密钥不能为空 (JWT_SECRET)")
+	}
+
+	if len(c.Auth.JWTSecret) < 32 {
+		return fmt.Errorf("JWT 签名密钥长度必须至少为 32 个字符")
+	}
+
+	if c.Auth.JWTIssuer == "" {
+		return fmt.Errorf("JWT 签发者不能为空")
+	}
+
+	if c.Auth.JWTAudience == "" {
+		return fmt.Errorf("JWT 受众不能为空")
+	}
+
+	if c.Auth.AccessTokenTTL <= 0 {
+		return fmt.Errorf("Access Token 生命周期必须大于0")
+	}
+
+	if c.Auth.RefreshTokenTTL <= 0 {
+		return fmt.Errorf("Refresh Token 生命周期必须大于0")
+	}
+
+	if c.Auth.BcryptCost < 4 || c.Auth.BcryptCost > 31 {
+		return fmt.Errorf("Bcrypt cost factor 必须在 4-31 之间")
+	}
+
+	if c.Auth.MaxLoginAttempts <= 0 {
+		return fmt.Errorf("最大登录尝试次数必须大于0")
+	}
+
+	if c.Auth.LoginAttemptWindow <= 0 {
+		return fmt.Errorf("登录尝试时间窗口必须大于0")
+	}
+
+	if c.Auth.PasswordMinLength < 6 {
+		return fmt.Errorf("密码最小长度必须至少为6")
+	}
+
+	validStrategies := map[string]bool{
+		"header":    true,
+		"subdomain": true,
+		"path":      true,
+		"cookie":    true,
+	}
+	if !validStrategies[c.Auth.TenantIdentifyStrategy] {
+		return fmt.Errorf("租户识别策略必须是 header, subdomain, path 或 cookie 之一")
+	}
+
 	return nil
 }
 
@@ -314,6 +419,21 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 	}
 	
 	value, err := time.ParseDuration(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+	
+	return value
+}
+
+// getEnvBool 获取布尔类型的环境变量
+func getEnvBool(key string, defaultValue bool) bool {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+	
+	value, err := strconv.ParseBool(valueStr)
 	if err != nil {
 		return defaultValue
 	}

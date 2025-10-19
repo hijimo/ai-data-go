@@ -109,6 +109,22 @@ func NewBadRequestError(message string) *AppError {
 	return New(CodeBadRequest, message)
 }
 
+// NewUnauthorizedError 创建未授权错误
+func NewUnauthorizedError(message string) *AppError {
+	if message == "" {
+		message = MsgUnauthorized
+	}
+	return New(CodeUnauthorized, message)
+}
+
+// NewForbiddenError 创建禁止访问错误
+func NewForbiddenError(message string) *AppError {
+	if message == "" {
+		message = MsgForbidden
+	}
+	return New(CodeForbidden, message)
+}
+
 // NewValidationError 创建参数验证错误
 func NewValidationError(message string) *AppError {
 	if message == "" {

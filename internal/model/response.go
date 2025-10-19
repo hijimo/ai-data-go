@@ -152,3 +152,17 @@ type MessageDetailResponse struct {
 	// 元数据
 	Meta map[string]interface{} `json:"meta,omitempty"`
 }
+
+// LoginResponse 登录响应（用于 Swagger）
+type LoginResponse struct {
+	// 访问令牌
+	AccessToken string `json:"accessToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	// 刷新令牌
+	RefreshToken string `json:"refreshToken" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 过期时间（秒）
+	ExpiresIn int64 `json:"expiresIn" example:"3600"`
+	// 令牌类型
+	TokenType string `json:"tokenType" example:"Bearer"`
+	// 用户信息
+	User *User `json:"user"`
+}

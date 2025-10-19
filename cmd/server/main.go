@@ -20,6 +20,8 @@ import (
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/internal/service"
 	"genkit-ai-service/internal/service/ai"
+	"genkit-ai-service/internal/service/auth"
+	"genkit-ai-service/internal/service/cleanup"
 	"genkit-ai-service/internal/service/health"
 	"genkit-ai-service/internal/service/session"
 	"genkit-ai-service/internal/storage"
@@ -42,6 +44,20 @@ import (
 // @host localhost:8080
 // @BasePath /api/v1
 // @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description 输入 "Bearer {token}" 格式的 JWT 令牌进行身份认证
+
+// @tag.name 认证
+// @tag.description 用户认证相关接口（注册、登录、Token 刷新、注销等）
+
+// @tag.name 租户管理
+// @tag.description 租户管理接口（需要管理员权限）
+
+// @tag.name 用户管理
+// @tag.description 用户管理接口（需要租户管理员权限）
 
 // @tag.name providers
 // @tag.description 模型提供商管理接口
@@ -135,7 +151,35 @@ func main() {
 	routes.RegisterProviderRoutes(serveMux, providerHandler)
 	log.Info("模型提供商API路由已注册", nil)
 
-	// 8.1 注册会话管理路由（如果数据库可用）
+	// 8.1 注册认证路由（如果数据库可用）
+	var cleanupSvc cleanup.CleanupService
+	if db != nil {
+		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW := initAuthHandlers(db, cfg, log)
+		routes.RegisterAuthRoutes(serveMux, authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW)
+		log.Info("认证路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/auth/register",
+				"/api/v1/auth/login",
+				"/api/v1/auth/refresh",
+				"/api/v1/auth/logout",
+				"/api/v1/auth/change-password",
+				"/api/v1/auth/me",
+				"/api/v1/tenants",
+				"/api/v1/users",
+				"/api/v1/audit/auth",
+			},
+		})
+		
+		// 启动数据库清理服务
+		cleanupSvc = initCleanupService(db, cfg, log)
+		ctx := context.Background()
+		cleanupSvc.Start(ctx)
+		log.Info("数据库清理服务已启动", nil)
+	} else {
+		log.Warn("认证路由未注册（数据库不可用）", nil)
+	}
+
+	// 8.2 注册会话管理路由（如果数据库可用）
 	if db != nil && aiService != nil {
 		sessionHandler, messageHandler := initSessionHandlers(db, aiService, cfg, log)
 		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler)
@@ -224,6 +268,12 @@ func main() {
 			"signal": sig.String(),
 		})
 
+		// 停止清理服务
+		if cleanupSvc != nil {
+			cleanupSvc.Stop()
+			log.Info("数据库清理服务已停止", nil)
+		}
+
 		// 创建关闭超时上下文
 		ctx, cancel := context.WithTimeout(context.Background(), ShutdownTimeout)
 		defer cancel()
@@ -297,6 +347,12 @@ func runDatabaseMigrations(db database.Database, log logger.Logger) error {
 		return fmt.Errorf("无法获取数据库实例")
 	}
 
+	// 执行认证相关的迁移
+	if err := database.RunAuthMigrations(gormDB); err != nil {
+		log.Error("认证迁移失败", logger.Fields{"error": err})
+		return fmt.Errorf("认证迁移失败: %w", err)
+	}
+
 	// 执行会话管理相关的迁移
 	if err := database.RunSessionMigrations(gormDB); err != nil {
 		log.Error("会话管理迁移失败", logger.Fields{"error": err})
@@ -305,6 +361,10 @@ func runDatabaseMigrations(db database.Database, log logger.Logger) error {
 
 	log.Info("数据库迁移完成", logger.Fields{
 		"migrations": []string{
+			"tenants",
+			"users",
+			"refresh_tokens",
+			"auth_audit",
 			"chat_sessions",
 			"chat_messages",
 			"chat_summaries",
@@ -434,4 +494,144 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	})
 
 	return sessionHandler, messageHandler
+}
+
+// initAuthHandlers 初始化认证相关的处理器和中间件
+func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logger) (
+	*handler.AuthHandler,
+	*handler.TenantHandler,
+	*handler.UserHandler,
+	*handler.AuditHandler,
+	func(http.Handler) http.Handler,
+	func(http.Handler) http.Handler,
+	func(...string) func(http.Handler) http.Handler,
+) {
+	log.Info("初始化认证服务...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+
+	// 2. 创建 Repository 层实例
+	tenantRepo := repository.NewTenantRepository(gormDB)
+	userRepo := repository.NewUserRepository(gormDB)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(gormDB)
+	auditRepo := repository.NewAuditRepository(gormDB)
+	emailVerificationRepo := repository.NewEmailVerificationRepository(gormDB)
+
+	// 3. 创建 Service 层实例
+	// 3.1 初始化 Redis 客户端（如果启用）
+	var redisClient *database.RedisClient
+	if cfg.Redis.Enabled {
+		var err error
+		redisClient, err = database.NewRedisClient(cfg.Redis, log)
+		if err != nil {
+			log.Warn("Redis 连接失败，Token 黑名单功能将被禁用", logger.Fields{"error": err})
+			redisClient = nil
+		}
+	} else {
+		log.Info("Redis 已禁用，Token 黑名单功能将不可用", nil)
+	}
+
+	// 3.2 创建 TokenBlacklistService
+	var blacklistService auth.TokenBlacklistService
+	if redisClient != nil && cfg.Auth.EnableTokenBlacklist {
+		blacklistService = auth.NewTokenBlacklistService(redisClient, log)
+		log.Info("Token 黑名单服务已启用", nil)
+	} else {
+		log.Info("Token 黑名单服务已禁用", nil)
+	}
+
+	// 3.3 创建 TokenService
+	tokenService := auth.NewTokenService(&cfg.Auth, refreshTokenRepo)
+
+	// 3.4 创建 TenantService
+	tenantService := auth.NewTenantService(tenantRepo)
+
+	// 3.5 创建 UserService
+	userService := auth.NewUserService(userRepo, tenantRepo)
+
+	// 3.6 创建 EmailService
+	// 使用控制台邮件发送器（开发环境）
+	// 生产环境应该使用 SMTP 邮件发送器
+	emailSender := auth.NewConsoleEmailSender()
+	emailService := auth.NewEmailService(
+		emailVerificationRepo,
+		userRepo,
+		emailSender,
+		24*time.Hour, // 验证令牌有效期24小时
+	)
+
+	// 3.7 创建 AuthService
+	authService := auth.NewAuthService(
+		userRepo, 
+		tokenService, 
+		auditRepo, 
+		refreshTokenRepo,
+		blacklistService, // 传入黑名单服务
+		cfg.Auth.AccessTokenTTL,
+		cfg.Auth.MaxLoginAttempts,
+		cfg.Auth.LoginAttemptWindow,
+	)
+
+	// 4. 创建 Handler 层实例
+	authHandler := handler.NewAuthHandler(authService, emailService, log)
+	tenantHandler := handler.NewTenantHandler(tenantService, log)
+	userHandler := handler.NewUserHandler(userService, log)
+	auditHandler := handler.NewAuditHandler(auditRepo, log)
+
+	// 5. 创建中间件
+	// 创建租户识别中间件配置
+	tenantConfig := middleware.TenantIdentifierConfig{
+		Strategy:   cfg.Auth.TenantIdentifyStrategy,
+		TenantRepo: tenantRepo,
+		BaseDomain: "",
+	}
+	tenantMiddleware := middleware.TenantIdentifier(tenantConfig)
+	
+	// 创建 JWT 认证中间件（传入黑名单服务）
+	jwtAuthMiddleware := middleware.JWTAuth(tokenService, blacklistService)
+	
+	// 创建 RBAC 授权中间件工厂函数
+	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
+		config := middleware.RBACConfig{
+			RequiredRoles: roles,
+			RequireAll:    false,
+		}
+		return middleware.RBACAuthorizer(config)
+	}
+
+	log.Info("认证服务初始化成功", logger.Fields{
+		"repositories": []string{"TenantRepository", "UserRepository", "RefreshTokenRepository", "AuditRepository"},
+		"services":     []string{"TokenService", "TenantService", "UserService", "AuthService"},
+		"handlers":     []string{"AuthHandler", "TenantHandler", "UserHandler", "AuditHandler"},
+		"middlewares":  []string{"TenantIdentifier", "JWTAuth", "RBACAuthorizer"},
+	})
+
+	return authHandler, tenantHandler, userHandler, auditHandler, tenantMiddleware, jwtAuthMiddleware, rbacMiddleware
+}
+
+// initCleanupService 初始化数据库清理服务
+func initCleanupService(db database.Database, cfg *config.Config, log logger.Logger) cleanup.CleanupService {
+	log.Info("初始化数据库清理服务...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+
+	// 2. 创建 Repository
+	refreshTokenRepo := repository.NewRefreshTokenRepository(gormDB)
+	emailVerificationRepo := repository.NewEmailVerificationRepository(gormDB)
+
+	// 3. 创建清理服务配置
+	cleanupConfig := cleanup.CleanupConfig{
+		TokenCleanupInterval: cfg.Auth.TokenCleanupInterval,
+	}
+
+	// 4. 创建清理服务实例
+	cleanupService := cleanup.NewCleanupService(refreshTokenRepo, emailVerificationRepo, log, cleanupConfig)
+
+	log.Info("数据库清理服务初始化成功", logger.Fields{
+		"interval": cleanupConfig.TokenCleanupInterval.String(),
+	})
+
+	return cleanupService
 }

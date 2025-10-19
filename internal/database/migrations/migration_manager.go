@@ -71,3 +71,36 @@ func RunSessionMigrations(db *gorm.DB) error {
 	
 	return nil
 }
+
+// RunAuthMigrations 运行认证相关的迁移
+func RunAuthMigrations(db *gorm.DB) error {
+	manager := NewMigrationManager(db)
+	
+	// 注册认证迁移
+	manager.Register(NewAuthMigration(db))
+	
+	// 执行迁移
+	if err := manager.Up(); err != nil {
+		return fmt.Errorf("执行认证迁移失败: %w", err)
+	}
+	
+	return nil
+}
+
+// RunAllMigrations 运行所有迁移
+func RunAllMigrations(db *gorm.DB) error {
+	manager := NewMigrationManager(db)
+	
+	// 按顺序注册所有迁移
+	// 1. 认证迁移（基础表）
+	manager.Register(NewAuthMigration(db))
+	// 2. 会话管理迁移
+	manager.Register(NewSessionMigration(db))
+	
+	// 执行迁移
+	if err := manager.Up(); err != nil {
+		return fmt.Errorf("执行迁移失败: %w", err)
+	}
+	
+	return nil
+}
