@@ -2,7 +2,7 @@ package ai
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"time"
 
 	"genkit-ai-service/internal/genkit"
@@ -114,11 +114,115 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 	return response, nil
 }
 
-// ChatStream 流式对话（预留接口）
+// ChatStream 流式对话
 func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) (<-chan model.StreamChunk, error) {
-	// TODO: 实现流式对话功能
-	// 当前版本暂不实现，返回未实现错误
-	return nil, fmt.Errorf("流式对话功能暂未实现")
+	startTime := time.Now()
+
+	// 创建或获取会话
+	var sessionID string
+	var sessionCtx context.Context
+
+	if req.MessageID != "" {
+		// 使用现有会话（通过消息ID）
+		sessionID = req.MessageID
+		existingCtx, exists := s.contextManager.GetSession(sessionID)
+		if !exists {
+			s.logger.WarnContext(ctx, "会话不存在，创建新会话", logger.Fields{
+				"requestedMessageId": req.MessageID,
+			})
+			sessionID, sessionCtx, _ = s.contextManager.CreateSession(ctx)
+		} else {
+			sessionCtx = existingCtx
+		}
+	} else {
+		// 创建新会话
+		sessionID, sessionCtx, _ = s.contextManager.CreateSession(ctx)
+	}
+
+	// 记录请求日志
+	s.logger.InfoContext(sessionCtx, "开始处理流式对话请求", logger.Fields{
+		"sessionId": sessionID,
+		"message":   req.Message,
+	})
+
+	// 构建生成选项
+	options := s.buildGenerateOptions(req.Options)
+
+	// 调用 Genkit 流式生成
+	genkitStream, err := s.client.GenerateStream(sessionCtx, req.Message, options)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "启动流式生成失败", logger.Fields{
+			"sessionId": sessionID,
+			"error":     err.Error(),
+		})
+		return nil, errors.NewAIServiceError(err)
+	}
+
+	// 创建输出通道
+	outputChan := make(chan model.StreamChunk, 10)
+
+	// 在 goroutine 中转换流式数据
+	go func() {
+		defer close(outputChan)
+
+		for chunk := range genkitStream {
+			// 检查是否有错误
+			if chunk.Error != nil {
+				// 检查是否是上下文取消错误
+				if sessionCtx.Err() == context.Canceled {
+					s.logger.WarnContext(ctx, "流式对话请求被取消", logger.Fields{
+						"sessionId": sessionID,
+					})
+					outputChan <- model.StreamChunk{
+						Done:  true,
+						Error: errors.NewContextCancelledError(),
+					}
+				} else {
+					s.logger.ErrorContext(ctx, "流式生成出错", logger.Fields{
+						"sessionId": sessionID,
+						"error":     chunk.Error.Error(),
+					})
+					outputChan <- model.StreamChunk{
+						Done:  true,
+						Error: errors.NewAIServiceError(chunk.Error),
+					}
+				}
+				return
+			}
+
+			// 转换并发送数据块
+			modelChunk := model.StreamChunk{
+				Content:   chunk.Content,
+				Done:      chunk.Done,
+				SessionID: sessionID,
+			}
+
+			// 如果是最后一个块，添加模型和使用统计信息
+			if chunk.Done {
+				modelChunk.Model = chunk.Model
+				if chunk.Usage != nil {
+					modelChunk.Usage = &model.Usage{
+						PromptTokens:     chunk.Usage.PromptTokens,
+						CompletionTokens: chunk.Usage.CompletionTokens,
+						TotalTokens:      chunk.Usage.TotalTokens,
+					}
+				}
+
+				// 记录完成日志
+				duration := time.Since(startTime)
+				s.logger.InfoContext(sessionCtx, "流式对话请求处理完成", logger.Fields{
+					"sessionId": sessionID,
+					"model":     chunk.Model,
+					"duration":  duration.String(),
+					"tokens":    modelChunk.Usage,
+				})
+			}
+
+			outputChan <- modelChunk
+		}
+	}()
+
+	return outputChan, nil
 }
 
 // AbortChat 中止对话

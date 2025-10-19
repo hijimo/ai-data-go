@@ -12,11 +12,12 @@ import (
 
 // Router HTTP 路由器
 type Router struct {
-	mux           *http.ServeMux
-	chatHandler   *handler.ChatHandler
-	abortHandler  *handler.AbortHandler
-	healthHandler *handler.HealthHandler
-	corsConfig    *middleware.CORS
+	mux               *http.ServeMux
+	chatHandler       *handler.ChatHandler
+	chatStreamHandler *handler.ChatStreamHandler
+	abortHandler      *handler.AbortHandler
+	healthHandler     *handler.HealthHandler
+	corsConfig        *middleware.CORS
 }
 
 // NewRouter 创建新的路由器
@@ -26,11 +27,12 @@ func NewRouter(
 	log logger.Logger,
 ) *Router {
 	return &Router{
-		mux:           http.NewServeMux(),
-		chatHandler:   handler.NewChatHandler(aiService, log),
-		abortHandler:  handler.NewAbortHandler(aiService, log),
-		healthHandler: handler.NewHealthHandler(healthService, log),
-		corsConfig:    middleware.DefaultCORS(),
+		mux:               http.NewServeMux(),
+		chatHandler:       handler.NewChatHandler(aiService, log),
+		chatStreamHandler: handler.NewChatStreamHandler(aiService, log),
+		abortHandler:      handler.NewAbortHandler(aiService, log),
+		healthHandler:     handler.NewHealthHandler(healthService, log),
+		corsConfig:        middleware.DefaultCORS(),
 	}
 }
 
@@ -38,6 +40,7 @@ func NewRouter(
 func (r *Router) Setup() http.Handler {
 	// 注册 API 路由
 	r.mux.HandleFunc("/api/v1/chat", r.chatHandler.HandleChat)
+	r.mux.HandleFunc("/api/v1/chat/stream", r.chatStreamHandler.HandleChatStream)
 	r.mux.HandleFunc("/api/v1/chat/abort", r.abortHandler.HandleAbort)
 	
 	// 注册健康检查路由

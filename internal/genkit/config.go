@@ -43,3 +43,17 @@ type Usage struct {
 	// 总 token 数
 	TotalTokens int
 }
+
+// StreamChunk 流式响应块
+type StreamChunk struct {
+	// 内容片段
+	Content string
+	// 是否完成
+	Done bool
+	// 使用的模型（仅在完成时提供）
+	Model string
+	// Token 使用情况（仅在完成时提供）
+	Usage *Usage
+	// 错误信息
+	Error error
+}

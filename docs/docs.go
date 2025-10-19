@@ -2324,6 +2324,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/chat/stream": {
+            "post": {
+                "description": "向 AI 发送消息并以流式方式获取回复，支持通过 messageId 继续对话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "发送流式对话消息",
+                "parameters": [
+                    {
+                        "description": "对话请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "流式返回 AI 回复（Server-Sent Events 格式）",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "AI 服务不可用",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "检查服务及其依赖项的健康状态",

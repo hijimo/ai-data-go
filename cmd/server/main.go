@@ -198,14 +198,16 @@ func main() {
 	// 9. 注册 AI 服务路由（如果可用）
 	if aiService != nil {
 		chatHandler := handler.NewChatHandler(aiService, log)
+		chatStreamHandler := handler.NewChatStreamHandler(aiService, log)
 		abortHandler := handler.NewAbortHandler(aiService, log)
 		
 		// 注意：必须先注册更具体的路径，再注册通用路径
+		serveMux.HandleFunc("POST /api/v1/chat/stream", chatStreamHandler.HandleChatStream)
 		serveMux.HandleFunc("POST /api/v1/chat/abort", abortHandler.HandleAbort)
 		serveMux.HandleFunc("POST /api/v1/chat", chatHandler.HandleChat)
 		
 		log.Info("AI对话路由已注册", logger.Fields{
-			"routes": []string{"/api/v1/chat", "/api/v1/chat/abort"},
+			"routes": []string{"/api/v1/chat", "/api/v1/chat/stream", "/api/v1/chat/abort"},
 		})
 	} else {
 		log.Warn("AI对话路由未注册（AI服务不可用）", nil)

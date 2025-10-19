@@ -24,10 +24,16 @@ type Usage struct {
 
 // StreamChunk 流式响应块
 type StreamChunk struct {
+	// 会话ID
+	SessionID string `json:"sessionId,omitempty"`
 	// 内容片段
 	Content string `json:"content"`
 	// 是否完成
 	Done bool `json:"done"`
+	// 使用的模型名称（仅在完成时提供）
+	Model string `json:"model,omitempty"`
+	// Token使用情况（仅在完成时提供）
+	Usage *Usage `json:"usage,omitempty"`
 	// 错误信息
 	Error error `json:"error,omitempty"`
 }

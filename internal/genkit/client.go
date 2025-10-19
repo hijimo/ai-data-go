@@ -20,6 +20,9 @@ type Client interface {
 	// Generate 生成内容
 	Generate(ctx context.Context, prompt string, options *GenerateOptions) (*GenerateResult, error)
 
+	// GenerateStream 流式生成内容
+	GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error)
+
 	// Close 关闭客户端
 	Close() error
 }
@@ -109,6 +112,75 @@ func (c *client) Generate(ctx context.Context, prompt string, options *GenerateO
 	}
 
 	return result, nil
+}
+
+// GenerateStream 流式生成内容
+func (c *client) GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
+	if c.config == nil {
+		return nil, fmt.Errorf("客户端未初始化")
+	}
+
+	if c.g == nil {
+		return nil, fmt.Errorf("模型未初始化，请先通过 InitializeModel 设置模型")
+	}
+
+	if prompt == "" {
+		return nil, fmt.Errorf("提示词不能为空")
+	}
+
+	// 创建流式响应通道
+	streamChan := make(chan StreamChunk, 10)
+
+	// 在 goroutine 中处理流式响应
+	go func() {
+		defer close(streamChan)
+
+		// 调用 Genkit 流式生成
+		resp, err := genkit.Generate(ctx, c.g,
+			ai.WithPrompt(prompt),
+			ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
+				// 发送流式数据块
+				select {
+				case streamChan <- StreamChunk{
+					Content: chunk.Text(),
+					Done:    false,
+				}:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+				return nil
+			}),
+		)
+
+		if err != nil {
+			// 发送错误
+			streamChan <- StreamChunk{
+				Content: "",
+				Done:    true,
+				Error:   err,
+			}
+			return
+		}
+
+		// 发送完成标记，包含最终的使用统计
+		var usage *Usage
+		if resp.Usage != nil {
+			usage = &Usage{
+				PromptTokens:     int(resp.Usage.InputTokens),
+				CompletionTokens: int(resp.Usage.OutputTokens),
+				TotalTokens:      int(resp.Usage.TotalTokens),
+			}
+		}
+
+		streamChan <- StreamChunk{
+			Content: "",
+			Done:    true,
+			Model:   c.config.Model,
+			Usage:   usage,
+		}
+	}()
+
+	return streamChan, nil
 }
 
 // Close 关闭客户端
