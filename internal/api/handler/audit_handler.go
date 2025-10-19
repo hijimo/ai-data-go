@@ -65,7 +65,7 @@ type AuditQueryRequest struct {
 // @Failure 401 {object} model.ErrorResponse "未授权"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/audit/auth [get]
+// @Router /audit/auth [get]
 func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

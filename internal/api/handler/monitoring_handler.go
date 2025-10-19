@@ -26,7 +26,7 @@ func NewMonitoringHandler(alertManager *monitoring.AlertManager) *MonitoringHand
 // @Tags 监控
 // @Produce json
 // @Success 200 {object} model.MetricsDataResponse
-// @Router /api/v1/monitoring/metrics [get]
+// @Router /monitoring/metrics [get]
 func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request) {
 	snapshot := monitoring.GetMetrics().GetSnapshot()
 	
@@ -47,7 +47,7 @@ func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request
 // @Tags 监控
 // @Produce json
 // @Success 200 {object} model.AlertListDataResponse
-// @Router /api/v1/monitoring/alerts [get]
+// @Router /monitoring/alerts [get]
 func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request) {
 	alerts := h.alertManager.GetActiveAlerts()
 	
@@ -68,7 +68,7 @@ func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request)
 // @Tags 监控
 // @Produce json
 // @Success 200 {object} model.AnyDataResponse
-// @Router /api/v1/monitoring/alerts [delete]
+// @Router /monitoring/alerts [delete]
 func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Request) {
 	h.alertManager.ClearAlerts()
 	
@@ -89,7 +89,7 @@ func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Req
 // @Tags 监控
 // @Produce json
 // @Success 200 {object} model.AnyDataResponse
-// @Router /api/v1/monitoring/metrics/reset [post]
+// @Router /monitoring/metrics/reset [post]
 func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Request) {
 	monitoring.GetMetrics().Reset()
 	
@@ -110,7 +110,7 @@ func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Re
 // @Tags 监控
 // @Produce json
 // @Success 200 {object} model.HealthDataResponse
-// @Router /api/v1/monitoring/health [get]
+// @Router /monitoring/health [get]
 func (h *MonitoringHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	snapshot := monitoring.GetMetrics().GetSnapshot()
 	alerts := h.alertManager.GetActiveAlerts()

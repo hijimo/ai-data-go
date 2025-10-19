@@ -67,7 +67,7 @@ type UpdateTenantRequest struct {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/tenants [post]
+// @Router /tenants [post]
 func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -139,7 +139,7 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 404 {object} model.ErrorResponse "租户不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/tenants/{id} [get]
+// @Router /tenants/{id} [get]
 func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -204,7 +204,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} model.ErrorResponse "租户不存在"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/tenants/{id} [put]
+// @Router /tenants/{id} [put]
 func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -282,7 +282,7 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 404 {object} model.ErrorResponse "租户不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/tenants/{id} [delete]
+// @Router /tenants/{id} [delete]
 func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -347,7 +347,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/tenants [get]
+// @Router /tenants [get]
 func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

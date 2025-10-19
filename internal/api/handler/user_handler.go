@@ -75,7 +75,7 @@ type UpdateUserRequest struct {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/users [post]
+// @Router /users [post]
 func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -160,7 +160,7 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 404 {object} model.ErrorResponse "用户不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/users/{id} [get]
+// @Router /users/{id} [get]
 func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -236,7 +236,7 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} model.ErrorResponse "用户不存在"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/users/{id} [put]
+// @Router /users/{id} [put]
 func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -325,7 +325,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 404 {object} model.ErrorResponse "用户不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/users/{id} [delete]
+// @Router /users/{id} [delete]
 func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -401,7 +401,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} model.ErrorResponse "权限不足"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
-// @Router /api/v1/users [get]
+// @Router /users [get]
 func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
