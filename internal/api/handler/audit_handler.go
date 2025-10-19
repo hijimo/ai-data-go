@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"genkit-ai-service/internal/logger"
-	"genkit-ai-service/internal/model"
+	_ "genkit-ai-service/internal/model" // 用于 Swagger 文档类型引用
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
