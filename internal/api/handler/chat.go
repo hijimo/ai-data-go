@@ -35,7 +35,7 @@ func NewChatHandler(aiService ai.AIService, log logger.Logger) *ChatHandler {
 // @Accept json
 // @Produce json
 // @Param request body model.ChatRequest true "对话请求"
-// @Success 200 {object} model.ResponseData[model.ChatResponse] "成功返回 AI 回复"
+// @Success 200 {object} model.ChatResponseData "成功返回 AI 回复"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"genkit-ai-service/internal/logger"
+	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
@@ -59,7 +60,7 @@ type AuditQueryRequest struct {
 // @Param endTime query string false "结束时间（RFC3339格式）"
 // @Param page query int false "页码" default(1)
 // @Param pageSize query int false "每页大小" default(10)
-// @Success 200 {object} model.ResponsePaginationData[[]model.AuthAudit] "查询成功"
+// @Success 200 {object} model.AuthAuditListResponse "查询成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未授权"
 // @Failure 403 {object} model.ErrorResponse "权限不足"

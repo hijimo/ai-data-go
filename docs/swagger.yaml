@@ -9,6 +9,104 @@ definitions:
     required:
     - messageId
     type: object
+  genkit-ai-service_internal_model.AlertListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 告警列表数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.AnyDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.AuthAuditItem:
+    properties:
+      createdAt:
+        description: 事件发生时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      event:
+        description: 事件类型
+        example: login
+        type: string
+      id:
+        description: 审计日志ID
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      ip:
+        description: 客户端IP地址
+        example: 192.168.1.1
+        type: string
+      meta:
+        description: 事件元数据
+      tenantId:
+        description: 租户ID
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userAgent:
+        description: 用户代理字符串
+        example: Mozilla/5.0
+        type: string
+      userId:
+        description: 用户ID
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  genkit-ai-service_internal_model.AuthAuditListResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditPaginationData'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: 查询审计日志成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.AuthAuditPaginationData:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditItem'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
   genkit-ai-service_internal_model.ChatOptions:
     properties:
       maxTokens:
@@ -67,6 +165,21 @@ definitions:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
         description: Token使用情况
+    type: object
+  genkit-ai-service_internal_model.ChatResponseData:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponse'
+        description: 对话响应数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
     type: object
   genkit-ai-service_internal_model.CreateSessionRequest:
     properties:
@@ -164,6 +277,36 @@ definitions:
         description: 选项值
         type: string
     type: object
+  genkit-ai-service_internal_model.HealthDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        additionalProperties: true
+        description: 健康检查数据
+        type: object
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.LoginDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.LoginResponse'
+        description: 登录数据
+      message:
+        description: 响应信息
+        example: 登录成功
+        type: string
+    type: object
   genkit-ai-service_internal_model.LoginResponse:
     properties:
       accessToken:
@@ -187,6 +330,126 @@ definitions:
         - $ref: '#/definitions/genkit-ai-service_internal_model.User'
         description: 用户信息
     type: object
+  genkit-ai-service_internal_model.Message:
+    properties:
+      content:
+        description: 消息内容
+        example: 你好
+        type: string
+      createdAt:
+        description: 创建时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      id:
+        description: 消息ID
+        example: msg-123456
+        type: string
+      role:
+        description: 角色
+        example: user
+        type: string
+      sequence:
+        description: 序列号
+        example: 1
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.MessageDetailDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
+        description: 消息详情数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.MessageDetailListResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailPaginationData'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: 获取消息列表成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.MessageDetailPaginationData:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.MessageDetailResponse:
+    properties:
+      content:
+        description: 消息内容
+        example: 你好
+        type: string
+      createdAt:
+        description: 创建时间
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      error:
+        description: 错误信息
+        example: ""
+        type: string
+      id:
+        description: 消息ID
+        example: msg-123456
+        type: string
+      meta:
+        additionalProperties: true
+        description: 元数据
+        type: object
+      role:
+        description: 角色
+        example: user
+        type: string
+      sequence:
+        description: 序列号
+        example: 1
+        type: integer
+      sessionId:
+        description: 会话ID
+        example: session-123456
+        type: string
+      tokens:
+        description: Token数量
+        example: 10
+        type: integer
+      toolCalls:
+        additionalProperties: true
+        description: 工具调用
+        type: object
+    type: object
   genkit-ai-service_internal_model.MessagePreview:
     properties:
       content:
@@ -204,6 +467,61 @@ definitions:
       role:
         description: 角色
         example: user
+        type: string
+    type: object
+  genkit-ai-service_internal_model.MessageResponse:
+    properties:
+      aiMessage:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Message'
+        description: AI消息
+      messageId:
+        description: 消息ID
+        example: msg-123456
+        type: string
+      model:
+        description: 模型名称
+        example: gpt-4
+        type: string
+      sessionId:
+        description: 会话ID
+        example: session-123456
+        type: string
+      usage:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
+        description: 使用统计
+      userMessage:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Message'
+        description: 用户消息
+    type: object
+  genkit-ai-service_internal_model.MessageResponseData:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageResponse'
+        description: 消息响应数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.MetricsDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 指标数据
+      message:
+        description: 响应信息
+        example: 操作成功
         type: string
     type: object
   genkit-ai-service_internal_model.Model:
@@ -251,6 +569,37 @@ definitions:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Pricing'
         description: 定价信息
     type: object
+  genkit-ai-service_internal_model.ModelDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+        description: 模型数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ModelListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 模型列表数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+        type: array
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
   genkit-ai-service_internal_model.ModelProperties:
     properties:
       context_size:
@@ -270,102 +619,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
-    type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
-    type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.User'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
-    type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_model.ParameterRule:
     properties:
@@ -405,6 +658,22 @@ definitions:
       use_template:
         description: 使用的模板
         example: temperature
+        type: string
+    type: object
+  genkit-ai-service_internal_model.ParameterRuleListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 参数规则列表数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
+        type: array
+      message:
+        description: 响应信息
+        example: 操作成功
         type: string
     type: object
   genkit-ai-service_internal_model.Pricing:
@@ -488,6 +757,21 @@ definitions:
           type: string
         type: array
     type: object
+  genkit-ai-service_internal_model.ProviderDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
+        description: 提供商数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
   genkit-ai-service_internal_model.ProviderHelp:
     properties:
       title:
@@ -501,260 +785,20 @@ definitions:
         description: 帮助链接（多语言）
         type: object
     type: object
-  genkit-ai-service_internal_model.ResponseData-any:
+  genkit-ai-service_internal_model.ProviderListDataResponse:
     properties:
       code:
         description: 响应代码
         example: 200
         type: integer
       data:
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 响应数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Model'
-        type: array
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 响应数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
-        type: array
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 响应数据
+        description: 提供商列表数据
         items:
           $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
         type: array
       message:
         description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponse'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.LoginResponse'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Model'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.User'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_service_session.MessageResponse'
-        description: 响应数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse'
-        description: 分页数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant'
-        description: 分页数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User'
-        description: 分页数据
-      message:
-        description: 响应信息
-        example: success
-        type: string
-    type: object
-  genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse'
-        description: 分页数据
-      message:
-        description: 响应信息
-        example: success
+        example: 操作成功
         type: string
     type: object
   genkit-ai-service_internal_model.SendMessageRequest:
@@ -774,6 +818,60 @@ definitions:
     required:
     - message
     - sessionId
+    type: object
+  genkit-ai-service_internal_model.SessionDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        description: 会话数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.SessionListResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionPaginationData'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: 获取会话列表成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.SessionPaginationData:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
     type: object
   genkit-ai-service_internal_model.SessionResponse:
     properties:
@@ -877,6 +975,60 @@ definitions:
         description: 更新时间
         type: string
     type: object
+  genkit-ai-service_internal_model.TenantDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+        description: 租户数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.TenantListResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.TenantPaginationData'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: 获取租户列表成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.TenantPaginationData:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
   genkit-ai-service_internal_model.UpdateSessionRequest:
     properties:
       modelName:
@@ -938,6 +1090,9 @@ definitions:
       emailVerified:
         description: 邮箱是否已验证
         type: boolean
+      failedLoginAttempts:
+        description: 登录失败次数
+        type: integer
       id:
         description: 用户ID
         type: string
@@ -952,6 +1107,9 @@ definitions:
         type: boolean
       lastLoginAt:
         description: 最后登录时间
+        type: string
+      lockedUntil:
+        description: 账户锁定时间
         type: string
       meta:
         description: 用户元数据
@@ -972,6 +1130,60 @@ definitions:
       updatedAt:
         description: 更新时间
         type: string
+    type: object
+  genkit-ai-service_internal_model.UserDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        description: 用户数据
+      message:
+        description: 响应信息
+        example: 操作成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.UserListResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/genkit-ai-service_internal_model.UserPaginationData'
+        description: 分页数据
+      message:
+        description: 响应信息
+        example: 获取用户列表成功
+        type: string
+    type: object
+  genkit-ai-service_internal_model.UserPaginationData:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
     type: object
   genkit-ai-service_internal_service_health.HealthStatus:
     properties:
@@ -995,59 +1207,6 @@ definitions:
         description: 服务版本
         example: 1.0.0
         type: string
-    type: object
-  genkit-ai-service_internal_service_session.Message:
-    properties:
-      content:
-        type: string
-      createdAt:
-        type: string
-      id:
-        type: string
-      role:
-        type: string
-      sequence:
-        type: integer
-    type: object
-  genkit-ai-service_internal_service_session.MessageDetailResponse:
-    properties:
-      content:
-        type: string
-      createdAt:
-        type: string
-      error:
-        type: string
-      id:
-        type: string
-      meta:
-        additionalProperties: true
-        type: object
-      role:
-        type: string
-      sequence:
-        type: integer
-      sessionId:
-        type: string
-      tokens:
-        type: integer
-      toolCalls:
-        additionalProperties: true
-        type: object
-    type: object
-  genkit-ai-service_internal_service_session.MessageResponse:
-    properties:
-      aiMessage:
-        $ref: '#/definitions/genkit-ai-service_internal_service_session.Message'
-      messageId:
-        type: string
-      model:
-        type: string
-      sessionId:
-        type: string
-      usage:
-        $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
-      userMessage:
-        $ref: '#/definitions/genkit-ai-service_internal_service_session.Message'
     type: object
   internal_api_handler.ChangePasswordRequest:
     properties:
@@ -1183,6 +1342,30 @@ definitions:
     - password
     - tenantId
     type: object
+  internal_api_handler.ResendVerificationRequest:
+    properties:
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - tenantId
+    - userId
+    type: object
+  internal_api_handler.UnlockAccountRequest:
+    properties:
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - tenantId
+    - userId
+    type: object
   internal_api_handler.UpdateTenantRequest:
     properties:
       domain:
@@ -1227,6 +1410,14 @@ definitions:
           type: string
         type: array
     type: object
+  internal_api_handler.VerifyEmailRequest:
+    properties:
+      token:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - token
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -1241,6 +1432,70 @@ info:
   title: Genkit AI Service API
   version: 1.0.0
 paths:
+  /api/v1/audit/auth:
+    get:
+      consumes:
+      - application/json
+      description: 查询认证审计日志，支持多条件过滤和分页
+      parameters:
+      - description: 租户ID
+        in: query
+        name: tenantId
+        type: string
+      - description: 用户ID
+        in: query
+        name: userId
+        type: string
+      - description: 事件类型（login, logout, refresh, revoke, failed_login）
+        in: query
+        name: event
+        type: string
+      - description: 开始时间（RFC3339格式）
+        in: query
+        name: startTime
+        type: string
+      - description: 结束时间（RFC3339格式）
+        in: query
+        name: endTime
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditListResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 查询审计日志
+      tags:
+      - 审计
   /api/v1/auth/change-password:
     post:
       consumes:
@@ -1259,7 +1514,7 @@ paths:
         "200":
           description: 修改成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1299,7 +1554,7 @@ paths:
         "200":
           description: 登录成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1337,7 +1592,7 @@ paths:
         "200":
           description: 注销成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1368,7 +1623,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
         "401":
           description: 未认证
           schema:
@@ -1404,7 +1659,7 @@ paths:
         "200":
           description: 刷新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1442,7 +1697,7 @@ paths:
         "201":
           description: 注册成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1458,6 +1713,182 @@ paths:
       summary: 用户注册
       tags:
       - 认证
+  /api/v1/auth/resend-verification:
+    post:
+      consumes:
+      - application/json
+      description: 重新发送邮箱验证邮件
+      parameters:
+      - description: 重发请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.ResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 发送成功
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 重新发送验证邮件
+      tags:
+      - 认证
+  /api/v1/auth/unlock-account:
+    post:
+      consumes:
+      - application/json
+      description: 解锁被锁定的用户账户（需要管理员权限）
+      parameters:
+      - description: 解锁请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.UnlockAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 解锁成功
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 解锁账户
+      tags:
+      - 认证
+  /api/v1/auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: 使用验证令牌验证用户邮箱
+      parameters:
+      - description: 验证请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证成功
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+      summary: 验证邮箱
+      tags:
+      - 认证
+  /api/v1/monitoring/alerts:
+    delete:
+      description: 清空所有活跃告警
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+      summary: 清空告警
+      tags:
+      - 监控
+    get:
+      description: 获取当前活跃的告警列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.AlertListDataResponse'
+      summary: 获取活跃告警
+      tags:
+      - 监控
+  /api/v1/monitoring/health:
+    get:
+      description: 获取系统健康状态和关键监控指标
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.HealthDataResponse'
+      summary: 健康检查（含监控）
+      tags:
+      - 监控
+  /api/v1/monitoring/metrics:
+    get:
+      description: 获取认证系统的性能监控指标
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.MetricsDataResponse'
+      summary: 获取性能指标
+      tags:
+      - 监控
+  /api/v1/monitoring/metrics/reset:
+    post:
+      description: 重置所有性能监控指标
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+      summary: 重置指标
+      tags:
+      - 监控
   /api/v1/tenants:
     get:
       consumes:
@@ -1485,7 +1916,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant'
+            $ref: '#/definitions/genkit-ai-service_internal_model.TenantListResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1528,7 +1959,7 @@ paths:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant'
+            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1571,7 +2002,7 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1613,7 +2044,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant'
+            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1661,7 +2092,7 @@ paths:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant'
+            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1718,7 +2149,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserListResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1761,7 +2192,7 @@ paths:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1804,7 +2235,7 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1846,7 +2277,7 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1894,7 +2325,7 @@ paths:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User'
+            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -1942,7 +2373,7 @@ paths:
         "200":
           description: 成功返回 AI 回复
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponseData'
         "400":
           description: 请求参数错误
           schema:
@@ -2017,7 +2448,7 @@ paths:
         "200":
           description: 成功返回消息详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2054,7 +2485,7 @@ paths:
         "200":
           description: 成功中止消息生成
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2113,7 +2544,7 @@ paths:
         "200":
           description: 成功返回会话列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2146,7 +2577,7 @@ paths:
         "200":
           description: 成功创建会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2179,7 +2610,7 @@ paths:
         "200":
           description: 成功删除会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2215,7 +2646,7 @@ paths:
         "200":
           description: 成功返回会话详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2257,7 +2688,7 @@ paths:
         "200":
           description: 成功更新会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2303,7 +2734,7 @@ paths:
         "200":
           description: 成功更新归档状态
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2355,7 +2786,7 @@ paths:
         "200":
           description: 成功返回消息历史
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailListResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2401,7 +2832,7 @@ paths:
         "200":
           description: 成功发送消息
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.MessageResponseData'
         "400":
           description: 请求参数错误
           schema:
@@ -2447,7 +2878,7 @@ paths:
         "200":
           description: 成功更新置顶状态
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-any'
+            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2499,7 +2930,7 @@ paths:
         "200":
           description: 成功返回搜索结果
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+            $ref: '#/definitions/genkit-ai-service_internal_model.SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2549,7 +2980,7 @@ paths:
         "200":
           description: 成功返回提供商列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ProviderListDataResponse'
         "500":
           description: 服务器内部错误
           schema:
@@ -2575,7 +3006,7 @@ paths:
         "200":
           description: 成功返回提供商详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ProviderDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2609,7 +3040,7 @@ paths:
         "200":
           description: 成功返回模型列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ModelListDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2649,7 +3080,7 @@ paths:
         "200":
           description: 成功返回模型详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ModelDataResponse'
         "400":
           description: 请求参数错误
           schema:
@@ -2689,7 +3120,7 @@ paths:
         "200":
           description: 成功返回参数规则列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule'
+            $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRuleListDataResponse'
         "400":
           description: 请求参数错误
           schema:

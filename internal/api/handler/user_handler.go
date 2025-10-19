@@ -69,7 +69,7 @@ type UpdateUserRequest struct {
 // @Produce json
 // @Security BearerAuth
 // @Param request body CreateUserRequest true "创建用户请求"
-// @Success 201 {object} model.ResponseData[model.User] "创建成功"
+// @Success 201 {object} model.UserDataResponse "创建成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -154,7 +154,7 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "用户ID"
-// @Success 200 {object} model.ResponseData[model.User] "获取成功"
+// @Success 200 {object} model.UserDataResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -229,7 +229,7 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "用户ID"
 // @Param request body UpdateUserRequest true "更新用户请求"
-// @Success 200 {object} model.ResponseData[model.User] "更新成功"
+// @Success 200 {object} model.UserDataResponse "更新成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -319,7 +319,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "用户ID"
-// @Success 200 {object} model.ResponseData[any] "删除成功"
+// @Success 200 {object} model.AnyDataResponse "删除成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -395,7 +395,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param pageNo query int true "页码" minimum(1) default(1)
 // @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(20)
-// @Success 200 {object} model.ResponsePaginationData[[]model.User] "获取成功"
+// @Success 200 {object} model.UserListResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"

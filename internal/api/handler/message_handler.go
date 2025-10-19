@@ -38,7 +38,7 @@ func NewMessageHandler(messageService session.MessageService, log logger.Logger)
 // @Produce json
 // @Param id path string true "会话ID"
 // @Param request body model.SendMessageRequest true "发送消息请求"
-// @Success 200 {object} model.ResponseData[session.MessageResponse] "成功发送消息"
+// @Success 200 {object} model.MessageResponseData "成功发送消息"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -130,7 +130,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "会话ID"
 // @Param pageNo query int true "页码" minimum(1) default(1)
 // @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(50)
-// @Success 200 {object} model.ResponsePaginationData[[]session.MessageDetailResponse] "成功返回消息历史"
+// @Success 200 {object} model.MessageDetailListResponse "成功返回消息历史"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -220,7 +220,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "消息ID"
-// @Success 200 {object} model.ResponseData[session.MessageDetailResponse] "成功返回消息详情"
+// @Success 200 {object} model.MessageDetailDataResponse "成功返回消息详情"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "消息不存在"
@@ -282,7 +282,7 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param id path string true "消息ID"
-// @Success 200 {object} model.ResponseData[any] "成功中止消息生成"
+// @Success 200 {object} model.AnyDataResponse "成功中止消息生成"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "消息不存在"

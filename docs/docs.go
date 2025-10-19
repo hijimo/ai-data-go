@@ -22,6 +22,104 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/audit/auth": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "查询认证审计日志，支持多条件过滤和分页",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "审计"
+                ],
+                "summary": "查询审计日志",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "事件类型（login, logout, refresh, revoke, failed_login）",
+                        "name": "event",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间（RFC3339格式）",
+                        "name": "startTime",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间（RFC3339格式）",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查询成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/change-password": {
             "post": {
                 "security": [
@@ -55,7 +153,7 @@ const docTemplate = `{
                     "200": {
                         "description": "修改成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
                         }
                     },
                     "400": {
@@ -113,7 +211,7 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginDataResponse"
                         }
                     },
                     "400": {
@@ -171,7 +269,7 @@ const docTemplate = `{
                     "200": {
                         "description": "注销成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
                         }
                     },
                     "400": {
@@ -223,7 +321,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
                         }
                     },
                     "401": {
@@ -275,7 +373,7 @@ const docTemplate = `{
                     "200": {
                         "description": "刷新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginDataResponse"
                         }
                     },
                     "400": {
@@ -333,7 +431,7 @@ const docTemplate = `{
                     "201": {
                         "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
                         }
                     },
                     "400": {
@@ -352,6 +450,277 @@ const docTemplate = `{
                         "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/resend-verification": {
+            "post": {
+                "description": "重新发送邮箱验证邮件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "重新发送验证邮件",
+                "parameters": [
+                    {
+                        "description": "重发请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.ResendVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "发送成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/unlock-account": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "解锁被锁定的用户账户（需要管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "解锁账户",
+                "parameters": [
+                    {
+                        "description": "解锁请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.UnlockAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "解锁成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/verify-email": {
+            "post": {
+                "description": "使用验证令牌验证用户邮箱",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证"
+                ],
+                "summary": "验证邮箱",
+                "parameters": [
+                    {
+                        "description": "验证请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.VerifyEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "验证成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/monitoring/alerts": {
+            "get": {
+                "description": "获取当前活跃的告警列表",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "获取活跃告警",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AlertListDataResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "清空所有活跃告警",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "清空告警",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/monitoring/health": {
+            "get": {
+                "description": "获取系统健康状态和关键监控指标",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "健康检查（含监控）",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.HealthDataResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/monitoring/metrics": {
+            "get": {
+                "description": "获取认证系统的性能监控指标",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "获取性能指标",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MetricsDataResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/monitoring/metrics/reset": {
+            "post": {
+                "description": "重置所有性能监控指标",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "重置指标",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     }
                 }
@@ -400,7 +769,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantListResponse"
                         }
                     },
                     "400": {
@@ -467,7 +836,7 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
                         }
                     },
                     "400": {
@@ -534,7 +903,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
                         }
                     },
                     "400": {
@@ -608,7 +977,7 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
                         }
                     },
                     "400": {
@@ -679,7 +1048,7 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -758,7 +1127,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserListResponse"
                         }
                     },
                     "400": {
@@ -825,7 +1194,7 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
                         }
                     },
                     "400": {
@@ -892,7 +1261,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
                         }
                     },
                     "400": {
@@ -966,7 +1335,7 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
                         }
                     },
                     "400": {
@@ -1037,7 +1406,7 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -1101,7 +1470,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回 AI 回复",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponseData"
                         }
                     },
                     "400": {
@@ -1215,7 +1584,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailDataResponse"
                         }
                     },
                     "400": {
@@ -1271,7 +1640,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功中止消息生成",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -1357,7 +1726,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionListResponse"
                         }
                     },
                     "400": {
@@ -1407,7 +1776,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功创建会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
                         }
                     },
                     "400": {
@@ -1476,7 +1845,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回搜索结果",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionListResponse"
                         }
                     },
                     "400": {
@@ -1526,7 +1895,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
                         }
                     },
                     "400": {
@@ -1580,7 +1949,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功删除会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -1643,7 +2012,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
                         }
                     },
                     "400": {
@@ -1712,7 +2081,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新归档状态",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -1787,7 +2156,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息历史",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailListResponse"
                         }
                     },
                     "400": {
@@ -1856,7 +2225,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功发送消息",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageResponseData"
                         }
                     },
                     "400": {
@@ -1925,7 +2294,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新置顶状态",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-any"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
                         }
                     },
                     "400": {
@@ -2007,7 +2376,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ProviderListDataResponse"
                         }
                     },
                     "500": {
@@ -2046,7 +2415,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ProviderDataResponse"
                         }
                     },
                     "400": {
@@ -2097,7 +2466,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ModelListDataResponse"
                         }
                     },
                     "400": {
@@ -2156,7 +2525,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ModelDataResponse"
                         }
                     },
                     "400": {
@@ -2215,7 +2584,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回参数规则列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRuleListDataResponse"
                         }
                     },
                     "400": {
@@ -2251,6 +2620,140 @@ const docTemplate = `{
                     "description": "消息ID（必填）",
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.AlertListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "告警列表数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.AnyDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.AuthAuditItem": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "事件发生时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "event": {
+                    "description": "事件类型",
+                    "type": "string",
+                    "example": "login"
+                },
+                "id": {
+                    "description": "审计日志ID",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "ip": {
+                    "description": "客户端IP地址",
+                    "type": "string",
+                    "example": "192.168.1.1"
+                },
+                "meta": {
+                    "description": "事件元数据"
+                },
+                "tenantId": {
+                    "description": "租户ID",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "userAgent": {
+                    "description": "用户代理字符串",
+                    "type": "string",
+                    "example": "Mozilla/5.0"
+                },
+                "userId": {
+                    "description": "用户ID",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.AuthAuditListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditPaginationData"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "查询审计日志成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.AuthAuditPaginationData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditItem"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -2334,6 +2837,29 @@ const docTemplate = `{
                             "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
                         }
                     ]
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ChatResponseData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "对话响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
                 }
             }
         },
@@ -2467,6 +2993,49 @@ const docTemplate = `{
                 }
             }
         },
+        "genkit-ai-service_internal_model.HealthDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "健康检查数据",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.LoginDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "登录数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "登录成功"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.LoginResponse": {
             "type": "object",
             "properties": {
@@ -2500,6 +3069,169 @@ const docTemplate = `{
                 }
             }
         },
+        "genkit-ai-service_internal_model.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "消息内容",
+                    "type": "string",
+                    "example": "你好"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "id": {
+                    "description": "消息ID",
+                    "type": "string",
+                    "example": "msg-123456"
+                },
+                "role": {
+                    "description": "角色",
+                    "type": "string",
+                    "example": "user"
+                },
+                "sequence": {
+                    "description": "序列号",
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageDetailDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "消息详情数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageDetailListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailPaginationData"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "获取消息列表成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageDetailPaginationData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "消息内容",
+                    "type": "string",
+                    "example": "你好"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
+                },
+                "error": {
+                    "description": "错误信息",
+                    "type": "string",
+                    "example": ""
+                },
+                "id": {
+                    "description": "消息ID",
+                    "type": "string",
+                    "example": "msg-123456"
+                },
+                "meta": {
+                    "description": "元数据",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "role": {
+                    "description": "角色",
+                    "type": "string",
+                    "example": "user"
+                },
+                "sequence": {
+                    "description": "序列号",
+                    "type": "integer",
+                    "example": 1
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string",
+                    "example": "session-123456"
+                },
+                "tokens": {
+                    "description": "Token数量",
+                    "type": "integer",
+                    "example": 10
+                },
+                "toolCalls": {
+                    "description": "工具调用",
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
         "genkit-ai-service_internal_model.MessagePreview": {
             "type": "object",
             "properties": {
@@ -2522,6 +3254,91 @@ const docTemplate = `{
                     "description": "角色",
                     "type": "string",
                     "example": "user"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "aiMessage": {
+                    "description": "AI消息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Message"
+                        }
+                    ]
+                },
+                "messageId": {
+                    "description": "消息ID",
+                    "type": "string",
+                    "example": "msg-123456"
+                },
+                "model": {
+                    "description": "模型名称",
+                    "type": "string",
+                    "example": "gpt-4"
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string",
+                    "example": "session-123456"
+                },
+                "usage": {
+                    "description": "使用统计",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
+                        }
+                    ]
+                },
+                "userMessage": {
+                    "description": "用户消息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Message"
+                        }
+                    ]
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MessageResponseData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "消息响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.MetricsDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "指标数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
                 }
             }
         },
@@ -2591,6 +3408,51 @@ const docTemplate = `{
                 }
             }
         },
+        "genkit-ai-service_internal_model.ModelDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "模型数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ModelListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "模型列表数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.ModelProperties": {
             "type": "object",
             "properties": {
@@ -2617,134 +3479,6 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
                 }
             }
         },
@@ -2800,6 +3534,28 @@ const docTemplate = `{
                     "description": "使用的模板",
                     "type": "string",
                     "example": "temperature"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.ParameterRuleListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "参数规则列表数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRule"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
                 }
             }
         },
@@ -2922,6 +3678,29 @@ const docTemplate = `{
                 }
             }
         },
+        "genkit-ai-service_internal_model.ProviderDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "提供商数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
         "genkit-ai-service_internal_model.ProviderHelp": {
             "type": "object",
             "properties": {
@@ -2941,7 +3720,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ResponseData-any": {
+        "genkit-ai-service_internal_model.ProviderListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2950,69 +3729,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "响应数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Model": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
-                    }
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_ParameterRule": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRule"
-                    }
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-array_genkit-ai-service_internal_model_Provider": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
+                    "description": "提供商列表数据",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
@@ -3021,306 +3738,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_ChatResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_LoginResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Model": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Provider": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_SessionResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_Tenant": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_model_User": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageDetailResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageDetailResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponseData-genkit-ai-service_internal_service_session_MessageResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_service_session.MessageResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "分页数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_Tenant": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "分页数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_model_User": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "分页数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.ResponsePaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "分页数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_service_session_MessageDetailResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "success"
+                    "example": "操作成功"
                 }
             }
         },
@@ -3348,6 +3766,84 @@ const docTemplate = `{
                     "description": "会话ID",
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.SessionDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "会话数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.SessionListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionPaginationData"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "获取会话列表成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.SessionPaginationData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -3488,6 +3984,84 @@ const docTemplate = `{
                 }
             }
         },
+        "genkit-ai-service_internal_model.TenantDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "租户数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.TenantListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantPaginationData"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "获取租户列表成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.TenantPaginationData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
         "genkit-ai-service_internal_model.UpdateSessionRequest": {
             "type": "object",
             "properties": {
@@ -3567,6 +4141,10 @@ const docTemplate = `{
                     "description": "邮箱是否已验证",
                     "type": "boolean"
                 },
+                "failedLoginAttempts": {
+                    "description": "登录失败次数",
+                    "type": "integer"
+                },
                 "id": {
                     "description": "用户ID",
                     "type": "string"
@@ -3585,6 +4163,10 @@ const docTemplate = `{
                 },
                 "lastLoginAt": {
                     "description": "最后登录时间",
+                    "type": "string"
+                },
+                "lockedUntil": {
+                    "description": "账户锁定时间",
                     "type": "string"
                 },
                 "meta": {
@@ -3612,6 +4194,84 @@ const docTemplate = `{
                 "updatedAt": {
                     "description": "更新时间",
                     "type": "string"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.UserDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "用户数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "操作成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.UserListResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserPaginationData"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "获取用户列表成功"
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.UserPaginationData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -3643,86 +4303,6 @@ const docTemplate = `{
                     "description": "服务版本",
                     "type": "string",
                     "example": "1.0.0"
-                }
-            }
-        },
-        "genkit-ai-service_internal_service_session.Message": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "sequence": {
-                    "type": "integer"
-                }
-            }
-        },
-        "genkit-ai-service_internal_service_session.MessageDetailResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "error": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "meta": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "role": {
-                    "type": "string"
-                },
-                "sequence": {
-                    "type": "integer"
-                },
-                "sessionId": {
-                    "type": "string"
-                },
-                "tokens": {
-                    "type": "integer"
-                },
-                "toolCalls": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
-        "genkit-ai-service_internal_service_session.MessageResponse": {
-            "type": "object",
-            "properties": {
-                "aiMessage": {
-                    "$ref": "#/definitions/genkit-ai-service_internal_service_session.Message"
-                },
-                "messageId": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "sessionId": {
-                    "type": "string"
-                },
-                "usage": {
-                    "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
-                },
-                "userMessage": {
-                    "$ref": "#/definitions/genkit-ai-service_internal_service_session.Message"
                 }
             }
         },
@@ -3913,6 +4493,40 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handler.ResendVerificationRequest": {
+            "type": "object",
+            "required": [
+                "tenantId",
+                "userId"
+            ],
+            "properties": {
+                "tenantId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "userId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_api_handler.UnlockAccountRequest": {
+            "type": "object",
+            "required": [
+                "tenantId",
+                "userId"
+            ],
+            "properties": {
+                "tenantId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "userId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
         "internal_api_handler.UpdateTenantRequest": {
             "type": "object",
             "properties": {
@@ -3971,6 +4585,18 @@ const docTemplate = `{
                         "[\"user\"",
                         "\"moderator\"]"
                     ]
+                }
+            }
+        },
+        "internal_api_handler.VerifyEmailRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         }

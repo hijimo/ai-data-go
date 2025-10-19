@@ -32,7 +32,7 @@ func NewProviderHandler(providerService service.ProviderService, logger logger.L
 // @Tags providers
 // @Accept json
 // @Produce json
-// @Success 200 {object} model.ResponseData[[]model.Provider] "成功返回提供商列表"
+// @Success 200 {object} model.ProviderListDataResponse "成功返回提供商列表"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /providers [get]
 func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param providerId path string true "提供商ID" example(gemini)
-// @Success 200 {object} model.ResponseData[model.Provider] "成功返回提供商详情"
+// @Success 200 {object} model.ProviderDataResponse "成功返回提供商详情"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 404 {object} model.ErrorResponse "提供商不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -127,7 +127,7 @@ func (h *ProviderHandler) GetProviderByID(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Param providerId path string true "提供商ID" example(gemini)
-// @Success 200 {object} model.ResponseData[[]model.Model] "成功返回模型列表"
+// @Success 200 {object} model.ModelListDataResponse "成功返回模型列表"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 404 {object} model.ErrorResponse "提供商不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -186,7 +186,7 @@ func (h *ProviderHandler) GetProviderModels(w http.ResponseWriter, r *http.Reque
 // @Produce json
 // @Param providerId path string true "提供商ID" example(gemini)
 // @Param modelId path string true "模型ID" example(gemini-1.5-flash)
-// @Success 200 {object} model.ResponseData[model.Model] "成功返回模型详情"
+// @Success 200 {object} model.ModelDataResponse "成功返回模型详情"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 404 {object} model.ErrorResponse "提供商或模型不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -254,7 +254,7 @@ func (h *ProviderHandler) GetProviderModel(w http.ResponseWriter, r *http.Reques
 // @Produce json
 // @Param providerId path string true "提供商ID" example(gemini)
 // @Param modelId path string true "模型ID" example(gemini-1.5-flash)
-// @Success 200 {object} model.ResponseData[[]model.ParameterRule] "成功返回参数规则列表"
+// @Success 200 {object} model.ParameterRuleListDataResponse "成功返回参数规则列表"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 404 {object} model.ErrorResponse "提供商或模型不存在"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"

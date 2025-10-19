@@ -166,3 +166,305 @@ type LoginResponse struct {
 	// 用户信息
 	User *User `json:"user"`
 }
+
+// AuthAuditItem 审计日志项（用于 Swagger）
+type AuthAuditItem struct {
+	// 审计日志ID
+	ID string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 租户ID
+	TenantID *string `json:"tenantId" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 用户ID
+	UserID *string `json:"userId" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 事件类型
+	Event string `json:"event" example:"login"`
+	// 客户端IP地址
+	IP string `json:"ip" example:"192.168.1.1"`
+	// 用户代理字符串
+	UserAgent string `json:"userAgent" example:"Mozilla/5.0"`
+	// 事件元数据
+	Meta interface{} `json:"meta"`
+	// 事件发生时间
+	CreatedAt string `json:"createdAt" example:"2024-01-01T12:00:00Z"`
+}
+
+// AuthAuditPaginationData 审计日志分页数据（用于 Swagger）
+type AuthAuditPaginationData struct {
+	// 数据
+	Data []AuthAuditItem `json:"data"`
+	// 当前页码
+	PageNo int `json:"pageNo" example:"1"`
+	// 每页大小
+	PageSize int `json:"pageSize" example:"10"`
+	// 总记录数
+	TotalCount int `json:"totalCount" example:"100"`
+	// 总页数
+	TotalPage int `json:"totalPage" example:"10"`
+}
+
+// AuthAuditListResponse 审计日志列表响应（用于 Swagger）
+type AuthAuditListResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"查询审计日志成功"`
+	// 分页数据
+	Data AuthAuditPaginationData `json:"data"`
+}
+
+// TenantPaginationData 租户分页数据（用于 Swagger）
+type TenantPaginationData struct {
+	// 数据
+	Data []Tenant `json:"data"`
+	// 当前页码
+	PageNo int `json:"pageNo" example:"1"`
+	// 每页大小
+	PageSize int `json:"pageSize" example:"10"`
+	// 总记录数
+	TotalCount int `json:"totalCount" example:"100"`
+	// 总页数
+	TotalPage int `json:"totalPage" example:"10"`
+}
+
+// TenantListResponse 租户列表响应（用于 Swagger）
+type TenantListResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"获取租户列表成功"`
+	// 分页数据
+	Data TenantPaginationData `json:"data"`
+}
+
+// UserPaginationData 用户分页数据（用于 Swagger）
+type UserPaginationData struct {
+	// 数据
+	Data []User `json:"data"`
+	// 当前页码
+	PageNo int `json:"pageNo" example:"1"`
+	// 每页大小
+	PageSize int `json:"pageSize" example:"10"`
+	// 总记录数
+	TotalCount int `json:"totalCount" example:"100"`
+	// 总页数
+	TotalPage int `json:"totalPage" example:"10"`
+}
+
+// UserListResponse 用户列表响应（用于 Swagger）
+type UserListResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"获取用户列表成功"`
+	// 分页数据
+	Data UserPaginationData `json:"data"`
+}
+
+// SessionPaginationData 会话分页数据（用于 Swagger）
+type SessionPaginationData struct {
+	// 数据
+	Data []SessionResponse `json:"data"`
+	// 当前页码
+	PageNo int `json:"pageNo" example:"1"`
+	// 每页大小
+	PageSize int `json:"pageSize" example:"10"`
+	// 总记录数
+	TotalCount int `json:"totalCount" example:"100"`
+	// 总页数
+	TotalPage int `json:"totalPage" example:"10"`
+}
+
+// SessionListResponse 会话列表响应（用于 Swagger）
+type SessionListResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"获取会话列表成功"`
+	// 分页数据
+	Data SessionPaginationData `json:"data"`
+}
+
+// MessageDetailPaginationData 消息详情分页数据（用于 Swagger）
+type MessageDetailPaginationData struct {
+	// 数据
+	Data []MessageDetailResponse `json:"data"`
+	// 当前页码
+	PageNo int `json:"pageNo" example:"1"`
+	// 每页大小
+	PageSize int `json:"pageSize" example:"10"`
+	// 总记录数
+	TotalCount int `json:"totalCount" example:"100"`
+	// 总页数
+	TotalPage int `json:"totalPage" example:"10"`
+}
+
+// MessageDetailListResponse 消息详情列表响应（用于 Swagger）
+type MessageDetailListResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"获取消息列表成功"`
+	// 分页数据
+	Data MessageDetailPaginationData `json:"data"`
+}
+
+// UserDataResponse 用户数据响应（用于 Swagger）
+type UserDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 用户数据
+	Data *User `json:"data"`
+}
+
+// TenantDataResponse 租户数据响应（用于 Swagger）
+type TenantDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 租户数据
+	Data *Tenant `json:"data"`
+}
+
+// LoginDataResponse 登录数据响应（用于 Swagger）
+type LoginDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"登录成功"`
+	// 登录数据
+	Data *LoginResponse `json:"data"`
+}
+
+// SessionDataResponse 会话数据响应（用于 Swagger）
+type SessionDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 会话数据
+	Data *SessionResponse `json:"data"`
+}
+
+// AnyDataResponse 任意数据响应（用于 Swagger）
+type AnyDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 数据
+	Data interface{} `json:"data,omitempty"`
+}
+
+// MessageResponseData 消息响应数据（用于 Swagger）
+type MessageResponseData struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 消息响应数据
+	Data *MessageResponse `json:"data"`
+}
+
+// MessageDetailDataResponse 消息详情数据响应（用于 Swagger）
+type MessageDetailDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 消息详情数据
+	Data *MessageDetailResponse `json:"data"`
+}
+
+// ChatResponseData 对话响应数据（用于 Swagger）
+type ChatResponseData struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 对话响应数据
+	Data *ChatResponse `json:"data"`
+}
+
+// ProviderListDataResponse 提供商列表数据响应（用于 Swagger）
+type ProviderListDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 提供商列表数据
+	Data []Provider `json:"data"`
+}
+
+// ProviderDataResponse 提供商数据响应（用于 Swagger）
+type ProviderDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 提供商数据
+	Data *Provider `json:"data"`
+}
+
+// ModelListDataResponse 模型列表数据响应（用于 Swagger）
+type ModelListDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 模型列表数据
+	Data []Model `json:"data"`
+}
+
+// ModelDataResponse 模型数据响应（用于 Swagger）
+type ModelDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 模型数据
+	Data *Model `json:"data"`
+}
+
+// ParameterRuleListDataResponse 参数规则列表数据响应（用于 Swagger）
+type ParameterRuleListDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 参数规则列表数据
+	Data []ParameterRule `json:"data"`
+}
+
+// MetricsDataResponse 指标数据响应（用于 Swagger）
+// 注意：MetricsSnapshot 类型来自 internal/monitoring 包
+type MetricsDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 指标数据
+	Data interface{} `json:"data"` // 使用 interface{} 避免循环依赖
+}
+
+// AlertListDataResponse 告警列表数据响应（用于 Swagger）
+// 注意：Alert 类型来自 internal/monitoring 包
+type AlertListDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 告警列表数据
+	Data interface{} `json:"data"` // 使用 interface{} 避免循环依赖
+}
+
+// HealthDataResponse 健康检查数据响应（用于 Swagger）
+type HealthDataResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"操作成功"`
+	// 健康检查数据
+	Data map[string]interface{} `json:"data"`
+}

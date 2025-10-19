@@ -61,7 +61,7 @@ type UpdateTenantRequest struct {
 // @Produce json
 // @Security BearerAuth
 // @Param request body CreateTenantRequest true "创建租户请求"
-// @Success 201 {object} model.ResponseData[model.Tenant] "创建成功"
+// @Success 201 {object} model.TenantDataResponse "创建成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -133,7 +133,7 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "租户ID"
-// @Success 200 {object} model.ResponseData[model.Tenant] "获取成功"
+// @Success 200 {object} model.TenantDataResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -197,7 +197,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path string true "租户ID"
 // @Param request body UpdateTenantRequest true "更新租户请求"
-// @Success 200 {object} model.ResponseData[model.Tenant] "更新成功"
+// @Success 200 {object} model.TenantDataResponse "更新成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -276,7 +276,7 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "租户ID"
-// @Success 200 {object} model.ResponseData[any] "删除成功"
+// @Success 200 {object} model.AnyDataResponse "删除成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"
@@ -341,7 +341,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param pageNo query int true "页码" minimum(1) default(1)
 // @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(20)
-// @Success 200 {object} model.ResponsePaginationData[[]model.Tenant] "获取成功"
+// @Success 200 {object} model.TenantListResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
 // @Failure 403 {object} model.ErrorResponse "权限不足"

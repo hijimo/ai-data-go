@@ -25,7 +25,7 @@ func NewMonitoringHandler(alertManager *monitoring.AlertManager) *MonitoringHand
 // @Description 获取认证系统的性能监控指标
 // @Tags 监控
 // @Produce json
-// @Success 200 {object} model.ResponseData[monitoring.MetricsSnapshot]
+// @Success 200 {object} model.MetricsDataResponse
 // @Router /api/v1/monitoring/metrics [get]
 func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request) {
 	snapshot := monitoring.GetMetrics().GetSnapshot()
@@ -46,7 +46,7 @@ func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request
 // @Description 获取当前活跃的告警列表
 // @Tags 监控
 // @Produce json
-// @Success 200 {object} model.ResponseData[[]monitoring.Alert]
+// @Success 200 {object} model.AlertListDataResponse
 // @Router /api/v1/monitoring/alerts [get]
 func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request) {
 	alerts := h.alertManager.GetActiveAlerts()
@@ -67,7 +67,7 @@ func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request)
 // @Description 清空所有活跃告警
 // @Tags 监控
 // @Produce json
-// @Success 200 {object} model.ResponseData[any]
+// @Success 200 {object} model.AnyDataResponse
 // @Router /api/v1/monitoring/alerts [delete]
 func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Request) {
 	h.alertManager.ClearAlerts()
@@ -88,7 +88,7 @@ func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Req
 // @Description 重置所有性能监控指标
 // @Tags 监控
 // @Produce json
-// @Success 200 {object} model.ResponseData[any]
+// @Success 200 {object} model.AnyDataResponse
 // @Router /api/v1/monitoring/metrics/reset [post]
 func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Request) {
 	monitoring.GetMetrics().Reset()
@@ -109,7 +109,7 @@ func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Re
 // @Description 获取系统健康状态和关键监控指标
 // @Tags 监控
 // @Produce json
-// @Success 200 {object} model.ResponseData[map[string]interface{}]
+// @Success 200 {object} model.HealthDataResponse
 // @Router /api/v1/monitoring/health [get]
 func (h *MonitoringHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	snapshot := monitoring.GetMetrics().GetSnapshot()

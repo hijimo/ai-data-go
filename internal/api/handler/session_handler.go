@@ -37,7 +37,7 @@ func NewSessionHandler(sessionService session.SessionService, log logger.Logger)
 // @Accept json
 // @Produce json
 // @Param request body model.CreateSessionRequest true "创建会话请求"
-// @Success 200 {object} model.ResponseData[model.SessionResponse] "成功创建会话"
+// @Success 200 {object} model.SessionDataResponse "成功创建会话"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -106,7 +106,7 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 // @Param isPinned query bool false "是否置顶"
 // @Param isArchived query bool false "是否归档"
 // @Param modelName query string false "模型名称"
-// @Success 200 {object} model.ResponsePaginationData[[]model.SessionResponse] "成功返回会话列表"
+// @Success 200 {object} model.SessionListResponse "成功返回会话列表"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -172,7 +172,7 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "会话ID"
-// @Success 200 {object} model.ResponseData[model.SessionResponse] "成功返回会话详情"
+// @Success 200 {object} model.SessionDataResponse "成功返回会话详情"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -235,7 +235,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "会话ID"
 // @Param request body model.UpdateSessionRequest true "更新会话请求"
-// @Success 200 {object} model.ResponseData[model.SessionResponse] "成功更新会话"
+// @Success 200 {object} model.SessionDataResponse "成功更新会话"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -313,7 +313,7 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "会话ID"
-// @Success 200 {object} model.ResponseData[any] "成功删除会话"
+// @Success 200 {object} model.AnyDataResponse "成功删除会话"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -378,7 +378,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 // @Param keyword query string true "搜索关键词"
 // @Param pageNo query int true "页码" minimum(1) default(1)
 // @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(20)
-// @Success 200 {object} model.ResponsePaginationData[[]model.SessionResponse] "成功返回搜索结果"
+// @Success 200 {object} model.SessionListResponse "成功返回搜索结果"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
@@ -445,7 +445,7 @@ func (h *SessionHandler) SearchSessions(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Param id path string true "会话ID"
 // @Param pinned query bool true "是否置顶"
-// @Success 200 {object} model.ResponseData[any] "成功更新置顶状态"
+// @Success 200 {object} model.AnyDataResponse "成功更新置顶状态"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
@@ -515,7 +515,7 @@ func (h *SessionHandler) PinSession(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "会话ID"
 // @Param archived query bool true "是否归档"
-// @Success 200 {object} model.ResponseData[any] "成功更新归档状态"
+// @Success 200 {object} model.AnyDataResponse "成功更新归档状态"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 403 {object} model.ErrorResponse "无权访问"
 // @Failure 404 {object} model.ErrorResponse "会话不存在"
