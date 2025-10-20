@@ -26,12 +26,12 @@ type SummaryService interface {
 
 // summaryService 摘要业务逻辑实现
 type summaryService struct {
-	summaryRepo  repository.SummaryRepository
-	messageRepo  repository.MessageRepository
-	sessionRepo  repository.SessionRepository
-	aiService    ai.AIService
-	config       *config.Config
-	logger       logger.Logger
+	summaryRepo repository.SummaryRepository
+	messageRepo repository.MessageRepository
+	sessionRepo repository.SessionRepository
+	aiService   ai.AIService
+	config      *config.Config
+	logger      logger.Logger
 }
 
 // NewSummaryService 创建摘要服务实例
@@ -89,11 +89,11 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 	var messages []*model.ChatMessage
 	if latestSummary != nil {
 		// 如果已有摘要，只获取摘要之后的消息
-		messages, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID)
+		messages, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID.String())
 		if err != nil {
 			s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
 				"sessionId":     sessionID,
-				"lastMessageId": latestSummary.LastMessageID,
+				"lastMessageId": latestSummary.LastMessageID.String(),
 				"error":         err.Error(),
 			})
 			return nil, fmt.Errorf("获取消息失败: %w", err)
@@ -144,7 +144,7 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 	// 7. 创建摘要记录
 	lastMessageID := messages[len(messages)-1].ID
 	summary := &model.ChatSummary{
-		SessionID:     sessionID,
+		SessionID:     session.ID,
 		Summary:       chatResp.Message,
 		LastMessageID: lastMessageID,
 		TokenCount:    chatResp.Usage.TotalTokens,
@@ -234,11 +234,11 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 	}
 
 	// 5. 计算摘要后的新消息数量
-	messagesAfterSummary, err := s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID)
+	messagesAfterSummary, err := s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID.String())
 	if err != nil {
 		s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
 			"sessionId":     sessionID,
-			"lastMessageId": latestSummary.LastMessageID,
+			"lastMessageId": latestSummary.LastMessageID.String(),
 			"error":         err.Error(),
 		})
 		return false, fmt.Errorf("获取摘要后的消息失败: %w", err)

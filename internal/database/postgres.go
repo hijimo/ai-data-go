@@ -26,6 +26,7 @@ type Database interface {
 
 // PostgresConfig PostgreSQL 配置
 type PostgresConfig struct {
+	DSN             string        // 数据库连接字符串（优先使用）
 	Host            string        // 数据库主机
 	Port            string        // 数据库端口
 	User            string        // 数据库用户名
@@ -53,16 +54,22 @@ func NewPostgresDatabase(config *PostgresConfig) *PostgresDatabase {
 
 // Connect 连接数据库
 func (p *PostgresDatabase) Connect(ctx context.Context) error {
-	// 构建连接字符串
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		p.config.Host,
-		p.config.Port,
-		p.config.User,
-		p.config.Password,
-		p.config.DBName,
-		p.config.SSLMode,
-	)
+	// 获取连接字符串
+	// 优先使用 DSN，如果未设置则根据独立配置项构建
+	var dsn string
+	if p.config.DSN != "" {
+		dsn = p.config.DSN
+	} else {
+		dsn = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+			p.config.Host,
+			p.config.Port,
+			p.config.User,
+			p.config.Password,
+			p.config.DBName,
+			p.config.SSLMode,
+		)
+	}
 
 	// 配置 GORM
 	gormConfig := &gorm.Config{

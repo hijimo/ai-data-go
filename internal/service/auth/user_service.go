@@ -88,7 +88,8 @@ func NewUserService(userRepo repository.UserRepository, tenantRepo repository.Te
 // Create 创建用户
 func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model.User, error) {
 	// 验证租户ID格式
-	if _, err := uuid.Parse(req.TenantID); err != nil {
+	tenantUUID, err := uuid.Parse(req.TenantID)
+	if err != nil {
 		return nil, errors.New("无效的租户ID格式")
 	}
 
@@ -123,17 +124,26 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 		return nil, fmt.Errorf("密码加密失败: %w", err)
 	}
 
+	var createdByUUID *uuid.UUID
+	if req.CreatedBy != nil {
+		parsed := parseUUIDPointer(*req.CreatedBy)
+		if parsed == nil {
+			return nil, errors.New("创建者用户ID格式无效")
+		}
+		createdByUUID = parsed
+	}
+
 	// 创建用户对象
 	user := &model.User{
-		ID:           uuid.New().String(),
-		TenantID:     req.TenantID,
+		ID:           uuid.New(),
+		TenantID:     tenantUUID,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
 		DisplayName:  req.DisplayName,
 		Phone:        req.Phone,
 		IsActive:     true, // 默认激活
 		IsAdmin:      req.IsAdmin,
-		CreatedBy:    req.CreatedBy,
+		CreatedBy:    createdByUUID,
 		IsDeleted:    false,
 	}
 

@@ -8,6 +8,8 @@ import (
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/pkg/errors"
+
+	"github.com/google/uuid"
 )
 
 // SessionService 会话业务逻辑接口
@@ -53,15 +55,20 @@ func NewSessionService(sessionRepo repository.SessionRepository, messageRepo rep
 
 // CreateSession 创建新会话
 func (s *sessionService) CreateSession(ctx context.Context, userID string, req *model.CreateSessionRequest) (*model.SessionResponse, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, errors.NewBadRequestError("用户ID格式无效")
+	}
+
 	// 创建会话实体
 	session := &model.ChatSession{
-		UserID:       userID,
+		UserID:       userUUID,
 		Title:        req.Title,
 		ModelName:    req.ModelName,
 		SystemPrompt: req.SystemPrompt,
 		Temperature:  req.Temperature,
 		TopP:         req.TopP,
-		CreatedBy:    userID,
+		CreatedBy:    userUUID,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 		MessageCount: 0,
@@ -97,14 +104,14 @@ func (s *sessionService) GetSession(ctx context.Context, sessionID, userID strin
 	}
 
 	// 验证权限
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		return nil, errors.NewSessionAccessDeniedError()
 	}
 
 	// 获取最后一条消息
 	var lastMessage *model.ChatMessage
 	if session.LastMessageID != nil {
-		lastMessage, _ = s.messageRepo.GetByID(ctx, *session.LastMessageID)
+		lastMessage, _ = s.messageRepo.GetByID(ctx, session.LastMessageID.String())
 	}
 
 	// 转换为响应格式
@@ -130,8 +137,8 @@ func (s *sessionService) ListSessions(ctx context.Context, userID string, req *m
 	messageMap := make(map[string]*model.ChatMessage)
 	for _, session := range sessions {
 		if session.LastMessageID != nil {
-			if msg, err := s.messageRepo.GetByID(ctx, *session.LastMessageID); err == nil {
-				messageMap[session.ID] = msg
+			if msg, err := s.messageRepo.GetByID(ctx, session.LastMessageID.String()); err == nil {
+				messageMap[session.ID.String()] = msg
 			}
 		}
 	}
@@ -139,7 +146,7 @@ func (s *sessionService) ListSessions(ctx context.Context, userID string, req *m
 	// 转换为响应格式
 	responses := make([]*model.SessionResponse, 0, len(sessions))
 	for _, session := range sessions {
-		lastMessage := messageMap[session.ID]
+		lastMessage := messageMap[session.ID.String()]
 		responses = append(responses, s.toSessionResponse(session, lastMessage))
 	}
 
@@ -155,7 +162,7 @@ func (s *sessionService) UpdateSession(ctx context.Context, sessionID, userID st
 	}
 
 	// 验证权限
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		return nil, errors.NewSessionAccessDeniedError()
 	}
 
@@ -196,7 +203,7 @@ func (s *sessionService) UpdateSession(ctx context.Context, sessionID, userID st
 	// 获取最后一条消息
 	var lastMessage *model.ChatMessage
 	if session.LastMessageID != nil {
-		lastMessage, _ = s.messageRepo.GetByID(ctx, *session.LastMessageID)
+		lastMessage, _ = s.messageRepo.GetByID(ctx, session.LastMessageID.String())
 	}
 
 	// 转换为响应格式
@@ -212,7 +219,7 @@ func (s *sessionService) DeleteSession(ctx context.Context, sessionID, userID st
 	}
 
 	// 验证权限
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		return errors.NewSessionAccessDeniedError()
 	}
 
@@ -236,8 +243,8 @@ func (s *sessionService) SearchSessions(ctx context.Context, userID string, req 
 	messageMap := make(map[string]*model.ChatMessage)
 	for _, session := range sessions {
 		if session.LastMessageID != nil {
-			if msg, err := s.messageRepo.GetByID(ctx, *session.LastMessageID); err == nil {
-				messageMap[session.ID] = msg
+			if msg, err := s.messageRepo.GetByID(ctx, session.LastMessageID.String()); err == nil {
+				messageMap[session.ID.String()] = msg
 			}
 		}
 	}
@@ -245,7 +252,7 @@ func (s *sessionService) SearchSessions(ctx context.Context, userID string, req 
 	// 转换为响应格式
 	responses := make([]*model.SessionResponse, 0, len(sessions))
 	for _, session := range sessions {
-		lastMessage := messageMap[session.ID]
+		lastMessage := messageMap[session.ID.String()]
 		responses = append(responses, s.toSessionResponse(session, lastMessage))
 	}
 
@@ -261,7 +268,7 @@ func (s *sessionService) PinSession(ctx context.Context, sessionID, userID strin
 	}
 
 	// 验证权限
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		return errors.NewSessionAccessDeniedError()
 	}
 
@@ -287,7 +294,7 @@ func (s *sessionService) ArchiveSession(ctx context.Context, sessionID, userID s
 	}
 
 	// 验证权限
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		return errors.NewSessionAccessDeniedError()
 	}
 
@@ -307,8 +314,8 @@ func (s *sessionService) ArchiveSession(ctx context.Context, sessionID, userID s
 // toSessionResponse 将会话实体转换为响应格式
 func (s *sessionService) toSessionResponse(session *model.ChatSession, lastMessage *model.ChatMessage) *model.SessionResponse {
 	response := &model.SessionResponse{
-		ID:           session.ID,
-		UserID:       session.UserID,
+		ID:           session.ID.String(),
+		UserID:       session.UserID.String(),
 		Title:        session.Title,
 		ModelName:    session.ModelName,
 		SystemPrompt: session.SystemPrompt,
@@ -324,7 +331,7 @@ func (s *sessionService) toSessionResponse(session *model.ChatSession, lastMessa
 	// 处理最后一条消息
 	if lastMessage != nil {
 		response.LastMessage = &model.MessagePreview{
-			ID:        lastMessage.ID,
+			ID:        lastMessage.ID.String(),
 			Role:      lastMessage.Role,
 			Content:   lastMessage.Content,
 			CreatedAt: lastMessage.CreatedAt.Format(time.RFC3339),

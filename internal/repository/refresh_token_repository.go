@@ -48,10 +48,10 @@ func (r *refreshTokenRepository) Create(ctx context.Context, token *model.Refres
 	}
 
 	// 验证必需字段
-	if token.UserID == "" {
+	if token.UserID == uuid.Nil {
 		return errors.New("user_id is required")
 	}
-	if token.TenantID == "" {
+	if token.TenantID == uuid.Nil {
 		return errors.New("tenant_id is required")
 	}
 	if token.TokenHash == "" {
@@ -59,8 +59,8 @@ func (r *refreshTokenRepository) Create(ctx context.Context, token *model.Refres
 	}
 
 	// 如果没有设置 ID，生成一个新的
-	if token.ID == "" {
-		token.ID = uuid.New().String()
+	if token.ID == uuid.Nil {
+		token.ID = uuid.New()
 	}
 
 	return r.db.WithContext(ctx).Create(token).Error

@@ -31,11 +31,11 @@ type MessageService interface {
 
 // messageService 消息服务实现
 type messageService struct {
-	db                *gorm.DB
-	sessionRepo       repository.SessionRepository
-	messageRepo       repository.MessageRepository
-	aiService         ai.AIService
-	logger            logger.Logger
+	db          *gorm.DB
+	sessionRepo repository.SessionRepository
+	messageRepo repository.MessageRepository
+	aiService   ai.AIService
+	logger      logger.Logger
 }
 
 // logInfo 安全地记录信息日志
@@ -78,10 +78,10 @@ func NewMessageService(
 
 // SendMessageRequest 发送消息请求
 type SendMessageRequest struct {
-	SessionID string              `json:"sessionId" validate:"required,uuid"`
-	Message   string              `json:"message" validate:"required"`
-	UserID    string              `json:"userId" validate:"required,uuid"`
-	Options   *model.ChatOptions  `json:"options,omitempty"`
+	SessionID string             `json:"sessionId" validate:"required,uuid"`
+	Message   string             `json:"message" validate:"required"`
+	UserID    string             `json:"userId" validate:"required,uuid"`
+	Options   *model.ChatOptions `json:"options,omitempty"`
 }
 
 // MessageResponse 消息响应
@@ -155,11 +155,11 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 	}
 
 	// 验证会话所有权
-	if session.UserID != req.UserID {
+	if session.UserID.String() != req.UserID {
 		s.logWarn(ctx, "用户尝试访问其他用户的会话", logger.Fields{
 			"sessionId":    req.SessionID,
 			"userId":       req.UserID,
-			"sessionOwner": session.UserID,
+			"sessionOwner": session.UserID.String(),
 		})
 		return nil, errors.NewSessionAccessDeniedError()
 	}
@@ -178,7 +178,7 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 
 		// 2.2 保存用户消息
 		userMessage = &model.ChatMessage{
-			SessionID: req.SessionID,
+			SessionID: session.ID,
 			Role:      "user",
 			Content:   req.Message,
 			Sequence:  nextSeq,
@@ -190,7 +190,7 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 		}
 
 		s.logInfo(ctx, "用户消息已保存", logger.Fields{
-			"messageId": userMessage.ID,
+			"messageId": userMessage.ID.String(),
 			"sequence":  userMessage.Sequence,
 		})
 
@@ -216,7 +216,7 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 
 		// 2.4 保存 AI 回复消息
 		aiMessage = &model.ChatMessage{
-			SessionID: req.SessionID,
+			SessionID: session.ID,
 			Role:      "assistant",
 			Content:   aiResponse.Message,
 			Sequence:  nextSeq + 1,
@@ -233,19 +233,16 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 		}
 
 		s.logInfo(ctx, "AI消息已保存", logger.Fields{
-			"messageId": aiMessage.ID,
+			"messageId": aiMessage.ID.String(),
 			"sequence":  aiMessage.Sequence,
 			"tokens":    aiMessage.Tokens,
 		})
 
 		// 2.5 更新会话信息
-		if err := s.sessionRepo.UpdateLastMessage(ctx, req.SessionID, aiMessage.ID); err != nil {
+		if err := s.sessionRepo.UpdateLastMessage(ctx, req.SessionID, aiMessage.ID.String()); err != nil {
 			return fmt.Errorf("更新会话最后消息失败: %w", err)
 		}
 
-		if err := s.sessionRepo.IncrementMessageCount(ctx, req.SessionID); err != nil {
-			return fmt.Errorf("更新会话消息计数失败: %w", err)
-		}
 		if err := s.sessionRepo.IncrementMessageCount(ctx, req.SessionID); err != nil {
 			return fmt.Errorf("更新会话消息计数失败: %w", err)
 		}
@@ -267,17 +264,17 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 
 	// 3. 构建响应
 	response := &MessageResponse{
-		MessageID: aiMessage.ID,
+		MessageID: aiMessage.ID.String(),
 		SessionID: req.SessionID,
 		UserMessage: &Message{
-			ID:        userMessage.ID,
+			ID:        userMessage.ID.String(),
 			Role:      userMessage.Role,
 			Content:   userMessage.Content,
 			Sequence:  userMessage.Sequence,
 			CreatedAt: userMessage.CreatedAt,
 		},
 		AIMessage: &Message{
-			ID:        aiMessage.ID,
+			ID:        aiMessage.ID.String(),
 			Role:      aiMessage.Role,
 			Content:   aiMessage.Content,
 			Sequence:  aiMessage.Sequence,
@@ -289,8 +286,8 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 
 	s.logInfo(ctx, "消息发送成功", logger.Fields{
 		"sessionId": req.SessionID,
-		"userMsgId": userMessage.ID,
-		"aiMsgId":   aiMessage.ID,
+		"userMsgId": userMessage.ID.String(),
+		"aiMsgId":   aiMessage.ID.String(),
 		"model":     aiResponse.Model,
 	})
 
@@ -320,11 +317,11 @@ func (s *messageService) GetMessages(ctx context.Context, req *GetMessagesReques
 	}
 
 	// 验证会话所有权
-	if session.UserID != req.UserID {
+	if session.UserID.String() != req.UserID {
 		s.logWarn(ctx, "用户尝试访问其他用户的会话消息", logger.Fields{
 			"sessionId":    req.SessionID,
 			"userId":       req.UserID,
-			"sessionOwner": session.UserID,
+			"sessionOwner": session.UserID.String(),
 		})
 		return nil, errors.NewSessionAccessDeniedError()
 	}
@@ -343,8 +340,8 @@ func (s *messageService) GetMessages(ctx context.Context, req *GetMessagesReques
 	messageDetails := make([]*MessageDetailResponse, 0, len(messages))
 	for _, msg := range messages {
 		detail := &MessageDetailResponse{
-			ID:        msg.ID,
-			SessionID: msg.SessionID,
+			ID:        msg.ID.String(),
+			SessionID: msg.SessionID.String(),
 			Role:      msg.Role,
 			Content:   msg.Content,
 			Tokens:    msg.Tokens,
@@ -410,31 +407,31 @@ func (s *messageService) GetMessageByID(ctx context.Context, messageID, userID s
 	}
 
 	// 2. 验证消息所属会话的所有权
-	session, err := s.sessionRepo.GetByID(ctx, message.SessionID)
+	session, err := s.sessionRepo.GetByID(ctx, message.SessionID.String())
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewSessionNotFoundError(message.SessionID)
+			return nil, errors.NewSessionNotFoundError(message.SessionID.String())
 		}
 		s.logError(ctx, "获取会话失败", logger.Fields{
-			"sessionId": message.SessionID,
+			"sessionId": message.SessionID.String(),
 			"error":     err.Error(),
 		})
 		return nil, errors.NewInternalError(err)
 	}
 
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		s.logWarn(ctx, "用户尝试访问其他用户的消息", logger.Fields{
 			"messageId":    messageID,
 			"userId":       userID,
-			"sessionOwner": session.UserID,
+			"sessionOwner": session.UserID.String(),
 		})
 		return nil, errors.NewMessageAccessDeniedError()
 	}
 
 	// 3. 构建响应
 	response := &MessageDetailResponse{
-		ID:        message.ID,
-		SessionID: message.SessionID,
+		ID:        message.ID.String(),
+		SessionID: message.SessionID.String(),
 		Role:      message.Role,
 		Content:   message.Content,
 		Tokens:    message.Tokens,
@@ -485,32 +482,32 @@ func (s *messageService) AbortMessage(ctx context.Context, messageID, userID str
 	}
 
 	// 2. 验证消息所属会话的所有权
-	session, err := s.sessionRepo.GetByID(ctx, message.SessionID)
+	session, err := s.sessionRepo.GetByID(ctx, message.SessionID.String())
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return errors.NewSessionNotFoundError(message.SessionID)
+			return errors.NewSessionNotFoundError(message.SessionID.String())
 		}
 		s.logError(ctx, "获取会话失败", logger.Fields{
-			"sessionId": message.SessionID,
+			"sessionId": message.SessionID.String(),
 			"error":     err.Error(),
 		})
 		return errors.NewInternalError(err)
 	}
 
-	if session.UserID != userID {
+	if session.UserID.String() != userID {
 		s.logWarn(ctx, "用户尝试中止其他用户的消息", logger.Fields{
 			"messageId":    messageID,
 			"userId":       userID,
-			"sessionOwner": session.UserID,
+			"sessionOwner": session.UserID.String(),
 		})
 		return errors.NewMessageAccessDeniedError()
 	}
 
 	// 3. 调用 AI 服务中止会话
 	// 注意：这里使用 SessionID 而不是 MessageID，因为 AI 服务是基于会话的
-	if err := s.aiService.AbortChat(ctx, message.SessionID); err != nil {
+	if err := s.aiService.AbortChat(ctx, message.SessionID.String()); err != nil {
 		s.logError(ctx, "中止AI会话失败", logger.Fields{
-			"sessionId": message.SessionID,
+			"sessionId": message.SessionID.String(),
 			"messageId": messageID,
 			"error":     err.Error(),
 		})
@@ -519,7 +516,7 @@ func (s *messageService) AbortMessage(ctx context.Context, messageID, userID str
 
 	s.logInfo(ctx, "消息生成已中止", logger.Fields{
 		"messageId": messageID,
-		"sessionId": message.SessionID,
+		"sessionId": message.SessionID.String(),
 	})
 
 	return nil

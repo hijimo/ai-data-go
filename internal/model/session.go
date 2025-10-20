@@ -3,15 +3,16 @@ package model
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
 )
 
 // ChatSession 会话实体
 type ChatSession struct {
 	// 会话ID
-	ID string `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	// 用户ID
-	UserID string `gorm:"type:uuid;not null;index:idx_user_sessions" json:"userId"`
+	UserID uuid.UUID `gorm:"type:uuid;not null;index:idx_user_sessions" json:"userId"`
 	// 会话标题
 	Title string `gorm:"type:varchar(255);not null" json:"title"`
 	// 模型名称
@@ -23,13 +24,13 @@ type ChatSession struct {
 	// TopP参数
 	TopP *float64 `gorm:"type:float" json:"topP"`
 	// 创建者ID
-	CreatedBy string `gorm:"type:uuid;not null" json:"createdBy"`
+	CreatedBy uuid.UUID `gorm:"type:uuid;not null" json:"createdBy"`
 	// 创建时间
 	CreatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	// 更新时间
 	UpdatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 	// 最后一条消息ID
-	LastMessageID *string `gorm:"type:uuid" json:"lastMessageId"`
+	LastMessageID *uuid.UUID `gorm:"type:uuid" json:"lastMessageId"`
 	// 消息数量
 	MessageCount int `gorm:"default:0" json:"messageCount"`
 	// 是否置顶
@@ -40,6 +41,9 @@ type ChatSession struct {
 	IsDeleted bool `gorm:"default:false;index:idx_deleted" json:"isDeleted"`
 	// 元数据
 	Meta datatypes.JSON `gorm:"type:jsonb" json:"meta"`
+
+	// 关联
+	User *User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // TableName 指定表名
@@ -50,9 +54,9 @@ func (ChatSession) TableName() string {
 // ChatMessage 消息实体
 type ChatMessage struct {
 	// 消息ID
-	ID string `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	// 会话ID
-	SessionID string `gorm:"type:uuid;not null;index:idx_session_messages" json:"sessionId"`
+	SessionID uuid.UUID `gorm:"type:uuid;not null;index:idx_session_messages" json:"sessionId"`
 	// 角色 (user, assistant, system, function)
 	Role string `gorm:"type:varchar(32);not null" json:"role"`
 	// 消息内容
@@ -68,7 +72,7 @@ type ChatMessage struct {
 	// 错误信息
 	Error string `gorm:"type:text" json:"error"`
 	// 父消息ID
-	ParentID *string `gorm:"type:uuid" json:"parentId"`
+	ParentID *uuid.UUID `gorm:"type:uuid" json:"parentId"`
 	// 元数据
 	Meta datatypes.JSON `gorm:"type:jsonb" json:"meta"`
 
@@ -84,13 +88,13 @@ func (ChatMessage) TableName() string {
 // ChatSummary 会话摘要实体
 type ChatSummary struct {
 	// 摘要ID
-	ID string `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	// 会话ID
-	SessionID string `gorm:"type:uuid;not null;index:idx_session_summary" json:"sessionId"`
+	SessionID uuid.UUID `gorm:"type:uuid;not null;index:idx_session_summary" json:"sessionId"`
 	// 摘要内容
 	Summary string `gorm:"type:text;not null" json:"summary"`
 	// 最后一条消息ID
-	LastMessageID string `gorm:"type:uuid;not null" json:"lastMessageId"`
+	LastMessageID uuid.UUID `gorm:"type:uuid;not null" json:"lastMessageId"`
 	// Token数量
 	TokenCount int `gorm:"default:0" json:"tokenCount"`
 	// 创建时间

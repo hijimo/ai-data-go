@@ -37,6 +37,7 @@ type GenkitConfig struct {
 
 // DatabaseConfig 数据库配置
 type DatabaseConfig struct {
+	URL             string        // 数据库连接 URL（优先使用，格式：postgres://user:pass@host:port/dbname?sslmode=disable）
 	Host            string        // 数据库主机
 	Port            string        // 数据库端口
 	User            string        // 数据库用户名
@@ -124,7 +125,9 @@ func Load() (*Config, error) {
 	}
 
 	// 加载数据库配置
+	// 优先使用 DATABASE_URL，如果未设置则使用独立的配置项
 	config.Database = DatabaseConfig{
+		URL:             os.Getenv("DATABASE_URL"),
 		Host:            getEnv("DB_HOST", "localhost"),
 		Port:            getEnv("DB_PORT", "5432"),
 		User:            getEnv("DB_USER", "postgres"),
@@ -222,25 +225,29 @@ func (c *Config) Validate() error {
 	}
 
 	// 验证数据库配置
-	if c.Database.Host == "" {
-		return fmt.Errorf("数据库主机不能为空")
-	}
-	
-	if c.Database.Port == "" {
-		return fmt.Errorf("数据库端口不能为空")
-	}
-	
-	dbPort, err := strconv.Atoi(c.Database.Port)
-	if err != nil || dbPort < 1 || dbPort > 65535 {
-		return fmt.Errorf("数据库端口必须是1-65535之间的有效数字")
-	}
-	
-	if c.Database.User == "" {
-		return fmt.Errorf("数据库用户名不能为空")
-	}
-	
-	if c.Database.DBName == "" {
-		return fmt.Errorf("数据库名称不能为空")
+	// 如果设置了 DATABASE_URL，则不需要验证独立配置项
+	if c.Database.URL == "" {
+		// 未设置 DATABASE_URL，验证独立配置项
+		if c.Database.Host == "" {
+			return fmt.Errorf("数据库主机不能为空（请设置 DATABASE_URL 或 DB_HOST）")
+		}
+		
+		if c.Database.Port == "" {
+			return fmt.Errorf("数据库端口不能为空（请设置 DATABASE_URL 或 DB_PORT）")
+		}
+		
+		dbPort, err := strconv.Atoi(c.Database.Port)
+		if err != nil || dbPort < 1 || dbPort > 65535 {
+			return fmt.Errorf("数据库端口必须是1-65535之间的有效数字")
+		}
+		
+		if c.Database.User == "" {
+			return fmt.Errorf("数据库用户名不能为空（请设置 DATABASE_URL 或 DB_USER）")
+		}
+		
+		if c.Database.DBName == "" {
+			return fmt.Errorf("数据库名称不能为空（请设置 DATABASE_URL 或 DB_NAME）")
+		}
 	}
 	
 	if c.Database.MaxOpenConns <= 0 {
@@ -439,4 +446,26 @@ func getEnvBool(key string, defaultValue bool) bool {
 	}
 	
 	return value
+}
+
+// GetDSN 获取数据库连接字符串
+// 优先使用 DATABASE_URL，如果未设置则根据独立配置项构建 DSN
+func (c *DatabaseConfig) GetDSN() string {
+	// 如果设置了 DATABASE_URL，直接使用
+	if c.URL != "" {
+		return c.URL
+	}
+	
+	// 否则根据独立配置项构建 DSN
+	// 格式：host=localhost user=postgres password=secret dbname=mydb port=5432 sslmode=disable
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		c.Host,
+		c.User,
+		c.Password,
+		c.DBName,
+		c.Port,
+		c.SSLMode,
+	)
+	
+	return dsn
 }

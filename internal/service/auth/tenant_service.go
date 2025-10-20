@@ -85,12 +85,21 @@ func (s *tenantService) Create(ctx context.Context, req CreateTenantRequest) (*m
 	}
 
 	// 创建租户对象
+	var createdByUUID *uuid.UUID
+	if req.CreatedBy != nil {
+		parsed := parseUUIDPointer(*req.CreatedBy)
+		if parsed == nil {
+			return nil, errors.New("创建者用户ID格式无效")
+		}
+		createdByUUID = parsed
+	}
+
 	tenant := &model.Tenant{
-		ID:        uuid.New().String(),
+		ID:        uuid.New(),
 		Name:      req.Name,
 		Domain:    req.Domain,
 		Status:    true, // 默认启用
-		CreatedBy: req.CreatedBy,
+		CreatedBy: createdByUUID,
 		IsDeleted: false,
 	}
 

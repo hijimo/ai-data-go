@@ -59,7 +59,14 @@ func RunSessionMigrations(db *gorm.DB) error {
 
 // RunAuthMigrations 执行认证相关的数据库迁移
 // 这个函数会创建 tenants、users、refresh_tokens 和 auth_audit 表及其索引
+// 注意：此函数已被 RunInitialMigration 替代，保留用于向后兼容
 func RunAuthMigrations(db *gorm.DB) error {
-	migration := migrations.NewAuthMigration(db)
-	return migration.Up()
+	return migrations.RunInitialMigration(db)
+}
+
+// RunInitialMigration 执行初始迁移
+// 这个函数会创建所有基础表（认证表和会话管理表）及其索引
+// 适用于新环境的数据库初始化
+func RunInitialMigration(db *gorm.DB) error {
+	return migrations.RunInitialMigration(db)
 }

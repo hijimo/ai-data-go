@@ -69,13 +69,13 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 	}
 
 	// 验证租户 ID
-	if user.TenantID == "" {
+	if user.TenantID == uuid.Nil {
 		return errors.New("tenant_id is required")
 	}
 
 	// 如果没有设置 ID，生成一个新的
-	if user.ID == "" {
-		user.ID = uuid.New().String()
+	if user.ID == uuid.Nil {
+		user.ID = uuid.New()
 	}
 
 	return r.db.WithContext(ctx).Create(user).Error
@@ -136,7 +136,7 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) error {
 	}
 
 	// 验证租户 ID
-	if user.TenantID == "" {
+	if user.TenantID == uuid.Nil {
 		return errors.New("tenant_id is required")
 	}
 

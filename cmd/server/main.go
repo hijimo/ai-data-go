@@ -99,15 +99,25 @@ func main() {
 	// 3. 初始化数据库连接（可选）
 	db, err := initDatabase(cfg, log)
 	if err != nil {
-		log.Warn("初始化数据库失败，AI服务将不可用", logger.Fields{"error": err})
-		db = nil
-	} else {
-		defer func() {
-			if err := db.Close(); err != nil {
-				log.Error("关闭数据库连接失败", logger.Fields{"error": err})
-			}
-		}()
+		// 数据库初始化失败（包括迁移失败）时，记录错误并退出
+		// 因为认证、会话管理等核心功能依赖数据库
+		log.Error("初始化数据库失败，应用无法启动", logger.Fields{
+			"error": err,
+			"解决方案": []string{
+				"1. 检查数据库连接配置是否正确",
+				"2. 确保数据库服务正在运行",
+				"3. 验证数据库用户权限是否足够",
+				"4. 查看详细错误信息定位问题",
+			},
+		})
+		os.Exit(1)
 	}
+	
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Error("关闭数据库连接失败", logger.Fields{"error": err})
+		}
+	}()
 
 	// 4. 初始化 Genkit 客户端（可选）
 	genkitClient, err := initGenkit(cfg, log)
@@ -296,13 +306,21 @@ func main() {
 
 // initDatabase 初始化数据库连接
 func initDatabase(cfg *config.Config, log logger.Logger) (database.Database, error) {
-	log.Info("初始化数据库连接...", logger.Fields{
-		"host": cfg.Database.Host,
-		"port": cfg.Database.Port,
-		"name": cfg.Database.DBName,
-	})
+	// 记录连接信息（如果使用 DATABASE_URL 则不显示详细信息）
+	if cfg.Database.URL != "" {
+		log.Info("初始化数据库连接...", logger.Fields{
+			"source": "DATABASE_URL",
+		})
+	} else {
+		log.Info("初始化数据库连接...", logger.Fields{
+			"host": cfg.Database.Host,
+			"port": cfg.Database.Port,
+			"name": cfg.Database.DBName,
+		})
+	}
 
 	postgresConfig := &database.PostgresConfig{
+		DSN:             cfg.Database.GetDSN(), // 使用新的 GetDSN 方法
 		Host:            cfg.Database.Host,
 		Port:            cfg.Database.Port,
 		User:            cfg.Database.User,
@@ -312,6 +330,7 @@ func initDatabase(cfg *config.Config, log logger.Logger) (database.Database, err
 		MaxOpenConns:    cfg.Database.MaxOpenConns,
 		MaxIdleConns:    cfg.Database.MaxIdleConns,
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
+		LogLevel:        cfg.Database.LogLevel,
 	}
 
 	db := database.NewPostgresDatabase(postgresConfig)
@@ -349,23 +368,31 @@ func runDatabaseMigrations(db database.Database, log logger.Logger) error {
 		return fmt.Errorf("无法获取数据库实例")
 	}
 
-	// 执行认证相关的迁移
-	if err := database.RunAuthMigrations(gormDB); err != nil {
-		log.Error("认证迁移失败", logger.Fields{"error": err})
-		return fmt.Errorf("认证迁移失败: %w", err)
-	}
-
-	// 执行会话管理相关的迁移
-	if err := database.RunSessionMigrations(gormDB); err != nil {
-		log.Error("会话管理迁移失败", logger.Fields{"error": err})
-		return fmt.Errorf("会话管理迁移失败: %w", err)
+	// 执行初始迁移
+	// 初始迁移包含所有表的创建逻辑（认证表和会话管理表）
+	if err := database.RunInitialMigration(gormDB); err != nil {
+		log.Error("初始迁移失败", logger.Fields{
+			"error": err,
+			"迁移名称": "initial_migration",
+		})
+		
+		// 提供详细的错误信息和解决建议
+		return fmt.Errorf("数据库迁移失败: %w\n\n可能的原因和解决方案:\n"+
+			"1. 数据库权限不足 - 确保数据库用户具有 CREATE TABLE、CREATE INDEX 等权限\n"+
+			"2. UUID 扩展未启用 - 确保 PostgreSQL 支持 gen_random_uuid() 函数\n"+
+			"3. 表已存在但结构不匹配 - 考虑使用 reset_db.go 脚本重置数据库\n"+
+			"4. 数据库连接中断 - 检查网络连接和数据库服务状态\n"+
+			"5. 磁盘空间不足 - 检查数据库服务器磁盘空间\n\n"+
+			"详细错误信息: %v", err)
 	}
 
 	log.Info("数据库迁移完成", logger.Fields{
-		"migrations": []string{
+		"migration": "initial_migration",
+		"tables": []string{
 			"tenants",
 			"users",
 			"refresh_tokens",
+			"email_verification_tokens",
 			"auth_audit",
 			"chat_sessions",
 			"chat_messages",

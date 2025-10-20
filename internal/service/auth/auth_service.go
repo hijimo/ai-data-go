@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -16,27 +17,27 @@ import (
 
 // RegisterRequest 用户注册请求
 type RegisterRequest struct {
-	TenantID    string `json:"tenantId" validate:"required"`    // 租户 ID
-	Email       string `json:"email" validate:"required,email"` // 邮箱
+	TenantID    string `json:"tenantId" validate:"required"`       // 租户 ID
+	Email       string `json:"email" validate:"required,email"`    // 邮箱
 	Password    string `json:"password" validate:"required,min=8"` // 密码（最少 8 位）
-	DisplayName string `json:"displayName"` // 显示名称
-	Phone       string `json:"phone"` // 手机号码
+	DisplayName string `json:"displayName"`                        // 显示名称
+	Phone       string `json:"phone"`                              // 手机号码
 }
 
 // LoginRequest 用户登录请求
 type LoginRequest struct {
-	TenantID string `json:"tenantId"` // 租户 ID（可选，可从其他方式识别）
+	TenantID string `json:"tenantId"`                        // 租户 ID（可选，可从其他方式识别）
 	Email    string `json:"email" validate:"required,email"` // 邮箱
-	Password string `json:"password" validate:"required"` // 密码
+	Password string `json:"password" validate:"required"`    // 密码
 }
 
 // LoginResponse 登录响应
 type LoginResponse struct {
-	AccessToken  string       `json:"accessToken"`  // 访问令牌
-	RefreshToken string       `json:"refreshToken"` // 刷新令牌
-	ExpiresIn    int64        `json:"expiresIn"`    // 过期时间（秒）
-	TokenType    string       `json:"tokenType"`    // 令牌类型（Bearer）
-	User         *model.User  `json:"user"`         // 用户信息
+	AccessToken  string      `json:"accessToken"`  // 访问令牌
+	RefreshToken string      `json:"refreshToken"` // 刷新令牌
+	ExpiresIn    int64       `json:"expiresIn"`    // 过期时间（秒）
+	TokenType    string      `json:"tokenType"`    // 令牌类型（Bearer）
+	User         *model.User `json:"user"`         // 用户信息
 }
 
 // AuthService 认证服务接口
@@ -101,14 +102,14 @@ type AuthService interface {
 
 // authService 认证服务实现
 type authService struct {
-	userRepo           repository.UserRepository         // 用户数据访问
-	tokenService       TokenService                      // Token 管理服务
-	auditRepo          repository.AuditRepository        // 审计日志数据访问
-	refreshTokenRepo   repository.RefreshTokenRepository // 刷新令牌数据访问
-	blacklistService   TokenBlacklistService             // Token 黑名单服务
-	accessTokenTTL     time.Duration                     // Access Token 生命周期
-	maxLoginAttempts   int                               // 最大登录尝试次数
-	lockDuration       time.Duration                     // 账户锁定时长
+	userRepo         repository.UserRepository         // 用户数据访问
+	tokenService     TokenService                      // Token 管理服务
+	auditRepo        repository.AuditRepository        // 审计日志数据访问
+	refreshTokenRepo repository.RefreshTokenRepository // 刷新令牌数据访问
+	blacklistService TokenBlacklistService             // Token 黑名单服务
+	accessTokenTTL   time.Duration                     // Access Token 生命周期
+	maxLoginAttempts int                               // 最大登录尝试次数
+	lockDuration     time.Duration                     // 账户锁定时长
 }
 
 // NewAuthService 创建认证服务实例
@@ -121,6 +122,7 @@ type authService struct {
 //   - accessTokenTTL: Access Token 生命周期（默认 60 分钟）
 //   - maxLoginAttempts: 最大登录尝试次数（默认 5 次）
 //   - lockDuration: 账户锁定时长（默认 15 分钟）
+//
 // 返回：
 //   - AuthService: 认证服务实例
 func NewAuthService(
@@ -168,6 +170,11 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*model
 		return nil, errors.New("邮箱已被注册")
 	}
 
+	tenantUUID, err := uuid.Parse(req.TenantID)
+	if err != nil {
+		return nil, errors.New("租户ID无效")
+	}
+
 	// 2. 哈希密码
 	passwordHash, err := crypto.HashPassword(req.Password)
 	if err != nil {
@@ -176,8 +183,8 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*model
 
 	// 3. 创建用户记录
 	user := &model.User{
-		ID:           uuid.New().String(),
-		TenantID:     req.TenantID,
+		ID:           uuid.New(),
+		TenantID:     tenantUUID,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
 		DisplayName:  req.DisplayName,
@@ -201,7 +208,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 	user, err := s.userRepo.GetByEmail(ctx, req.TenantID, req.Email)
 	if err != nil {
 		// 记录登录失败审计日志
-		s.createAuditLog(ctx, &req.TenantID, nil, "failed_login", map[string]interface{}{
+		s.createAuditLog(ctx, parseUUIDPointer(req.TenantID), nil, "failed_login", map[string]interface{}{
 			"email":  req.Email,
 			"reason": "user_not_found",
 		})
@@ -209,7 +216,10 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 	}
 
 	// 2. 检查账户是否被锁定
-	isLocked, err := s.userRepo.IsAccountLocked(ctx, user.TenantID, user.ID)
+	tenantIDStr := user.TenantID.String()
+	userIDStr := user.ID.String()
+
+	isLocked, err := s.userRepo.IsAccountLocked(ctx, tenantIDStr, userIDStr)
 	if err != nil {
 		return nil, fmt.Errorf("检查账户锁定状态失败: %w", err)
 	}
@@ -233,16 +243,20 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 	// 4. 验证密码
 	if err := crypto.VerifyPassword(user.PasswordHash, req.Password); err != nil {
 		// 增加登录失败次数
-		if incrementErr := s.userRepo.IncrementFailedLoginAttempts(ctx, user.TenantID, user.ID); incrementErr != nil {
+		if incrementErr := s.userRepo.IncrementFailedLoginAttempts(ctx, tenantIDStr, userIDStr); incrementErr != nil {
 			fmt.Printf("增加登录失败次数失败: %v\n", incrementErr)
 		}
 
 		// 重新获取用户信息以获取最新的失败次数
 		user, _ = s.userRepo.GetByEmail(ctx, req.TenantID, req.Email)
-		
+		if user != nil {
+			tenantIDStr = user.TenantID.String()
+			userIDStr = user.ID.String()
+		}
+
 		// 检查是否达到最大失败次数，如果是则锁定账户
 		if user != nil && user.FailedLoginAttempts >= s.maxLoginAttempts {
-			if lockErr := s.userRepo.LockAccount(ctx, user.TenantID, user.ID, s.lockDuration); lockErr != nil {
+			if lockErr := s.userRepo.LockAccount(ctx, tenantIDStr, userIDStr, s.lockDuration); lockErr != nil {
 				fmt.Printf("锁定账户失败: %v\n", lockErr)
 			}
 			s.createAuditLog(ctx, &user.TenantID, &user.ID, "account_locked", map[string]interface{}{
@@ -258,7 +272,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 			"reason":                "invalid_password",
 			"failed_login_attempts": user.FailedLoginAttempts,
 		})
-		
+
 		remainingAttempts := s.maxLoginAttempts - user.FailedLoginAttempts
 		if remainingAttempts > 0 {
 			return nil, fmt.Errorf("邮箱或密码错误，还剩 %d 次尝试机会", remainingAttempts)
@@ -267,7 +281,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 	}
 
 	// 5. 密码验证成功，重置登录失败次数
-	if err := s.userRepo.ResetFailedLoginAttempts(ctx, user.TenantID, user.ID); err != nil {
+	if err := s.userRepo.ResetFailedLoginAttempts(ctx, tenantIDStr, userIDStr); err != nil {
 		// 记录错误但不影响登录流程
 		fmt.Printf("重置登录失败次数失败: %v\n", err)
 	}
@@ -285,7 +299,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 	}
 
 	// 8. 更新最后登录时间
-	if err := s.userRepo.UpdateLastLogin(ctx, user.TenantID, user.ID); err != nil {
+	if err := s.userRepo.UpdateLastLogin(ctx, tenantIDStr, userIDStr); err != nil {
 		// 记录错误但不影响登录流程
 		fmt.Printf("更新最后登录时间失败: %v\n", err)
 	}
@@ -314,7 +328,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*L
 	}
 
 	// 2. 获取用户信息
-	user, err := s.userRepo.GetByID(ctx, token.TenantID, token.UserID)
+	user, err := s.userRepo.GetByID(ctx, token.TenantID.String(), token.UserID.String())
 	if err != nil {
 		return nil, fmt.Errorf("用户不存在: %w", err)
 	}
@@ -337,15 +351,16 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*L
 	}
 
 	// 6. 撤销旧的 Refresh Token 并记录 replaced_by
-	if err := s.refreshTokenRepo.Revoke(ctx, token.ID, &newTokenRecord.ID); err != nil {
+	replacedByID := newTokenRecord.ID.String()
+	if err := s.refreshTokenRepo.Revoke(ctx, token.ID.String(), &replacedByID); err != nil {
 		// 记录错误但不影响刷新流程
 		fmt.Printf("撤销旧令牌失败: %v\n", err)
 	}
 
 	// 7. 记录刷新审计日志
 	s.createAuditLog(ctx, &user.TenantID, &user.ID, "refresh", map[string]interface{}{
-		"old_token_id": token.ID,
-		"new_token_id": newTokenRecord.ID,
+		"old_token_id": token.ID.String(),
+		"new_token_id": newTokenRecord.ID.String(),
 	})
 
 	// 8. 返回新的 tokens
@@ -381,13 +396,13 @@ func (s *authService) Logout(ctx context.Context, accessToken, refreshToken stri
 	}
 
 	// 3. 撤销 Refresh Token
-	if err := s.refreshTokenRepo.Revoke(ctx, token.ID, nil); err != nil {
+	if err := s.refreshTokenRepo.Revoke(ctx, token.ID.String(), nil); err != nil {
 		return fmt.Errorf("撤销令牌失败: %w", err)
 	}
 
 	// 4. 记录注销审计日志
 	s.createAuditLog(ctx, &token.TenantID, &token.UserID, "logout", map[string]interface{}{
-		"token_id": token.ID,
+		"token_id": token.ID.String(),
 	})
 
 	return nil
@@ -425,7 +440,9 @@ func (s *authService) ChangePassword(ctx context.Context, tenantID, userID, oldP
 	}
 
 	// 6. 记录密码修改审计日志
-	s.createAuditLog(ctx, &tenantID, &userID, "change_password", map[string]interface{}{
+	tenantUUID := parseUUIDPointer(tenantID)
+	userUUID := parseUUIDPointer(userID)
+	s.createAuditLog(ctx, tenantUUID, userUUID, "change_password", map[string]interface{}{
 		"success": true,
 	})
 
@@ -446,7 +463,9 @@ func (s *authService) UnlockAccount(ctx context.Context, tenantID, userID string
 	}
 
 	// 3. 记录解锁审计日志
-	s.createAuditLog(ctx, &tenantID, &userID, "account_unlocked", map[string]interface{}{
+	tenantUUID := parseUUIDPointer(tenantID)
+	userUUID := parseUUIDPointer(userID)
+	s.createAuditLog(ctx, tenantUUID, userUUID, "account_unlocked", map[string]interface{}{
 		"email": user.Email,
 	})
 
@@ -454,25 +473,30 @@ func (s *authService) UnlockAccount(ctx context.Context, tenantID, userID string
 }
 
 // createAuditLog 创建审计日志（内部辅助方法）
-func (s *authService) createAuditLog(ctx context.Context, tenantID, userID *string, event string, meta map[string]interface{}) {
+func (s *authService) createAuditLog(ctx context.Context, tenantID, userID *uuid.UUID, event string, meta map[string]interface{}) {
 	// 从上下文中提取 IP 和 User-Agent（如果可用）
 	ip := ""
 	userAgent := ""
-	
+
 	// 注意：实际实现中应该从 HTTP 请求上下文中提取这些信息
 	// 这里只是占位符实现
 
 	// 将 meta 转换为 JSON
-	metaJSON, _ := datatypes.NewJSONType(meta).MarshalJSON()
+	var metaJSON datatypes.JSON
+	if meta != nil {
+		if data, err := json.Marshal(meta); err == nil {
+			metaJSON = datatypes.JSON(data)
+		}
+	}
 
 	audit := &model.AuthAudit{
-		ID:        uuid.New().String(),
+		ID:        uuid.New(),
 		TenantID:  tenantID,
 		UserID:    userID,
 		Event:     event,
 		IP:        ip,
 		UserAgent: userAgent,
-		Meta:      datatypes.JSON(metaJSON),
+		Meta:      metaJSON,
 	}
 
 	// 异步记录审计日志，不阻塞主流程
@@ -481,4 +505,16 @@ func (s *authService) createAuditLog(ctx context.Context, tenantID, userID *stri
 			fmt.Printf("记录审计日志失败: %v\n", err)
 		}
 	}()
+}
+
+func parseUUIDPointer(id string) *uuid.UUID {
+	if id == "" {
+		return nil
+	}
+
+	parsed, err := uuid.Parse(id)
+	if err != nil {
+		return nil
+	}
+	return &parsed
 }

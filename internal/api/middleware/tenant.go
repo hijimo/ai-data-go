@@ -194,7 +194,7 @@ func identifyFromSubdomain(r *http.Request, baseDomain string, tenantRepo reposi
 		if err != nil {
 			return "", err
 		}
-		return tenant.ID, nil
+		return tenant.ID.String(), nil
 	}
 
 	return "", nil

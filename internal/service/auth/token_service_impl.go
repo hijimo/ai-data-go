@@ -28,6 +28,7 @@ type tokenServiceImpl struct {
 // 参数：
 //   - cfg: 认证配置
 //   - tokenRepo: RefreshToken 仓储
+//
 // 返回：
 //   - TokenService: TokenService 接口实例
 func NewTokenService(cfg *config.AuthConfig, tokenRepo repository.RefreshTokenRepository) TokenService {
@@ -52,13 +53,13 @@ func (s *tokenServiceImpl) GenerateAccessToken(user *model.User) (string, error)
 	claims := model.JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.JWTIssuer,
-			Subject:   user.ID,
+			Subject:   user.ID.String(),
 			Audience:  jwt.ClaimStrings{s.config.JWTAudience},
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.AccessTokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        uuid.New().String(),
 		},
-		TenantID: user.TenantID,
+		TenantID: user.TenantID.String(),
 		Roles:    roles,
 		Scopes:   generateScopes(roles), // 根据角色生成权限范围
 	}
@@ -155,7 +156,7 @@ func (s *tokenServiceImpl) GenerateRefreshToken(user *model.User) (string, *mode
 
 	// 创建 RefreshToken 记录
 	refreshToken := &model.RefreshToken{
-		ID:        uuid.New().String(),
+		ID:        uuid.New(),
 		UserID:    user.ID,
 		TenantID:  user.TenantID,
 		TokenHash: tokenHash,
@@ -216,7 +217,7 @@ func (s *tokenServiceImpl) RevokeRefreshToken(ctx context.Context, tokenString s
 	}
 
 	// 撤销 token（不设置 replacedBy）
-	if err := s.tokenRepo.Revoke(ctx, refreshToken.ID, nil); err != nil {
+	if err := s.tokenRepo.Revoke(ctx, refreshToken.ID.String(), nil); err != nil {
 		return fmt.Errorf("撤销 token 失败: %w", err)
 	}
 
