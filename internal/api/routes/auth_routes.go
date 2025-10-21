@@ -104,6 +104,24 @@ func RegisterAuthRoutes(
 	// GET /api/v1/audit/auth - 查询审计日志（需要管理员权限）
 	mux.Handle("GET /api/v1/audit/auth",
 		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(auditHandler.HandleListAuditLogs)))))
+
+	// ========== 租户用户管理路由（需要租户管理员或平台管理员权限）==========
+	
+	// POST /api/v1/tenants/{tenantId}/users - 在租户下创建用户（需要租户管理员或平台管理员权限）
+	mux.Handle("POST /api/v1/tenants/{tenantId}/users",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantCreateUser))))
+
+	// GET /api/v1/tenants/{tenantId}/users - 列出租户用户（需要租户管理员或平台管理员权限）
+	mux.Handle("GET /api/v1/tenants/{tenantId}/users",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantListUsers))))
+
+	// PATCH /api/v1/tenants/{tenantId}/users/{userId}/status - 启用/禁用用户（需要租户管理员或平台管理员权限）
+	mux.Handle("PATCH /api/v1/tenants/{tenantId}/users/{userId}/status",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantUpdateUserStatus))))
+
+	// DELETE /api/v1/tenants/{tenantId}/users/{userId} - 删除用户（需要租户管理员或平台管理员权限）
+	mux.Handle("DELETE /api/v1/tenants/{tenantId}/users/{userId}",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantDeleteUser))))
 }
 
 // WrapAuthMiddleware 包装认证中间件，用于简化路由注册
@@ -131,11 +149,17 @@ func WrapAuthMiddleware(
 	
 	// 创建 RBAC 授权中间件工厂函数
 	rbacMiddleware = func(roles ...string) func(http.Handler) http.Handler {
-		config := middleware.RBACConfig{
-			RequiredRoles: roles,
-			RequireAll:    false,
+		// 根据角色返回相应的中间件
+		if len(roles) == 1 {
+			switch roles[0] {
+			case "system_admin":
+				return middleware.RequireSystemAdmin()
+			case "admin", "tenant_admin":
+				return middleware.RequireTenantAdmin()
+			}
 		}
-		return middleware.RBACAuthorizer(config)
+		// 默认返回租户管理员中间件
+		return middleware.RequireTenantAdmin()
 	}
 
 	return

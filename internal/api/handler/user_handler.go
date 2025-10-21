@@ -575,3 +575,394 @@ func (h *UserHandler) writePaginationResponse(w http.ResponseWriter, data []*mod
 	resp := response.Pagination(data, pageNo, pageSize, total)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
+
+// ========== 租户管理 API 方法 ==========
+
+// HandleTenantCreateUser 处理在指定租户下创建用户
+// @Summary 在租户下创建用户
+// @Description 在指定租户下创建新用户（需要租户管理员或平台管理员权限）
+// @Tags 租户用户管理
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param tenantId path string true "租户ID"
+// @Param request body CreateUserRequest true "创建用户请求"
+// @Success 201 {object} model.UserDataResponse "创建成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 403 {object} model.ErrorResponse "权限不足"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /tenants/{tenantId}/users [post]
+func (h *UserHandler) HandleTenantCreateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// 1. 从路径参数中提取租户ID
+	tenantID := r.PathValue("tenantId")
+	if tenantID == "" {
+		h.logger.Warn("租户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		return
+	}
+
+	// 2. 验证权限：租户管理员或平台管理员
+	if !h.canManageTenant(ctx, tenantID) {
+		h.logger.Warn("权限不足：无法在该租户下创建用户", logger.Fields{
+			"tenantId": tenantID,
+		})
+		h.writeErrorResponse(w, errors.NewForbiddenError("权限不足：无法在该租户下创建用户"))
+		return
+	}
+
+	// 3. 解析请求参数
+	var req auth.CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("解析创建用户请求参数失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	// 4. 设置租户ID（使用路径参数中的租户ID）
+	req.TenantID = tenantID
+
+	// 5. 验证请求参数
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.logger.Warn("创建用户请求参数验证失败", logger.Fields{"errors": validationErrors})
+		h.writeValidationErrorResponse(w, validationErrors)
+		return
+	}
+
+	// 6. 记录请求日志
+	h.logger.Info("收到在租户下创建用户请求", logger.Fields{
+		"tenantId": req.TenantID,
+		"email":    req.Email,
+	})
+
+	// 7. 调用服务层创建用户
+	user, err := h.userService.Create(ctx, req)
+	if err != nil {
+		h.logger.Error("创建用户失败", logger.Fields{
+			"error":    err,
+			"tenantId": req.TenantID,
+			"email":    req.Email,
+		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			h.writeErrorResponse(w, appErr)
+		} else {
+			h.writeErrorResponse(w, errors.NewInternalError(err))
+		}
+		return
+	}
+
+	// 8. 记录响应日志
+	h.logger.Info("创建用户成功", logger.Fields{
+		"userId":   user.ID,
+		"tenantId": user.TenantID,
+		"email":    user.Email,
+	})
+
+	// 9. 返回成功响应（HTTP 201 Created）
+	resp := response.SuccessWithMessage("创建用户成功", user)
+	h.writeJSONResponse(w, http.StatusCreated, resp)
+}
+
+// HandleTenantListUsers 处理获取指定租户下的用户列表
+// @Summary 获取租户用户列表
+// @Description 获取指定租户下的用户列表，支持分页（需要租户管理员或平台管理员权限）
+// @Tags 租户用户管理
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param tenantId path string true "租户ID"
+// @Param pageNo query int true "页码" minimum(1) default(1)
+// @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(20)
+// @Success 200 {object} model.UserListResponse "获取成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 403 {object} model.ErrorResponse "权限不足"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /tenants/{tenantId}/users [get]
+func (h *UserHandler) HandleTenantListUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// 1. 从路径参数中提取租户ID
+	tenantID := r.PathValue("tenantId")
+	if tenantID == "" {
+		h.logger.Warn("租户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		return
+	}
+
+	// 2. 验证权限：租户管理员或平台管理员
+	if !h.canManageTenant(ctx, tenantID) {
+		h.logger.Warn("权限不足：无法查看该租户的用户列表", logger.Fields{
+			"tenantId": tenantID,
+		})
+		h.writeErrorResponse(w, errors.NewForbiddenError("权限不足：无法查看该租户的用户列表"))
+		return
+	}
+
+	// 3. 解析查询参数
+	pageNo, err := h.parseIntQuery(r, "pageNo", 1)
+	if err != nil {
+		h.logger.Error("解析页码参数失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, errors.NewBadRequestError("无效的页码参数"))
+		return
+	}
+
+	pageSize, err := h.parseIntQuery(r, "pageSize", 20)
+	if err != nil {
+		h.logger.Error("解析每页大小参数失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, errors.NewBadRequestError("无效的每页大小参数"))
+		return
+	}
+
+	// 4. 记录请求日志
+	h.logger.Info("收到获取租户用户列表请求", logger.Fields{
+		"tenantId": tenantID,
+		"pageNo":   pageNo,
+		"pageSize": pageSize,
+	})
+
+	// 5. 调用服务层获取用户列表
+	users, total, err := h.userService.List(ctx, tenantID, pageNo, pageSize)
+	if err != nil {
+		h.logger.Error("获取用户列表失败", logger.Fields{
+			"error":    err,
+			"tenantId": tenantID,
+		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			h.writeErrorResponse(w, appErr)
+		} else {
+			h.writeErrorResponse(w, errors.NewInternalError(err))
+		}
+		return
+	}
+
+	// 6. 记录响应日志
+	h.logger.Info("获取用户列表成功", logger.Fields{
+		"tenantId": tenantID,
+		"count":    len(users),
+		"total":    total,
+	})
+
+	// 7. 返回分页响应
+	h.writePaginationResponse(w, users, pageNo, pageSize, int(total))
+}
+
+// UpdateUserStatusRequest 更新用户状态请求
+type UpdateUserStatusRequest struct {
+	IsActive bool `json:"isActive" validate:"required" example:"true"`
+}
+
+// HandleTenantUpdateUserStatus 处理更新指定租户下用户的状态
+// @Summary 更新用户状态
+// @Description 启用或禁用指定租户下的用户（需要租户管理员或平台管理员权限）
+// @Tags 租户用户管理
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param tenantId path string true "租户ID"
+// @Param userId path string true "用户ID"
+// @Param request body UpdateUserStatusRequest true "更新用户状态请求"
+// @Success 200 {object} model.UserDataResponse "更新成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 403 {object} model.ErrorResponse "权限不足"
+// @Failure 404 {object} model.ErrorResponse "用户不存在"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /tenants/{tenantId}/users/{userId}/status [patch]
+func (h *UserHandler) HandleTenantUpdateUserStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// 1. 从路径参数中提取租户ID和用户ID
+	tenantID := r.PathValue("tenantId")
+	if tenantID == "" {
+		h.logger.Warn("租户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		return
+	}
+
+	userID := r.PathValue("userId")
+	if userID == "" {
+		h.logger.Warn("用户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		return
+	}
+
+	// 2. 验证权限：租户管理员或平台管理员
+	if !h.canManageTenant(ctx, tenantID) {
+		h.logger.Warn("权限不足：无法修改该租户下的用户", logger.Fields{
+			"tenantId": tenantID,
+			"userId":   userID,
+		})
+		h.writeErrorResponse(w, errors.NewForbiddenError("权限不足：无法修改该租户下的用户"))
+		return
+	}
+
+	// 3. 解析请求参数
+	var req UpdateUserStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("解析更新用户状态请求参数失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	// 4. 验证请求参数
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.logger.Warn("更新用户状态请求参数验证失败", logger.Fields{"errors": validationErrors})
+		h.writeValidationErrorResponse(w, validationErrors)
+		return
+	}
+
+	// 5. 记录请求日志
+	h.logger.Info("收到更新用户状态请求", logger.Fields{
+		"tenantId": tenantID,
+		"userId":   userID,
+		"isActive": req.IsActive,
+	})
+
+	// 6. 构建更新请求
+	updateReq := auth.UpdateUserRequest{
+		IsActive: &req.IsActive,
+	}
+
+	// 7. 调用服务层更新用户
+	user, err := h.userService.Update(ctx, tenantID, userID, updateReq)
+	if err != nil {
+		h.logger.Error("更新用户状态失败", logger.Fields{
+			"error":    err,
+			"tenantId": tenantID,
+			"userId":   userID,
+		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			h.writeErrorResponse(w, appErr)
+		} else {
+			h.writeErrorResponse(w, errors.NewInternalError(err))
+		}
+		return
+	}
+
+	// 8. 记录响应日志
+	h.logger.Info("更新用户状态成功", logger.Fields{
+		"tenantId": tenantID,
+		"userId":   userID,
+		"isActive": user.IsActive,
+	})
+
+	// 9. 返回成功响应
+	resp := response.SuccessWithMessage("更新用户状态成功", user)
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// HandleTenantDeleteUser 处理删除指定租户下的用户
+// @Summary 删除用户
+// @Description 软删除指定租户下的用户（需要租户管理员或平台管理员权限）
+// @Tags 租户用户管理
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param tenantId path string true "租户ID"
+// @Param userId path string true "用户ID"
+// @Success 200 {object} model.AnyDataResponse "删除成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 403 {object} model.ErrorResponse "权限不足"
+// @Failure 404 {object} model.ErrorResponse "用户不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /tenants/{tenantId}/users/{userId} [delete]
+func (h *UserHandler) HandleTenantDeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// 1. 从路径参数中提取租户ID和用户ID
+	tenantID := r.PathValue("tenantId")
+	if tenantID == "" {
+		h.logger.Warn("租户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		return
+	}
+
+	userID := r.PathValue("userId")
+	if userID == "" {
+		h.logger.Warn("用户ID为空")
+		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		return
+	}
+
+	// 2. 验证权限：租户管理员或平台管理员
+	if !h.canManageTenant(ctx, tenantID) {
+		h.logger.Warn("权限不足：无法删除该租户下的用户", logger.Fields{
+			"tenantId": tenantID,
+			"userId":   userID,
+		})
+		h.writeErrorResponse(w, errors.NewForbiddenError("权限不足：无法删除该租户下的用户"))
+		return
+	}
+
+	// 3. 记录请求日志
+	h.logger.Info("收到删除用户请求", logger.Fields{
+		"tenantId": tenantID,
+		"userId":   userID,
+	})
+
+	// 4. 调用服务层删除用户
+	err := h.userService.Delete(ctx, tenantID, userID)
+	if err != nil {
+		h.logger.Error("删除用户失败", logger.Fields{
+			"error":    err,
+			"tenantId": tenantID,
+			"userId":   userID,
+		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			h.writeErrorResponse(w, appErr)
+		} else {
+			h.writeErrorResponse(w, errors.NewInternalError(err))
+		}
+		return
+	}
+
+	// 5. 记录响应日志
+	h.logger.Info("删除用户成功", logger.Fields{
+		"tenantId": tenantID,
+		"userId":   userID,
+	})
+
+	// 6. 返回成功响应
+	emptyData := struct{}{}
+	resp := response.SuccessWithMessage("删除用户成功", &emptyData)
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// canManageTenant 检查当前用户是否有权限管理指定租户
+// 平台管理员可以管理所有租户，租户管理员只能管理自己的租户
+func (h *UserHandler) canManageTenant(ctx context.Context, targetTenantID string) bool {
+	// 从上下文获取角色信息
+	roles, ok := ctx.Value("roles").([]string)
+	if !ok {
+		return false
+	}
+
+	// 检查是否为平台管理员
+	for _, role := range roles {
+		if role == model.RoleSystemAdmin {
+			return true
+		}
+	}
+
+	// 检查是否为租户管理员，并且租户ID匹配
+	currentTenantID, ok := ctx.Value("tenant_id").(string)
+	if !ok {
+		return false
+	}
+
+	// 租户管理员只能管理自己的租户
+	for _, role := range roles {
+		if role == model.RoleTenantAdmin && currentTenantID == targetTenantID {
+			return true
+		}
+	}
+
+	return false
+}

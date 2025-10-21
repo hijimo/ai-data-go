@@ -1,7 +1,9 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"errors"
+	"math/big"
 	"regexp"
 	"unicode"
 
@@ -249,4 +251,91 @@ func ValidatePassword(password string) error {
 	}
 
 	return nil
+}
+
+// GenerateSecurePassword 生成安全的随机密码
+// 参数:
+//   - length: 密码长度（至少为 8）
+//
+// 返回:
+//   - string: 生成的密码
+//   - error: 错误信息
+func GenerateSecurePassword(length int) (string, error) {
+	if length < MinPasswordLength {
+		length = MinPasswordLength
+	}
+	if length > MaxPasswordLength {
+		length = MaxPasswordLength
+	}
+
+	const (
+		lowercase = "abcdefghijklmnopqrstuvwxyz"
+		uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		digits    = "0123456789"
+		special   = "!@#$%^&*"
+	)
+
+	all := lowercase + uppercase + digits + special
+
+	// 确保至少包含每种字符类型
+	password := make([]byte, 0, length)
+	
+	lowerIdx, err := randomInt(len(lowercase))
+	if err != nil {
+		return "", err
+	}
+	password = append(password, lowercase[lowerIdx])
+	
+	upperIdx, err := randomInt(len(uppercase))
+	if err != nil {
+		return "", err
+	}
+	password = append(password, uppercase[upperIdx])
+	
+	digitIdx, err := randomInt(len(digits))
+	if err != nil {
+		return "", err
+	}
+	password = append(password, digits[digitIdx])
+	
+	specialIdx, err := randomInt(len(special))
+	if err != nil {
+		return "", err
+	}
+	password = append(password, special[specialIdx])
+
+	// 填充剩余长度
+	for i := 4; i < length; i++ {
+		idx, err := randomInt(len(all))
+		if err != nil {
+			return "", err
+		}
+		password = append(password, all[idx])
+	}
+
+	// 随机打乱
+	for i := len(password) - 1; i > 0; i-- {
+		j, err := randomInt(i + 1)
+		if err != nil {
+			return "", err
+		}
+		password[i], password[j] = password[j], password[i]
+	}
+
+	return string(password), nil
+}
+
+// randomInt 生成 [0, n) 范围内的随机整数
+// 使用 crypto/rand 确保密码学安全
+func randomInt(n int) (int, error) {
+	if n <= 0 {
+		return 0, errors.New("n must be positive")
+	}
+	
+	nBig, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
+	if err != nil {
+		return 0, err
+	}
+	
+	return int(nBig.Int64()), nil
 }

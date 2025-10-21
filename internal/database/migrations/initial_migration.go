@@ -133,18 +133,26 @@ func (m *InitialMigration) createTenantsTable(tx *gorm.DB) error {
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		name VARCHAR(255) NOT NULL,
 		domain VARCHAR(255),
+		type VARCHAR(32) NOT NULL DEFAULT 'tenant',
 		metadata JSONB,
 		status BOOLEAN DEFAULT true,
 		created_at TIMESTAMP WITH TIME ZONE,
 		updated_at TIMESTAMP WITH TIME ZONE,
 		created_by UUID,
-		is_deleted BOOLEAN DEFAULT false
+		is_deleted BOOLEAN DEFAULT false,
+		CONSTRAINT tenants_type_check CHECK (type IN ('system', 'tenant'))
 	);
 
 	-- 创建索引
 	CREATE INDEX IF NOT EXISTS idx_tenants_domain ON tenants(domain) WHERE domain IS NOT NULL;
 	CREATE INDEX IF NOT EXISTS idx_tenants_status ON tenants(status) WHERE NOT is_deleted;
 	CREATE INDEX IF NOT EXISTS idx_tenants_created_at ON tenants(created_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_tenants_type ON tenants(type);
+	
+	-- 创建唯一约束确保只能有一个平台租户
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_system_tenant 
+	ON tenants(type) 
+	WHERE type = 'system' AND is_deleted = false;
 
 	-- 添加表注释
 	COMMENT ON TABLE tenants IS '租户表，存储多租户系统中的租户信息';
@@ -153,6 +161,7 @@ func (m *InitialMigration) createTenantsTable(tx *gorm.DB) error {
 	COMMENT ON COLUMN tenants.id IS '租户唯一标识符（UUID）';
 	COMMENT ON COLUMN tenants.name IS '租户名称';
 	COMMENT ON COLUMN tenants.domain IS '租户域名，用于子域名识别';
+	COMMENT ON COLUMN tenants.type IS '租户类型：system=平台租户，tenant=业务租户';
 	COMMENT ON COLUMN tenants.metadata IS '租户元数据（JSONB格式）';
 	COMMENT ON COLUMN tenants.status IS '租户状态：true=启用，false=禁用';
 	COMMENT ON COLUMN tenants.created_at IS '创建时间';

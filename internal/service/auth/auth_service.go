@@ -103,6 +103,7 @@ type AuthService interface {
 // authService 认证服务实现
 type authService struct {
 	userRepo         repository.UserRepository         // 用户数据访问
+	tenantRepo       repository.TenantRepository       // 租户数据访问
 	tokenService     TokenService                      // Token 管理服务
 	auditRepo        repository.AuditRepository        // 审计日志数据访问
 	refreshTokenRepo repository.RefreshTokenRepository // 刷新令牌数据访问
@@ -115,6 +116,7 @@ type authService struct {
 // NewAuthService 创建认证服务实例
 // 参数：
 //   - userRepo: 用户数据访问接口
+//   - tenantRepo: 租户数据访问接口
 //   - tokenService: Token 管理服务接口
 //   - auditRepo: 审计日志数据访问接口
 //   - refreshTokenRepo: 刷新令牌数据访问接口
@@ -127,6 +129,7 @@ type authService struct {
 //   - AuthService: 认证服务实例
 func NewAuthService(
 	userRepo repository.UserRepository,
+	tenantRepo repository.TenantRepository,
 	tokenService TokenService,
 	auditRepo repository.AuditRepository,
 	refreshTokenRepo repository.RefreshTokenRepository,
@@ -152,6 +155,7 @@ func NewAuthService(
 
 	return &authService{
 		userRepo:         userRepo,
+		tenantRepo:       tenantRepo,
 		tokenService:     tokenService,
 		auditRepo:        auditRepo,
 		refreshTokenRepo: refreshTokenRepo,
@@ -215,8 +219,27 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 		return nil, errors.New("邮箱或密码错误")
 	}
 
-	// 2. 检查账户是否被锁定
+	// 2. 检查租户状态
 	tenantIDStr := user.TenantID.String()
+	tenant, err := s.tenantRepo.GetByID(ctx, tenantIDStr)
+	if err != nil {
+		s.createAuditLog(ctx, &user.TenantID, &user.ID, "failed_login", map[string]interface{}{
+			"email":  req.Email,
+			"reason": "tenant_not_found",
+		})
+		return nil, errors.New("租户不存在")
+	}
+
+	// 检查租户是否被禁用
+	if !tenant.Status {
+		s.createAuditLog(ctx, &user.TenantID, &user.ID, "failed_login", map[string]interface{}{
+			"email":  req.Email,
+			"reason": "tenant_disabled",
+		})
+		return nil, errors.New("租户已被禁用，无法登录")
+	}
+
+	// 3. 检查账户是否被锁定
 	userIDStr := user.ID.String()
 
 	isLocked, err := s.userRepo.IsAccountLocked(ctx, tenantIDStr, userIDStr)
@@ -231,7 +254,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 		return nil, errors.New("账户已被锁定，请稍后再试")
 	}
 
-	// 3. 验证用户状态
+	// 4. 验证用户激活状态
 	if !user.IsActive {
 		s.createAuditLog(ctx, &user.TenantID, &user.ID, "failed_login", map[string]interface{}{
 			"email":  req.Email,
@@ -240,7 +263,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 		return nil, errors.New("用户账户未激活")
 	}
 
-	// 4. 验证密码
+	// 5. 验证密码
 	if err := crypto.VerifyPassword(user.PasswordHash, req.Password); err != nil {
 		// 增加登录失败次数
 		if incrementErr := s.userRepo.IncrementFailedLoginAttempts(ctx, tenantIDStr, userIDStr); incrementErr != nil {
@@ -280,36 +303,36 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 		return nil, errors.New("邮箱或密码错误")
 	}
 
-	// 5. 密码验证成功，重置登录失败次数
+	// 6. 密码验证成功，重置登录失败次数
 	if err := s.userRepo.ResetFailedLoginAttempts(ctx, tenantIDStr, userIDStr); err != nil {
 		// 记录错误但不影响登录流程
 		fmt.Printf("重置登录失败次数失败: %v\n", err)
 	}
 
-	// 6. 生成 Access Token
+	// 7. 生成 Access Token
 	accessToken, err := s.tokenService.GenerateAccessToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成访问令牌失败: %w", err)
 	}
 
-	// 7. 生成 Refresh Token
+	// 8. 生成 Refresh Token
 	refreshToken, _, err := s.tokenService.GenerateRefreshToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成刷新令牌失败: %w", err)
 	}
 
-	// 8. 更新最后登录时间
+	// 9. 更新最后登录时间
 	if err := s.userRepo.UpdateLastLogin(ctx, tenantIDStr, userIDStr); err != nil {
 		// 记录错误但不影响登录流程
 		fmt.Printf("更新最后登录时间失败: %v\n", err)
 	}
 
-	// 9. 记录登录成功审计日志
+	// 10. 记录登录成功审计日志
 	s.createAuditLog(ctx, &user.TenantID, &user.ID, "login", map[string]interface{}{
 		"email": req.Email,
 	})
 
-	// 10. 返回登录响应
+	// 11. 返回登录响应
 	return &LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -333,37 +356,48 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*L
 		return nil, fmt.Errorf("用户不存在: %w", err)
 	}
 
-	// 3. 验证用户状态
+	// 3. 检查租户状态
+	tenant, err := s.tenantRepo.GetByID(ctx, token.TenantID.String())
+	if err != nil {
+		return nil, fmt.Errorf("租户不存在: %w", err)
+	}
+
+	// 检查租户是否被禁用
+	if !tenant.Status {
+		return nil, errors.New("租户已被禁用")
+	}
+
+	// 4. 验证用户激活状态
 	if !user.IsActive {
 		return nil, errors.New("用户账户未激活")
 	}
 
-	// 4. 生成新的 Access Token
+	// 5. 生成新的 Access Token
 	newAccessToken, err := s.tokenService.GenerateAccessToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成访问令牌失败: %w", err)
 	}
 
-	// 5. 生成新的 Refresh Token
+	// 6. 生成新的 Refresh Token
 	newRefreshToken, newTokenRecord, err := s.tokenService.GenerateRefreshToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成刷新令牌失败: %w", err)
 	}
 
-	// 6. 撤销旧的 Refresh Token 并记录 replaced_by
+	// 7. 撤销旧的 Refresh Token 并记录 replaced_by
 	replacedByID := newTokenRecord.ID.String()
 	if err := s.refreshTokenRepo.Revoke(ctx, token.ID.String(), &replacedByID); err != nil {
 		// 记录错误但不影响刷新流程
 		fmt.Printf("撤销旧令牌失败: %v\n", err)
 	}
 
-	// 7. 记录刷新审计日志
+	// 8. 记录刷新审计日志
 	s.createAuditLog(ctx, &user.TenantID, &user.ID, "refresh", map[string]interface{}{
 		"old_token_id": token.ID.String(),
 		"new_token_id": newTokenRecord.ID.String(),
 	})
 
-	// 8. 返回新的 tokens
+	// 9. 返回新的 tokens
 	return &LoginResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,

@@ -327,6 +327,26 @@ type TenantDataResponse struct {
 	Data *Tenant `json:"data"`
 }
 
+// CreateTenantWithAdminData 创建租户并自动生成管理员的响应数据（用于 Swagger）
+type CreateTenantWithAdminData struct {
+	// 租户信息
+	Tenant *Tenant `json:"tenant"`
+	// 管理员用户信息
+	AdminUser *User `json:"adminUser"`
+	// 管理员初始密码（仅在创建时返回）
+	AdminPassword string `json:"adminPassword" example:"Xy9#mK2$pL5@qR8!"`
+}
+
+// CreateTenantWithAdminResponse 创建租户并自动生成管理员的响应（用于 Swagger）
+type CreateTenantWithAdminResponse struct {
+	// 响应代码
+	Code int `json:"code" example:"200"`
+	// 响应信息
+	Message string `json:"message" example:"租户创建成功"`
+	// 响应数据
+	Data *CreateTenantWithAdminData `json:"data"`
+}
+
 // LoginDataResponse 登录数据响应（用于 Swagger）
 type LoginDataResponse struct {
 	// 响应代码

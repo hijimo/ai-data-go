@@ -20,6 +20,9 @@ type TenantRepository interface {
 	// GetByDomain 根据域名获取租户
 	GetByDomain(ctx context.Context, domain string) (*model.Tenant, error)
 
+	// GetByType 根据类型获取租户列表
+	GetByType(ctx context.Context, tenantType string) ([]*model.Tenant, error)
+
 	// Update 更新租户
 	Update(ctx context.Context, tenant *model.Tenant) error
 
@@ -28,6 +31,9 @@ type TenantRepository interface {
 
 	// List 列出租户（支持分页）
 	List(ctx context.Context, page, pageSize int) ([]*model.Tenant, int64, error)
+
+	// ListByType 根据类型列出租户（支持分页）
+	ListByType(ctx context.Context, tenantType string, page, pageSize int) ([]*model.Tenant, int64, error)
 }
 
 // tenantRepository 租户数据访问实现
@@ -46,6 +52,23 @@ func NewTenantRepository(db *gorm.DB) TenantRepository {
 func (r *tenantRepository) Create(ctx context.Context, tenant *model.Tenant) error {
 	if tenant == nil {
 		return errors.New("tenant cannot be nil")
+	}
+
+	// 如果是平台租户，检查是否已存在
+	if tenant.Type == model.TenantTypeSystem {
+		var count int64
+		err := r.db.WithContext(ctx).
+			Model(&model.Tenant{}).
+			Where("type = ? AND is_deleted = ?", model.TenantTypeSystem, false).
+			Count(&count).Error
+		
+		if err != nil {
+			return err
+		}
+		
+		if count > 0 {
+			return errors.New("platform tenant already exists")
+		}
 	}
 
 	return r.db.WithContext(ctx).Create(tenant).Error
@@ -89,6 +112,31 @@ func (r *tenantRepository) GetByDomain(ctx context.Context, domain string) (*mod
 	}
 
 	return &tenant, nil
+}
+
+// GetByType 根据类型获取租户列表
+func (r *tenantRepository) GetByType(ctx context.Context, tenantType string) ([]*model.Tenant, error) {
+	if tenantType == "" {
+		return nil, errors.New("tenant type cannot be empty")
+	}
+
+	// 验证租户类型
+	if tenantType != model.TenantTypeSystem && tenantType != model.TenantTypeBusiness {
+		return nil, errors.New("invalid tenant type")
+	}
+
+	var tenants []*model.Tenant
+
+	err := r.db.WithContext(ctx).
+		Where("type = ? AND is_deleted = ?", tenantType, false).
+		Order("created_at DESC").
+		Find(&tenants).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tenants, nil
 }
 
 // Update 更新租户
@@ -162,6 +210,51 @@ func (r *tenantRepository) List(ctx context.Context, page, pageSize int) ([]*mod
 	// 查询数据
 	if err := r.db.WithContext(ctx).
 		Where("is_deleted = ?", false).
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&tenants).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tenants, total, nil
+}
+
+// ListByType 根据类型列出租户（支持分页）
+func (r *tenantRepository) ListByType(ctx context.Context, tenantType string, page, pageSize int) ([]*model.Tenant, int64, error) {
+	// 参数验证
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	// 验证租户类型
+	if tenantType != model.TenantTypeSystem && tenantType != model.TenantTypeBusiness {
+		return nil, 0, errors.New("invalid tenant type")
+	}
+
+	var tenants []*model.Tenant
+	var total int64
+
+	// 计算偏移量
+	offset := (page - 1) * pageSize
+
+	// 查询总数
+	if err := r.db.WithContext(ctx).
+		Model(&model.Tenant{}).
+		Where("type = ? AND is_deleted = ?", tenantType, false).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 查询数据
+	if err := r.db.WithContext(ctx).
+		Where("type = ? AND is_deleted = ?", tenantType, false).
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

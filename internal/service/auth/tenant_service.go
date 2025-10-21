@@ -7,6 +7,7 @@ import (
 
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
+	"genkit-ai-service/pkg/crypto"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -26,11 +27,23 @@ type TenantService interface {
 	// Delete 删除租户
 	Delete(ctx context.Context, id string) error
 
-	// List 列出租户
-	List(ctx context.Context, page, pageSize int) ([]*model.Tenant, int64, error)
+	// List 列出租户（支持按类型过滤）
+	List(ctx context.Context, page, pageSize int, tenantType ...string) ([]*model.Tenant, int64, error)
 
 	// GetByDomain 根据域名获取租户
 	GetByDomain(ctx context.Context, domain string) (*model.Tenant, error)
+
+	// CreateWithAdmin 创建租户并自动生成管理员账户
+	CreateWithAdmin(ctx context.Context, req CreateTenantWithAdminRequest) (*CreateTenantWithAdminResponse, error)
+
+	// GetByType 根据类型获取租户列表
+	GetByType(ctx context.Context, tenantType string) ([]*model.Tenant, error)
+
+	// EnableTenant 启用租户
+	EnableTenant(ctx context.Context, id string) error
+
+	// DisableTenant 禁用租户
+	DisableTenant(ctx context.Context, id string) error
 }
 
 // CreateTenantRequest 创建租户请求
@@ -39,10 +52,36 @@ type CreateTenantRequest struct {
 	Name string `json:"name" validate:"required,min=1,max=255"`
 	// 租户域名
 	Domain string `json:"domain" validate:"omitempty,max=255"`
+	// 租户类型（system 或 tenant）
+	Type string `json:"type" validate:"omitempty,oneof=system tenant"`
 	// 租户元数据
 	Metadata map[string]interface{} `json:"metadata"`
 	// 创建者用户ID
 	CreatedBy *string `json:"createdBy"`
+}
+
+// CreateTenantWithAdminRequest 创建租户并自动生成管理员请求
+type CreateTenantWithAdminRequest struct {
+	// 租户名称
+	TenantName string `json:"tenantName" validate:"required,min=1,max=255"`
+	// 租户域名
+	TenantDomain string `json:"tenantDomain" validate:"required,max=255"`
+	// 租户元数据
+	TenantMetadata map[string]interface{} `json:"tenantMetadata"`
+	// 管理员邮箱（可选，默认为 admin@{domain}）
+	AdminEmail string `json:"adminEmail" validate:"omitempty,email"`
+	// 管理员显示名称（可选）
+	AdminDisplayName string `json:"adminDisplayName" validate:"omitempty,max=255"`
+}
+
+// CreateTenantWithAdminResponse 创建租户并自动生成管理员响应
+type CreateTenantWithAdminResponse struct {
+	// 租户信息
+	Tenant *model.Tenant `json:"tenant"`
+	// 管理员用户信息
+	AdminUser *model.User `json:"adminUser"`
+	// 管理员初始密码
+	AdminPassword string `json:"adminPassword"`
 }
 
 // UpdateTenantRequest 更新租户请求
@@ -60,12 +99,16 @@ type UpdateTenantRequest struct {
 // tenantService 租户服务实现
 type tenantService struct {
 	tenantRepo repository.TenantRepository
+	userRepo   repository.UserRepository
+	auditRepo  repository.AuditRepository
 }
 
 // NewTenantService 创建租户服务实例
-func NewTenantService(tenantRepo repository.TenantRepository) TenantService {
+func NewTenantService(tenantRepo repository.TenantRepository, userRepo repository.UserRepository, auditRepo repository.AuditRepository) TenantService {
 	return &tenantService{
 		tenantRepo: tenantRepo,
+		userRepo:   userRepo,
+		auditRepo:  auditRepo,
 	}
 }
 
@@ -84,6 +127,20 @@ func (s *tenantService) Create(ctx context.Context, req CreateTenantRequest) (*m
 		}
 	}
 
+	// 设置租户类型，默认为业务租户
+	tenantType := req.Type
+	if tenantType == "" {
+		tenantType = model.TenantTypeBusiness
+	}
+
+	// 如果是平台租户，验证唯一性
+	if tenantType == model.TenantTypeSystem {
+		systemTenants, err := s.tenantRepo.GetByType(ctx, model.TenantTypeSystem)
+		if err == nil && len(systemTenants) > 0 {
+			return nil, errors.New("平台租户已存在，不能创建多个")
+		}
+	}
+
 	// 创建租户对象
 	var createdByUUID *uuid.UUID
 	if req.CreatedBy != nil {
@@ -98,6 +155,7 @@ func (s *tenantService) Create(ctx context.Context, req CreateTenantRequest) (*m
 		ID:        uuid.New(),
 		Name:      req.Name,
 		Domain:    req.Domain,
+		Type:      tenantType,
 		Status:    true, // 默认启用
 		CreatedBy: createdByUUID,
 		IsDeleted: false,
@@ -154,6 +212,10 @@ func (s *tenantService) Update(ctx context.Context, id string, req UpdateTenantR
 		return nil, fmt.Errorf("租户不存在: %w", err)
 	}
 
+	// 防止修改平台租户的类型
+	// 注意：UpdateTenantRequest 中没有 Type 字段，所以类型不会被修改
+	// 这里只是作为额外的保护措施
+
 	// 更新字段
 	if req.Name != nil {
 		if *req.Name == "" {
@@ -201,9 +263,14 @@ func (s *tenantService) Delete(ctx context.Context, id string) error {
 	}
 
 	// 验证租户是否存在
-	_, err := s.tenantRepo.GetByID(ctx, id)
+	tenant, err := s.tenantRepo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("租户不存在: %w", err)
+	}
+
+	// 检查是否为平台租户，如果是则拒绝删除
+	if tenant.Type == model.TenantTypeSystem {
+		return errors.New("不允许删除平台租户")
 	}
 
 	// 执行软删除
@@ -211,11 +278,19 @@ func (s *tenantService) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("删除租户失败: %w", err)
 	}
 
+	// 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &tenant.ID,
+		Event:    model.AuditEventTenantDeleted,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"tenantId":"%s","tenantName":"%s"}`, tenant.ID, tenant.Name))),
+	}
+	_ = s.auditRepo.Create(ctx, auditLog)
+
 	return nil
 }
 
-// List 列出租户
-func (s *tenantService) List(ctx context.Context, page, pageSize int) ([]*model.Tenant, int64, error) {
+// List 列出租户（支持按类型过滤）
+func (s *tenantService) List(ctx context.Context, page, pageSize int, tenantType ...string) ([]*model.Tenant, int64, error) {
 	// 参数验证
 	if page < 1 {
 		page = 1
@@ -227,7 +302,22 @@ func (s *tenantService) List(ctx context.Context, page, pageSize int) ([]*model.
 		pageSize = 100
 	}
 
-	// 从数据库获取列表
+	// 如果指定了租户类型，使用类型过滤
+	if len(tenantType) > 0 && tenantType[0] != "" {
+		// 验证租户类型
+		if tenantType[0] != model.TenantTypeSystem && tenantType[0] != model.TenantTypeBusiness {
+			return nil, 0, fmt.Errorf("无效的租户类型: %s", tenantType[0])
+		}
+
+		// 从数据库获取指定类型的列表
+		tenants, total, err := s.tenantRepo.ListByType(ctx, tenantType[0], page, pageSize)
+		if err != nil {
+			return nil, 0, fmt.Errorf("获取租户列表失败: %w", err)
+		}
+		return tenants, total, nil
+	}
+
+	// 从数据库获取所有租户列表
 	tenants, total, err := s.tenantRepo.List(ctx, page, pageSize)
 	if err != nil {
 		return nil, 0, fmt.Errorf("获取租户列表失败: %w", err)
@@ -254,4 +344,202 @@ func (s *tenantService) GetByDomain(ctx context.Context, domain string) (*model.
 	}
 
 	return tenant, nil
+}
+
+// CreateWithAdmin 创建租户并自动生成管理员账户
+func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWithAdminRequest) (*CreateTenantWithAdminResponse, error) {
+	// 1. 验证请求参数
+	if req.TenantName == "" {
+		return nil, errors.New("租户名称不能为空")
+	}
+	if req.TenantDomain == "" {
+		return nil, errors.New("租户域名不能为空")
+	}
+
+	// 2. 检查域名是否已存在
+	existing, err := s.tenantRepo.GetByDomain(ctx, req.TenantDomain)
+	if err == nil && existing != nil {
+		return nil, fmt.Errorf("域名 %s 已被使用", req.TenantDomain)
+	}
+
+	// 3. 创建业务租户（type = "tenant"）
+	tenant := &model.Tenant{
+		ID:        uuid.New(),
+		Name:      req.TenantName,
+		Domain:    req.TenantDomain,
+		Type:      model.TenantTypeBusiness, // 业务租户
+		Status:    true,                     // 默认启用
+		IsDeleted: false,
+	}
+
+	// 设置元数据
+	if req.TenantMetadata != nil {
+		metadata, err := datatypes.NewJSONType(req.TenantMetadata).MarshalJSON()
+		if err != nil {
+			return nil, fmt.Errorf("元数据格式错误: %w", err)
+		}
+		tenant.Metadata = metadata
+	}
+
+	// 保存租户到数据库
+	if err := s.tenantRepo.Create(ctx, tenant); err != nil {
+		return nil, fmt.Errorf("创建租户失败: %w", err)
+	}
+
+	// 4. 生成租户管理员邮箱
+	adminEmail := req.AdminEmail
+	if adminEmail == "" {
+		adminEmail = fmt.Sprintf("admin@%s", req.TenantDomain)
+	}
+
+	// 5. 生成 16 位随机强密码
+	adminPassword, err := crypto.GenerateSecurePassword(16)
+	if err != nil {
+		// 如果生成失败，尝试回滚租户创建
+		_ = s.tenantRepo.Delete(ctx, tenant.ID.String())
+		return nil, fmt.Errorf("生成管理员密码失败: %w", err)
+	}
+
+	// 6. 对密码进行哈希
+	passwordHash, err := crypto.HashPassword(adminPassword)
+	if err != nil {
+		// 回滚租户创建
+		_ = s.tenantRepo.Delete(ctx, tenant.ID.String())
+		return nil, fmt.Errorf("密码哈希失败: %w", err)
+	}
+
+	// 7. 创建租户管理员用户
+	adminDisplayName := req.AdminDisplayName
+	if adminDisplayName == "" {
+		adminDisplayName = fmt.Sprintf("%s Admin", req.TenantName)
+	}
+
+	adminUser := &model.User{
+		ID:           uuid.New(),
+		TenantID:     tenant.ID,
+		Email:        adminEmail,
+		PasswordHash: passwordHash,
+		DisplayName:  adminDisplayName,
+		IsActive:     true,
+		IsAdmin:      true,
+		IsDeleted:    false,
+	}
+
+	// 设置角色为 tenant_admin
+	rolesJSON, err := datatypes.NewJSONType([]string{model.RoleTenantAdmin}).MarshalJSON()
+	if err != nil {
+		// 回滚租户创建
+		_ = s.tenantRepo.Delete(ctx, tenant.ID.String())
+		return nil, fmt.Errorf("角色数据格式错误: %w", err)
+	}
+	adminUser.Roles = rolesJSON
+
+	// 保存管理员用户到数据库
+	if err := s.userRepo.Create(ctx, adminUser); err != nil {
+		// 回滚租户创建
+		_ = s.tenantRepo.Delete(ctx, tenant.ID.String())
+		return nil, fmt.Errorf("创建管理员用户失败: %w", err)
+	}
+
+	// 8. 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &tenant.ID,
+		Event:    model.AuditEventTenantCreated,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"tenantId":"%s","tenantName":"%s","tenantDomain":"%s"}`, tenant.ID, tenant.Name, tenant.Domain))),
+	}
+	// 尝试记录审计日志，但不因为日志失败而影响主流程
+	_ = s.auditRepo.Create(ctx, auditLog)
+
+	// 9. 返回租户信息和管理员初始密码
+	return &CreateTenantWithAdminResponse{
+		Tenant:        tenant,
+		AdminUser:     adminUser,
+		AdminPassword: adminPassword, // 返回明文密码供平台管理员传递给租户管理员
+	}, nil
+}
+
+// GetByType 根据类型获取租户列表
+func (s *tenantService) GetByType(ctx context.Context, tenantType string) ([]*model.Tenant, error) {
+	// 验证租户类型
+	if tenantType != model.TenantTypeSystem && tenantType != model.TenantTypeBusiness {
+		return nil, fmt.Errorf("无效的租户类型: %s", tenantType)
+	}
+
+	// 从数据库获取
+	tenants, err := s.tenantRepo.GetByType(ctx, tenantType)
+	if err != nil {
+		return nil, fmt.Errorf("获取租户列表失败: %w", err)
+	}
+
+	return tenants, nil
+}
+
+// EnableTenant 启用租户
+func (s *tenantService) EnableTenant(ctx context.Context, id string) error {
+	// 验证ID格式
+	if _, err := uuid.Parse(id); err != nil {
+		return errors.New("无效的租户ID格式")
+	}
+
+	// 获取现有租户
+	tenant, err := s.tenantRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("租户不存在: %w", err)
+	}
+
+	// 如果已经是启用状态，直接返回
+	if tenant.Status {
+		return nil
+	}
+
+	// 更新状态为启用
+	tenant.Status = true
+	if err := s.tenantRepo.Update(ctx, tenant); err != nil {
+		return fmt.Errorf("启用租户失败: %w", err)
+	}
+
+	// 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &tenant.ID,
+		Event:    model.AuditEventTenantEnabled,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"tenantId":"%s","tenantName":"%s"}`, tenant.ID, tenant.Name))),
+	}
+	_ = s.auditRepo.Create(ctx, auditLog)
+
+	return nil
+}
+
+// DisableTenant 禁用租户
+func (s *tenantService) DisableTenant(ctx context.Context, id string) error {
+	// 验证ID格式
+	if _, err := uuid.Parse(id); err != nil {
+		return errors.New("无效的租户ID格式")
+	}
+
+	// 获取现有租户
+	tenant, err := s.tenantRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("租户不存在: %w", err)
+	}
+
+	// 如果已经是禁用状态，直接返回
+	if !tenant.Status {
+		return nil
+	}
+
+	// 更新状态为禁用
+	tenant.Status = false
+	if err := s.tenantRepo.Update(ctx, tenant); err != nil {
+		return fmt.Errorf("禁用租户失败: %w", err)
+	}
+
+	// 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &tenant.ID,
+		Event:    model.AuditEventTenantDisabled,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"tenantId":"%s","tenantName":"%s"}`, tenant.ID, tenant.Name))),
+	}
+	_ = s.auditRepo.Create(ctx, auditLog)
+
+	return nil
 }

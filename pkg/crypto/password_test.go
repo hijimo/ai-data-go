@@ -341,6 +341,112 @@ func TestValidatePassword(t *testing.T) {
 	}
 }
 
+func TestGenerateSecurePassword(t *testing.T) {
+	tests := []struct {
+		name       string
+		length     int
+		wantMinLen int
+	}{
+		{
+			name:       "默认长度16",
+			length:     16,
+			wantMinLen: 16,
+		},
+		{
+			name:       "最小长度8",
+			length:     8,
+			wantMinLen: 8,
+		},
+		{
+			name:       "长度20",
+			length:     20,
+			wantMinLen: 20,
+		},
+		{
+			name:       "长度小于最小值应使用最小长度",
+			length:     5,
+			wantMinLen: MinPasswordLength,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			password, err := GenerateSecurePassword(tt.length)
+			if err != nil {
+				t.Errorf("GenerateSecurePassword() 错误 = %v", err)
+				return
+			}
+
+			// 验证长度
+			if len(password) < tt.wantMinLen {
+				t.Errorf("GenerateSecurePassword() 生成的密码长度 = %v, 期望至少 %v", len(password), tt.wantMinLen)
+			}
+
+			// 验证包含所有必需的字符类型
+			var (
+				hasUpper   bool
+				hasLower   bool
+				hasNumber  bool
+				hasSpecial bool
+			)
+
+			for _, char := range password {
+				switch {
+				case char >= 'A' && char <= 'Z':
+					hasUpper = true
+				case char >= 'a' && char <= 'z':
+					hasLower = true
+				case char >= '0' && char <= '9':
+					hasNumber = true
+				case strings.ContainsRune("!@#$%^&*", char):
+					hasSpecial = true
+				}
+			}
+
+			if !hasUpper {
+				t.Error("GenerateSecurePassword() 生成的密码缺少大写字母")
+			}
+			if !hasLower {
+				t.Error("GenerateSecurePassword() 生成的密码缺少小写字母")
+			}
+			if !hasNumber {
+				t.Error("GenerateSecurePassword() 生成的密码缺少数字")
+			}
+			if !hasSpecial {
+				t.Error("GenerateSecurePassword() 生成的密码缺少特殊字符")
+			}
+
+			// 验证密码强度
+			err = ValidatePasswordStrength(password)
+			if err != nil {
+				t.Errorf("GenerateSecurePassword() 生成的密码强度验证失败: %v, 密码: %s", err, password)
+			}
+		})
+	}
+}
+
+func TestGenerateSecurePassword_Uniqueness(t *testing.T) {
+	// 生成多个密码，验证它们是唯一的
+	passwords := make(map[string]bool)
+	count := 100
+
+	for i := 0; i < count; i++ {
+		password, err := GenerateSecurePassword(16)
+		if err != nil {
+			t.Fatalf("GenerateSecurePassword() 错误 = %v", err)
+		}
+
+		if passwords[password] {
+			t.Errorf("GenerateSecurePassword() 生成了重复的密码: %s", password)
+		}
+		passwords[password] = true
+	}
+
+	if len(passwords) != count {
+		t.Errorf("GenerateSecurePassword() 生成的唯一密码数量 = %v, 期望 %v", len(passwords), count)
+	}
+}
+
 // 基准测试
 func BenchmarkHashPassword(b *testing.B) {
 	password := "TestPassword123!"

@@ -73,15 +73,24 @@ type UpdateUserRequest struct {
 
 // userService 用户服务实现
 type userService struct {
-	userRepo   repository.UserRepository
-	tenantRepo repository.TenantRepository
+	userRepo         repository.UserRepository
+	tenantRepo       repository.TenantRepository
+	refreshTokenRepo repository.RefreshTokenRepository
+	auditRepo        repository.AuditRepository
 }
 
 // NewUserService 创建用户服务实例
-func NewUserService(userRepo repository.UserRepository, tenantRepo repository.TenantRepository) UserService {
+func NewUserService(
+	userRepo repository.UserRepository,
+	tenantRepo repository.TenantRepository,
+	refreshTokenRepo repository.RefreshTokenRepository,
+	auditRepo repository.AuditRepository,
+) UserService {
 	return &userService{
-		userRepo:   userRepo,
-		tenantRepo: tenantRepo,
+		userRepo:         userRepo,
+		tenantRepo:       tenantRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		auditRepo:        auditRepo,
 	}
 }
 
@@ -174,6 +183,15 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 		return nil, fmt.Errorf("创建用户失败: %w", err)
 	}
 
+	// 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &user.TenantID,
+		UserID:   &user.ID,
+		Event:    model.AuditEventUserCreated,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"userId":"%s","email":"%s","tenantId":"%s"}`, user.ID, user.Email, user.TenantID))),
+	}
+	_ = s.auditRepo.Create(ctx, auditLog)
+
 	return user, nil
 }
 
@@ -215,6 +233,9 @@ func (s *userService) Update(ctx context.Context, tenantID, userID string, req U
 	if err != nil {
 		return nil, fmt.Errorf("用户不存在: %w", err)
 	}
+
+	// 记录原始的激活状态，用于检测状态变化
+	originalIsActive := user.IsActive
 
 	// 更新字段
 	if req.Email != nil {
@@ -268,6 +289,34 @@ func (s *userService) Update(ctx context.Context, tenantID, userID string, req U
 		return nil, fmt.Errorf("更新用户失败: %w", err)
 	}
 
+	// 检测用户激活状态变化：如果用户被禁用，撤销所有 Refresh Token
+	if originalIsActive && !user.IsActive {
+		// 用户从激活变为禁用，撤销所有 Token
+		if err := s.refreshTokenRepo.RevokeAllByUser(ctx, tenantID, userID); err != nil {
+			// 记录错误但不影响更新流程
+			fmt.Printf("撤销用户 Token 失败: %v\n", err)
+		}
+
+		// 记录用户禁用审计日志
+		auditLog := &model.AuthAudit{
+			TenantID: &user.TenantID,
+			UserID:   &user.ID,
+			Event:    model.AuditEventUserDisabled,
+			Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"userId":"%s","email":"%s","tenantId":"%s"}`, user.ID, user.Email, user.TenantID))),
+		}
+		_ = s.auditRepo.Create(ctx, auditLog)
+	} else if !originalIsActive && user.IsActive {
+		// 用户从禁用变为激活
+		// 记录用户启用审计日志
+		auditLog := &model.AuthAudit{
+			TenantID: &user.TenantID,
+			UserID:   &user.ID,
+			Event:    model.AuditEventUserEnabled,
+			Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"userId":"%s","email":"%s","tenantId":"%s"}`, user.ID, user.Email, user.TenantID))),
+		}
+		_ = s.auditRepo.Create(ctx, auditLog)
+	}
+
 	return user, nil
 }
 
@@ -284,7 +333,7 @@ func (s *userService) Delete(ctx context.Context, tenantID, userID string) error
 	}
 
 	// 验证用户是否存在（自动包含租户隔离）
-	_, err := s.userRepo.GetByID(ctx, tenantID, userID)
+	user, err := s.userRepo.GetByID(ctx, tenantID, userID)
 	if err != nil {
 		return fmt.Errorf("用户不存在: %w", err)
 	}
@@ -293,6 +342,15 @@ func (s *userService) Delete(ctx context.Context, tenantID, userID string) error
 	if err := s.userRepo.Delete(ctx, tenantID, userID); err != nil {
 		return fmt.Errorf("删除用户失败: %w", err)
 	}
+
+	// 记录审计日志
+	auditLog := &model.AuthAudit{
+		TenantID: &user.TenantID,
+		UserID:   &user.ID,
+		Event:    model.AuditEventUserDeleted,
+		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"userId":"%s","email":"%s","tenantId":"%s"}`, user.ID, user.Email, user.TenantID))),
+	}
+	_ = s.auditRepo.Create(ctx, auditLog)
 
 	return nil
 }

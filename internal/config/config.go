@@ -11,14 +11,15 @@ import (
 
 // Config 应用配置结构
 type Config struct {
-	Server   ServerConfig
-	Genkit   GenkitConfig
-	Database DatabaseConfig
-	Log      LogConfig
-	Session  SessionConfig
-	Models   ModelsConfig
-	Auth     AuthConfig
-	Redis    RedisConfig
+	Server    ServerConfig
+	Genkit    GenkitConfig
+	Database  DatabaseConfig
+	Log       LogConfig
+	Session   SessionConfig
+	Models    ModelsConfig
+	Auth      AuthConfig
+	Redis     RedisConfig
+	Bootstrap BootstrapConfig
 }
 
 // ServerConfig 服务器配置
@@ -95,6 +96,15 @@ type RedisConfig struct {
 	Password string // Redis 密码
 	DB       int    // Redis 数据库编号
 	Enabled  bool   // 是否启用 Redis
+}
+
+// BootstrapConfig 系统初始化配置
+type BootstrapConfig struct {
+	AdminEmail       string // 平台管理员邮箱
+	AdminPassword    string // 平台管理员初始密码（留空则自动生成）
+	AdminDisplayName string // 平台管理员显示名称
+	TenantName       string // 平台租户名称
+	TenantDomain     string // 平台租户域名
 }
 
 // Load 从环境变量加载配置
@@ -185,6 +195,15 @@ func Load() (*Config, error) {
 		Password: getEnv("REDIS_PASSWORD", ""),
 		DB:       getEnvInt("REDIS_DB", 0),
 		Enabled:  getEnvBool("REDIS_ENABLED", true),
+	}
+
+	// 加载系统初始化配置
+	config.Bootstrap = BootstrapConfig{
+		AdminEmail:       getEnv("PLATFORM_ADMIN_EMAIL", "admin@system.local"),
+		AdminPassword:    getEnv("PLATFORM_ADMIN_PASSWORD", ""), // 留空则自动生成
+		AdminDisplayName: getEnv("PLATFORM_ADMIN_NAME", "Platform Admin"),
+		TenantName:       getEnv("PLATFORM_TENANT_NAME", "Platform"),
+		TenantDomain:     getEnv("PLATFORM_TENANT_DOMAIN", "system.local"),
 	}
 
 	// 验证配置
@@ -376,6 +395,40 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("租户识别策略必须是 header, subdomain, path 或 cookie 之一")
 	}
 
+	// 验证系统初始化配置
+	if c.Bootstrap.AdminEmail == "" {
+		return fmt.Errorf("平台管理员邮箱不能为空 (PLATFORM_ADMIN_EMAIL)")
+	}
+
+	// 验证邮箱格式
+	if !isValidEmail(c.Bootstrap.AdminEmail) {
+		return fmt.Errorf("平台管理员邮箱格式无效: %s", c.Bootstrap.AdminEmail)
+	}
+
+	// 如果提供了密码，验证密码强度
+	if c.Bootstrap.AdminPassword != "" {
+		if len(c.Bootstrap.AdminPassword) < c.Auth.PasswordMinLength {
+			return fmt.Errorf("平台管理员密码长度必须至少为 %d 个字符", c.Auth.PasswordMinLength)
+		}
+		
+		// 验证密码复杂度（至少包含大小写字母、数字）
+		if !isStrongPassword(c.Bootstrap.AdminPassword) {
+			return fmt.Errorf("平台管理员密码必须包含大写字母、小写字母和数字")
+		}
+	}
+
+	if c.Bootstrap.AdminDisplayName == "" {
+		return fmt.Errorf("平台管理员显示名称不能为空 (PLATFORM_ADMIN_NAME)")
+	}
+
+	if c.Bootstrap.TenantName == "" {
+		return fmt.Errorf("平台租户名称不能为空 (PLATFORM_TENANT_NAME)")
+	}
+
+	if c.Bootstrap.TenantDomain == "" {
+		return fmt.Errorf("平台租户域名不能为空 (PLATFORM_TENANT_DOMAIN)")
+	}
+
 	return nil
 }
 
@@ -468,4 +521,69 @@ func (c *DatabaseConfig) GetDSN() string {
 	)
 	
 	return dsn
+}
+
+// isValidEmail 验证邮箱格式
+func isValidEmail(email string) bool {
+	// 简单的邮箱格式验证
+	// 格式：xxx@xxx.xxx
+	if len(email) < 5 || len(email) > 320 {
+		return false
+	}
+	
+	// 必须包含 @ 符号
+	atIndex := -1
+	for i, c := range email {
+		if c == '@' {
+			if atIndex != -1 {
+				// 不能有多个 @ 符号
+				return false
+			}
+			atIndex = i
+		}
+	}
+	
+	if atIndex <= 0 || atIndex >= len(email)-1 {
+		return false
+	}
+	
+	// @ 后面必须有点号
+	domain := email[atIndex+1:]
+	dotIndex := -1
+	for i, c := range domain {
+		if c == '.' {
+			dotIndex = i
+			break
+		}
+	}
+	
+	if dotIndex <= 0 || dotIndex >= len(domain)-1 {
+		return false
+	}
+	
+	return true
+}
+
+// isStrongPassword 验证密码强度
+// 要求：至少包含一个大写字母、一个小写字母和一个数字
+func isStrongPassword(password string) bool {
+	hasUpper := false
+	hasLower := false
+	hasDigit := false
+	
+	for _, c := range password {
+		if c >= 'A' && c <= 'Z' {
+			hasUpper = true
+		} else if c >= 'a' && c <= 'z' {
+			hasLower = true
+		} else if c >= '0' && c <= '9' {
+			hasDigit = true
+		}
+		
+		if hasUpper && hasLower && hasDigit {
+			return true
+		}
+	}
+	
+	return hasUpper && hasLower && hasDigit
 }

@@ -203,7 +203,8 @@ TenantService 负责租户的创建、查询、更新和删除等管理功能。
 ```go
 // 创建 TenantService
 tenantRepo := repository.NewTenantRepository(db)
-tenantService := auth.NewTenantService(tenantRepo)
+userRepo := repository.NewUserRepository(db)
+tenantService := auth.NewTenantService(tenantRepo, userRepo)
 
 // 创建租户
 tenant, err := tenantService.Create(ctx, auth.CreateTenantRequest{

@@ -20,6 +20,302 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/platform/tenants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取所有租户列表，支持分页和类型过滤。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 支持分页查询（默认每页10条，最多100条）\n- 支持按租户类型过滤（system: 平台租户, tenant: 业务租户）\n- 返回租户的完整信息，包括名称、域名、类型、状态等\n\n**租户类型：**\n- system: 平台租户（系统级租户，用于承载平台管理员）\n- tenant: 业务租户（普通租户，用于实际业务使用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "平台管理"
+                ],
+                "summary": "获取租户列表",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "example": 1,
+                        "description": "页码（从1开始）",
+                        "name": "pageNo",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "example": 10,
+                        "description": "每页大小（1-100）",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "system",
+                            "tenant"
+                        ],
+                        "type": "string",
+                        "example": "tenant",
+                        "description": "租户类型过滤",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足（需要 system_admin 角色）",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新的业务租户并自动生成租户管理员账户。系统会自动为租户创建一个管理员账户，并生成随机强密码。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 创建类型为 \"tenant\" 的业务租户\n- 自动生成租户管理员账户（角色为 tenant_admin）\n- 生成16位随机强密码（包含大小写字母、数字和特殊字符）\n- 返回租户信息和管理员初始密码\n\n**注意事项：**\n- 管理员邮箱如未指定，默认为 admin@{tenantDomain}\n- 请妥善保管返回的初始密码，建议首次登录后立即修改\n- 租户域名必须唯一",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "平台管理"
+                ],
+                "summary": "创建租户（带管理员）",
+                "parameters": [
+                    {
+                        "description": "创建租户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足（需要 system_admin 角色）",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/tenants/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除指定的业务租户。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 执行软删除操作，设置 is_deleted = true\n- 不会物理删除数据库记录，保留数据用于审计和恢复\n- 删除后的租户不会出现在租户列表中\n\n**限制条件：**\n- 不允许删除平台租户（type = \"system\"）\n- 删除租户时会级联处理相关数据（根据数据库外键约束）\n\n**注意事项：**\n- 删除操作不可逆（除非通过数据库直接恢复）\n- 建议在删除前先禁用租户，观察一段时间后再删除\n- 删除租户会影响该租户下的所有用户和数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "平台管理"
+                ],
+                "summary": "删除租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "description": "租户ID（UUID格式）",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误（如尝试删除平台租户）",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足（需要 system_admin 角色）",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/tenants/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新租户的启用/禁用状态。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 启用租户：设置 status = true，该租户下的用户可以正常登录和访问系统\n- 禁用租户：设置 status = false，该租户下的所有用户将无法登录和访问系统\n\n**影响范围：**\n- 禁用租户后，该租户下所有用户的登录请求将被拒绝\n- 禁用租户后，该租户下所有用户的 API 访问请求将被拒绝\n- 启用租户后，该租户下用户恢复正常访问\n\n**注意事项：**\n- 不允许禁用平台租户（type = \"system\"）\n- 禁用操作会立即生效",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "平台管理"
+                ],
+                "summary": "启用/禁用租户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
+                        "description": "租户ID（UUID格式）",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新租户状态请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.UpdateTenantStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足（需要 system_admin 角色）",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "租户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/audit/auth": {
             "get": {
                 "security": [
@@ -2306,6 +2602,329 @@
                 }
             }
         },
+        "/tenants/{tenantId}/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定租户下的用户列表，支持分页（需要租户管理员或平台管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户用户管理"
+                ],
+                "summary": "获取租户用户列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "在指定租户下创建新用户（需要租户管理员或平台管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户用户管理"
+                ],
+                "summary": "在租户下创建用户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "创建用户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenantId}/users/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除指定租户下的用户（需要租户管理员或平台管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户用户管理"
+                ],
+                "summary": "删除用户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{tenantId}/users/{userId}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "启用或禁用指定租户下的用户（需要租户管理员或平台管理员权限）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "租户用户管理"
+                ],
+                "summary": "更新用户状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "租户ID",
+                        "name": "tenantId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新用户状态请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.UpdateUserStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -3997,46 +4616,61 @@
             }
         },
         "genkit-ai-service_internal_model.Tenant": {
+            "description": "租户信息，包含租户的基本信息和状态",
             "type": "object",
             "properties": {
                 "createdAt": {
                     "description": "创建时间",
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 },
                 "createdBy": {
                     "description": "创建者用户ID",
-                    "type": "string"
+                    "type": "string",
+                    "example": "660e8400-e29b-41d4-a716-446655440000"
                 },
                 "domain": {
                     "description": "租户域名，用于子域识别",
-                    "type": "string"
+                    "type": "string",
+                    "example": "acme.example.com"
                 },
                 "id": {
                     "description": "租户ID",
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "isDeleted": {
                     "description": "软删除标记",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
                 },
                 "metadata": {
-                    "description": "租户元数据",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "description": "租户元数据，存储租户的自定义信息",
+                    "type": "object"
                 },
                 "name": {
                     "description": "租户名称",
-                    "type": "string"
+                    "type": "string",
+                    "example": "Acme Corporation"
                 },
                 "status": {
-                    "description": "租户状态：true=启用，false=禁用",
-                    "type": "boolean"
+                    "description": "租户状态：true=启用，false=禁用\n禁用的租户下的所有用户将无法登录",
+                    "type": "boolean",
+                    "example": true
+                },
+                "type": {
+                    "description": "租户类型：system=平台租户，tenant=业务租户\n可选值：system（平台租户，系统级租户，只能有一个）, tenant（业务租户，普通租户）",
+                    "type": "string",
+                    "enum": [
+                        "system",
+                        "tenant"
+                    ],
+                    "example": "tenant"
                 },
                 "updatedAt": {
                     "description": "更新时间",
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 }
             }
         },
@@ -4175,81 +4809,97 @@
             }
         },
         "genkit-ai-service_internal_model.User": {
+            "description": "用户信息，包含用户的基本信息、角色和状态",
             "type": "object",
             "properties": {
                 "createdAt": {
                     "description": "创建时间",
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 },
                 "createdBy": {
                     "description": "创建者用户ID",
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "displayName": {
                     "description": "显示名称",
-                    "type": "string"
+                    "type": "string",
+                    "example": "张三"
                 },
                 "email": {
-                    "description": "用户邮箱",
-                    "type": "string"
+                    "description": "用户邮箱，在租户内唯一",
+                    "type": "string",
+                    "example": "user@example.com"
                 },
                 "emailVerified": {
                     "description": "邮箱是否已验证",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
                 },
                 "failedLoginAttempts": {
-                    "description": "登录失败次数",
-                    "type": "integer"
+                    "description": "登录失败次数，用于账户锁定策略",
+                    "type": "integer",
+                    "example": 0
                 },
                 "id": {
                     "description": "用户ID",
-                    "type": "string"
+                    "type": "string",
+                    "example": "660e8400-e29b-41d4-a716-446655440001"
                 },
                 "isActive": {
-                    "description": "账户是否激活",
-                    "type": "boolean"
+                    "description": "账户是否激活，禁用的用户无法登录",
+                    "type": "boolean",
+                    "example": true
                 },
                 "isAdmin": {
-                    "description": "是否为管理员",
-                    "type": "boolean"
+                    "description": "是否为管理员（租户管理员或平台管理员）",
+                    "type": "boolean",
+                    "example": false
                 },
                 "isDeleted": {
                     "description": "软删除标记",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
                 },
                 "lastLoginAt": {
                     "description": "最后登录时间",
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 },
                 "lockedUntil": {
-                    "description": "账户锁定时间",
-                    "type": "string"
+                    "description": "账户锁定时间，锁定期间无法登录",
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 },
                 "meta": {
-                    "description": "用户元数据",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "description": "用户元数据，存储用户的自定义信息",
+                    "type": "object"
                 },
                 "phone": {
                     "description": "手机号码",
-                    "type": "string"
+                    "type": "string",
+                    "example": "13800138000"
                 },
                 "roles": {
-                    "description": "用户角色列表，如 [\"user\",\"admin\"]",
+                    "description": "用户角色列表，支持多角色\n可选值：system_admin（平台管理员）, tenant_admin（租户管理员）, user（普通用户）\n示例：[\"user\"], [\"tenant_admin\"], [\"system_admin\"]",
                     "type": "array",
                     "items": {
-                        "type": "integer"
-                    }
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"user\"]"
+                    ]
                 },
                 "tenantId": {
                     "description": "所属租户ID",
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "updatedAt": {
                     "description": "更新时间",
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-01-20T10:00:00Z"
                 }
             }
         },
@@ -4403,6 +5053,92 @@
                     "maxLength": 255,
                     "minLength": 1,
                     "example": "示例租户"
+                }
+            }
+        },
+        "internal_api_handler.CreateTenantWithAdminDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 201
+                },
+                "data": {
+                    "description": "创建租户响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "租户创建成功"
+                }
+            }
+        },
+        "internal_api_handler.CreateTenantWithAdminRequest": {
+            "type": "object",
+            "required": [
+                "tenantDomain",
+                "tenantName"
+            ],
+            "properties": {
+                "adminDisplayName": {
+                    "description": "管理员显示名称（可选，最多255字符）",
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "管理员"
+                },
+                "adminEmail": {
+                    "description": "管理员邮箱（可选，默认为 admin@{tenantDomain}）",
+                    "type": "string",
+                    "example": "admin@example.com"
+                },
+                "tenantDomain": {
+                    "description": "租户域名（必填，最多255字符）",
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "example.com"
+                },
+                "tenantMetadata": {
+                    "description": "租户元数据（可选，JSON对象）",
+                    "type": "object"
+                },
+                "tenantName": {
+                    "description": "租户名称（必填，1-255字符）",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "example": "示例公司"
+                }
+            }
+        },
+        "internal_api_handler.CreateTenantWithAdminResponse": {
+            "type": "object",
+            "properties": {
+                "adminPassword": {
+                    "description": "管理员初始密码（请妥善保管并建议首次登录后修改）",
+                    "type": "string",
+                    "example": "Xy9#mK2$pL5@qR8!"
+                },
+                "adminUser": {
+                    "description": "管理员用户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                        }
+                    ]
+                },
+                "tenant": {
+                    "description": "租户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                        }
+                    ]
                 }
             }
         },
@@ -4606,6 +5342,16 @@
                 }
             }
         },
+        "internal_api_handler.UpdateTenantStatusRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "description": "租户状态（true: 启用, false: 禁用）",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "internal_api_handler.UpdateUserRequest": {
             "type": "object",
             "properties": {
@@ -4641,6 +5387,18 @@
                         "[\"user\"",
                         "\"moderator\"]"
                     ]
+                }
+            }
+        },
+        "internal_api_handler.UpdateUserStatusRequest": {
+            "type": "object",
+            "required": [
+                "isActive"
+            ],
+            "properties": {
+                "isActive": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

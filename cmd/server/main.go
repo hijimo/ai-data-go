@@ -180,6 +180,17 @@ func main() {
 			},
 		})
 		
+		// 注册平台管理路由
+		platformHandler := initPlatformHandler(db, log)
+		routes.RegisterPlatformRoutes(serveMux, platformHandler, jwtAuthMW, rbacMW)
+		log.Info("平台管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/platform/tenants",
+				"/api/v1/platform/tenants/{id}/status",
+				"/api/v1/platform/tenants/{id}",
+			},
+		})
+		
 		// 启动数据库清理服务
 		cleanupSvc = initCleanupService(db, cfg, log)
 		ctx := context.Background()
@@ -351,7 +362,7 @@ func initDatabase(cfg *config.Config, log logger.Logger) (database.Database, err
 	})
 
 	// 执行数据库迁移
-	if err := runDatabaseMigrations(db, log); err != nil {
+	if err := runDatabaseMigrations(db, cfg, log); err != nil {
 		return nil, fmt.Errorf("数据库迁移失败: %w", err)
 	}
 
@@ -359,7 +370,7 @@ func initDatabase(cfg *config.Config, log logger.Logger) (database.Database, err
 }
 
 // runDatabaseMigrations 执行数据库迁移
-func runDatabaseMigrations(db database.Database, log logger.Logger) error {
+func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.Logger) error {
 	log.Info("开始执行数据库迁移...", nil)
 
 	// 获取 GORM 数据库实例
@@ -399,6 +410,14 @@ func runDatabaseMigrations(db database.Database, log logger.Logger) error {
 			"chat_summaries",
 		},
 	})
+
+	// 执行系统初始化（创建平台租户和管理员）
+	if err := runSystemBootstrap(db, cfg, log); err != nil {
+		log.Error("系统初始化失败", logger.Fields{
+			"error": err,
+		})
+		return err
+	}
 
 	return nil
 }
@@ -574,10 +593,10 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	tokenService := auth.NewTokenService(&cfg.Auth, refreshTokenRepo)
 
 	// 3.4 创建 TenantService
-	tenantService := auth.NewTenantService(tenantRepo)
+	tenantService := auth.NewTenantService(tenantRepo, userRepo, auditRepo)
 
 	// 3.5 创建 UserService
-	userService := auth.NewUserService(userRepo, tenantRepo)
+	userService := auth.NewUserService(userRepo, tenantRepo, refreshTokenRepo, auditRepo)
 
 	// 3.6 创建 EmailService
 	// 使用控制台邮件发送器（开发环境）
@@ -592,7 +611,8 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 
 	// 3.7 创建 AuthService
 	authService := auth.NewAuthService(
-		userRepo, 
+		userRepo,
+		tenantRepo,
 		tokenService, 
 		auditRepo, 
 		refreshTokenRepo,
@@ -622,11 +642,17 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	
 	// 创建 RBAC 授权中间件工厂函数
 	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
-		config := middleware.RBACConfig{
-			RequiredRoles: roles,
-			RequireAll:    false,
+		// 根据角色返回相应的中间件
+		if len(roles) == 1 {
+			switch roles[0] {
+			case "system_admin":
+				return middleware.RequireSystemAdmin()
+			case "admin", "tenant_admin":
+				return middleware.RequireTenantAdmin()
+			}
 		}
-		return middleware.RBACAuthorizer(config)
+		// 默认返回租户管理员中间件
+		return middleware.RequireTenantAdmin()
 	}
 
 	log.Info("认证服务初始化成功", logger.Fields{
@@ -663,4 +689,72 @@ func initCleanupService(db database.Database, cfg *config.Config, log logger.Log
 	})
 
 	return cleanupService
+}
+
+// runSystemBootstrap 执行系统初始化（创建平台租户和管理员）
+func runSystemBootstrap(db database.Database, cfg *config.Config, log logger.Logger) error {
+	log.Info("开始系统初始化检查...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+	if gormDB == nil {
+		return fmt.Errorf("无法获取数据库实例")
+	}
+
+	// 2. 创建 Repository 层实例
+	tenantRepo := repository.NewTenantRepository(gormDB)
+	userRepo := repository.NewUserRepository(gormDB)
+
+	// 3. 创建 BootstrapService 实例
+	bootstrapService := auth.NewBootstrapService(tenantRepo, userRepo, &cfg.Bootstrap)
+
+	// 4. 执行初始化
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	result, err := bootstrapService.Initialize(ctx)
+	if err != nil {
+		return fmt.Errorf("系统初始化失败: %w", err)
+	}
+
+	// 5. 记录初始化结果
+	if result.Initialized {
+		log.Info("系统初始化成功", logger.Fields{
+			"平台租户ID":   result.TenantID,
+			"管理员邮箱":    result.AdminEmail,
+			"管理员初始密码": result.AdminPassword,
+			"重要提示":     "请妥善保管管理员初始密码，建议首次登录后立即修改",
+		})
+	} else {
+		log.Info("系统已初始化，跳过初始化流程", nil)
+	}
+
+	return nil
+}
+
+// initPlatformHandler 初始化平台管理处理器
+func initPlatformHandler(db database.Database, log logger.Logger) *handler.PlatformHandler {
+	log.Info("初始化平台管理服务...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+
+	// 2. 创建 Repository 层实例
+	tenantRepo := repository.NewTenantRepository(gormDB)
+	userRepo := repository.NewUserRepository(gormDB)
+	auditRepo := repository.NewAuditRepository(gormDB)
+
+	// 3. 创建 TenantService 实例
+	tenantService := auth.NewTenantService(tenantRepo, userRepo, auditRepo)
+
+	// 4. 创建 PlatformHandler 实例
+	platformHandler := handler.NewPlatformHandler(tenantService, log)
+
+	log.Info("平台管理服务初始化成功", logger.Fields{
+		"repositories": []string{"TenantRepository", "UserRepository"},
+		"services":     []string{"TenantService"},
+		"handlers":     []string{"PlatformHandler"},
+	})
+
+	return platformHandler
 }
