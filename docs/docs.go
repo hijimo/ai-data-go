@@ -76,31 +76,31 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantListResponse"
+                            "$ref": "#/definitions/TenantListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足（需要 system_admin 角色）",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -129,7 +129,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminRequest"
+                            "$ref": "#/definitions/CreateTenantWithAdminRequest"
                         }
                     }
                 ],
@@ -137,37 +137,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminDataResponse"
+                            "$ref": "#/definitions/CreateTenantWithAdminDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足（需要 system_admin 角色）",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -205,37 +205,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误（如尝试删除平台租户）",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足（需要 system_admin 角色）",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -274,7 +274,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.UpdateTenantStatusRequest"
+                            "$ref": "#/definitions/UpdateTenantStatusRequest"
                         }
                     }
                 ],
@@ -282,37 +282,37 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足（需要 system_admin 角色）",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -386,31 +386,31 @@ const docTemplate = `{
                     "200": {
                         "description": "查询成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditListResponse"
+                            "$ref": "#/definitions/AuthAuditListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未授权",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -441,7 +441,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.ChangePasswordRequest"
+                            "$ref": "#/definitions/ChangePasswordRequest"
                         }
                     }
                 ],
@@ -449,31 +449,31 @@ const docTemplate = `{
                     "200": {
                         "description": "修改成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证或旧密码错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -499,7 +499,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.LoginRequest"
+                            "$ref": "#/definitions/LoginRequest"
                         }
                     }
                 ],
@@ -507,31 +507,31 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginDataResponse"
+                            "$ref": "#/definitions/LoginDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "认证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -557,7 +557,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.LogoutRequest"
+                            "$ref": "#/definitions/LogoutRequest"
                         }
                     }
                 ],
@@ -565,31 +565,31 @@ const docTemplate = `{
                     "200": {
                         "description": "注销成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Token 无效",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -617,25 +617,25 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -661,7 +661,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.RefreshRequest"
+                            "$ref": "#/definitions/RefreshRequest"
                         }
                     }
                 ],
@@ -669,31 +669,31 @@ const docTemplate = `{
                     "200": {
                         "description": "刷新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginDataResponse"
+                            "$ref": "#/definitions/LoginDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Token 无效或已过期",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -719,7 +719,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.RegisterRequest"
+                            "$ref": "#/definitions/RegisterRequest"
                         }
                     }
                 ],
@@ -727,25 +727,25 @@ const docTemplate = `{
                     "201": {
                         "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -771,7 +771,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.ResendVerificationRequest"
+                            "$ref": "#/definitions/ResendVerificationRequest"
                         }
                     }
                 ],
@@ -779,25 +779,25 @@ const docTemplate = `{
                     "200": {
                         "description": "发送成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -828,7 +828,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.UnlockAccountRequest"
+                            "$ref": "#/definitions/UnlockAccountRequest"
                         }
                     }
                 ],
@@ -836,37 +836,37 @@ const docTemplate = `{
                     "200": {
                         "description": "解锁成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -892,7 +892,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.VerifyEmailRequest"
+                            "$ref": "#/definitions/VerifyEmailRequest"
                         }
                     }
                 ],
@@ -900,25 +900,25 @@ const docTemplate = `{
                     "200": {
                         "description": "验证成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -944,7 +944,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatRequest"
+                            "$ref": "#/definitions/ChatRequest"
                         }
                     }
                 ],
@@ -952,31 +952,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回 AI 回复",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponseData"
+                            "$ref": "#/definitions/ChatResponseData"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "AI 服务不可用",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1002,7 +1002,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AbortRequest"
+                            "$ref": "#/definitions/AbortRequest"
                         }
                     }
                 ],
@@ -1010,31 +1010,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功中止对话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1066,31 +1066,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailDataResponse"
+                            "$ref": "#/definitions/MessageDetailDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1122,31 +1122,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功中止消息生成",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1208,25 +1208,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionListResponse"
+                            "$ref": "#/definitions/SessionListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1250,7 +1250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.CreateSessionRequest"
+                            "$ref": "#/definitions/CreateSessionRequest"
                         }
                     }
                 ],
@@ -1258,25 +1258,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功创建会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1327,25 +1327,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回搜索结果",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionListResponse"
+                            "$ref": "#/definitions/SessionListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1377,31 +1377,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1431,31 +1431,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功删除会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1486,7 +1486,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UpdateSessionRequest"
+                            "$ref": "#/definitions/UpdateSessionRequest"
                         }
                     }
                 ],
@@ -1494,37 +1494,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新会话",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1563,31 +1563,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新归档状态",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1638,37 +1638,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息历史",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailListResponse"
+                            "$ref": "#/definitions/MessageDetailListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1699,7 +1699,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SendMessageRequest"
+                            "$ref": "#/definitions/SendMessageRequest"
                         }
                     }
                 ],
@@ -1707,37 +1707,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功发送消息",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageResponseData"
+                            "$ref": "#/definitions/MessageResponseData"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1776,31 +1776,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新置顶状态",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1826,7 +1826,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatRequest"
+                            "$ref": "#/definitions/ChatRequest"
                         }
                     }
                 ],
@@ -1840,25 +1840,25 @@ const docTemplate = `{
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "AI 服务不可用",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1881,19 +1881,19 @@ const docTemplate = `{
                     "200": {
                         "description": "服务健康",
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.HealthStatusResponse"
+                            "$ref": "#/definitions/HealthStatusResponse"
                         }
                     },
                     "500": {
                         "description": "健康检查失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "服务不健康",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1913,7 +1913,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AlertListDataResponse"
+                            "$ref": "#/definitions/AlertListDataResponse"
                         }
                     }
                 }
@@ -1931,7 +1931,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     }
                 }
@@ -1951,7 +1951,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.HealthDataResponse"
+                            "$ref": "#/definitions/HealthDataResponse"
                         }
                     }
                 }
@@ -1971,7 +1971,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MetricsDataResponse"
+                            "$ref": "#/definitions/MetricsDataResponse"
                         }
                     }
                 }
@@ -1991,7 +1991,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     }
                 }
@@ -2014,13 +2014,13 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ProviderListDataResponse"
+                            "$ref": "#/definitions/ProviderListDataResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2053,25 +2053,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ProviderDataResponse"
+                            "$ref": "#/definitions/ProviderDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2104,25 +2104,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ModelListDataResponse"
+                            "$ref": "#/definitions/ModelListDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2163,25 +2163,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型详情",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ModelDataResponse"
+                            "$ref": "#/definitions/ModelDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商或模型不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2222,25 +2222,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回参数规则列表",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRuleListDataResponse"
+                            "$ref": "#/definitions/ParameterRuleListDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商或模型不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2289,37 +2289,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantListResponse"
+                            "$ref": "#/definitions/TenantListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2348,7 +2348,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.CreateTenantRequest"
+                            "$ref": "#/definitions/CreateTenantRequest"
                         }
                     }
                 ],
@@ -2356,37 +2356,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2423,37 +2423,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2489,7 +2489,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.UpdateTenantRequest"
+                            "$ref": "#/definitions/UpdateTenantRequest"
                         }
                     }
                 ],
@@ -2497,43 +2497,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2568,37 +2568,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2654,37 +2654,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserListResponse"
+                            "$ref": "#/definitions/UserListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2720,7 +2720,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.CreateUserRequest"
+                            "$ref": "#/definitions/CreateUserRequest"
                         }
                     }
                 ],
@@ -2728,37 +2728,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2802,37 +2802,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2877,7 +2877,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.UpdateUserStatusRequest"
+                            "$ref": "#/definitions/UpdateUserStatusRequest"
                         }
                     }
                 ],
@@ -2885,43 +2885,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2970,37 +2970,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserListResponse"
+                            "$ref": "#/definitions/UserListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -3029,7 +3029,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.CreateUserRequest"
+                            "$ref": "#/definitions/CreateUserRequest"
                         }
                     }
                 ],
@@ -3037,37 +3037,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -3104,37 +3104,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -3170,7 +3170,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_api_handler.UpdateUserRequest"
+                            "$ref": "#/definitions/UpdateUserRequest"
                         }
                     }
                 ],
@@ -3178,43 +3178,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -3249,37 +3249,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -3287,7 +3287,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "genkit-ai-service_internal_model.AbortRequest": {
+        "AbortRequest": {
             "type": "object",
             "required": [
                 "messageId"
@@ -3300,13 +3300,13 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.AlertListDataResponse": {
+        "AlertListDataResponse": {
             "type": "object"
         },
-        "genkit-ai-service_internal_model.AnyDataResponse": {
+        "AnyDataResponse": {
             "type": "object"
         },
-        "genkit-ai-service_internal_model.AuthAuditItem": {
+        "AuthAuditItem": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -3349,7 +3349,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.AuthAuditListResponse": {
+        "AuthAuditListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3361,7 +3361,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem"
+                            "$ref": "#/definitions/PaginationData-array_AuthAuditItem"
                         }
                     ]
                 },
@@ -3372,7 +3372,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ChatOptions": {
+        "ChatOptions": {
             "type": "object",
             "properties": {
                 "maxTokens": {
@@ -3401,7 +3401,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ChatRequest": {
+        "ChatRequest": {
             "type": "object",
             "required": [
                 "message"
@@ -3421,13 +3421,13 @@ const docTemplate = `{
                     "description": "AI高级参数（可选）",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatOptions"
+                            "$ref": "#/definitions/ChatOptions"
                         }
                     ]
                 }
             }
         },
-        "genkit-ai-service_internal_model.ChatResponse": {
+        "ChatResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -3449,13 +3449,13 @@ const docTemplate = `{
                     "description": "Token使用情况",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
+                            "$ref": "#/definitions/Usage"
                         }
                     ]
                 }
             }
         },
-        "genkit-ai-service_internal_model.ChatResponseData": {
+        "ChatResponseData": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3467,7 +3467,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponse"
+                            "$ref": "#/definitions/ChatResponse"
                         }
                     ]
                 },
@@ -3478,7 +3478,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.CreateSessionRequest": {
+        "CreateSessionRequest": {
             "type": "object",
             "required": [
                 "modelName",
@@ -3523,7 +3523,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.CredentialFormSchema": {
+        "CredentialFormSchema": {
             "type": "object",
             "properties": {
                 "default": {
@@ -3541,7 +3541,7 @@ const docTemplate = `{
                     "description": "选项列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.FormOption"
+                        "$ref": "#/definitions/FormOption"
                     }
                 },
                 "placeholder": {
@@ -3565,19 +3565,19 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.CredentialSchema": {
+        "CredentialSchema": {
             "type": "object",
             "properties": {
                 "credential_form_schemas": {
                     "description": "凭证表单配置列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.CredentialFormSchema"
+                        "$ref": "#/definitions/CredentialFormSchema"
                     }
                 }
             }
         },
-        "genkit-ai-service_internal_model.ErrorResponse": {
+        "ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3592,7 +3592,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.FormOption": {
+        "FormOption": {
             "type": "object",
             "properties": {
                 "label": {
@@ -3608,10 +3608,10 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.HealthDataResponse": {
+        "HealthDataResponse": {
             "type": "object"
         },
-        "genkit-ai-service_internal_model.LoginDataResponse": {
+        "LoginDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3623,7 +3623,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.LoginResponse"
+                            "$ref": "#/definitions/LoginResponse"
                         }
                     ]
                 },
@@ -3634,7 +3634,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.LoginResponse": {
+        "LoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -3661,13 +3661,13 @@ const docTemplate = `{
                     "description": "用户信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 }
             }
         },
-        "genkit-ai-service_internal_model.Message": {
+        "Message": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3697,7 +3697,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessageDetailDataResponse": {
+        "MessageDetailDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3709,7 +3709,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
+                            "$ref": "#/definitions/MessageDetailResponse"
                         }
                     ]
                 },
@@ -3720,7 +3720,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessageDetailListResponse": {
+        "MessageDetailListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3732,7 +3732,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse"
+                            "$ref": "#/definitions/PaginationData-array_MessageDetailResponse"
                         }
                     ]
                 },
@@ -3743,7 +3743,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessageDetailResponse": {
+        "MessageDetailResponse": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3798,7 +3798,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessagePreview": {
+        "MessagePreview": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3823,14 +3823,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessageResponse": {
+        "MessageResponse": {
             "type": "object",
             "properties": {
                 "aiMessage": {
                     "description": "AI消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Message"
+                            "$ref": "#/definitions/Message"
                         }
                     ]
                 },
@@ -3853,7 +3853,7 @@ const docTemplate = `{
                     "description": "使用统计",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Usage"
+                            "$ref": "#/definitions/Usage"
                         }
                     ]
                 },
@@ -3861,13 +3861,13 @@ const docTemplate = `{
                     "description": "用户消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Message"
+                            "$ref": "#/definitions/Message"
                         }
                     ]
                 }
             }
         },
-        "genkit-ai-service_internal_model.MessageResponseData": {
+        "MessageResponseData": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3879,7 +3879,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageResponse"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     ]
                 },
@@ -3890,10 +3890,10 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.MetricsDataResponse": {
+        "MetricsDataResponse": {
             "type": "object"
         },
-        "genkit-ai-service_internal_model.Model": {
+        "Model": {
             "type": "object",
             "properties": {
                 "deprecated": {
@@ -3933,7 +3933,7 @@ const docTemplate = `{
                     "description": "模型属性",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ModelProperties"
+                            "$ref": "#/definitions/ModelProperties"
                         }
                     ]
                 },
@@ -3946,20 +3946,20 @@ const docTemplate = `{
                     "description": "参数规则",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRule"
+                        "$ref": "#/definitions/ParameterRule"
                     }
                 },
                 "pricing": {
                     "description": "定价信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Pricing"
+                            "$ref": "#/definitions/Pricing"
                         }
                     ]
                 }
             }
         },
-        "genkit-ai-service_internal_model.ModelDataResponse": {
+        "ModelDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3971,7 +3971,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
+                            "$ref": "#/definitions/Model"
                         }
                     ]
                 },
@@ -3982,7 +3982,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ModelListDataResponse": {
+        "ModelListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3994,7 +3994,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
+                        "$ref": "#/definitions/Model"
                     }
                 },
                 "message": {
@@ -4004,7 +4004,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ModelProperties": {
+        "ModelProperties": {
             "type": "object",
             "properties": {
                 "context_size": {
@@ -4017,7 +4017,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ModelTypeInfo": {
+        "ModelTypeInfo": {
             "type": "object",
             "properties": {
                 "position": {
@@ -4033,14 +4033,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem": {
+        "PaginationData-array_AuthAuditItem": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditItem"
+                        "$ref": "#/definitions/AuthAuditItem"
                     }
                 },
                 "pageNo": {
@@ -4065,14 +4065,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse": {
+        "PaginationData-array_MessageDetailResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
+                        "$ref": "#/definitions/MessageDetailResponse"
                     }
                 },
                 "pageNo": {
@@ -4097,14 +4097,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
+        "PaginationData-array_SessionResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                        "$ref": "#/definitions/SessionResponse"
                     }
                 },
                 "pageNo": {
@@ -4129,14 +4129,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant": {
+        "PaginationData-array_Tenant": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                        "$ref": "#/definitions/Tenant"
                     }
                 },
                 "pageNo": {
@@ -4161,14 +4161,14 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User": {
+        "PaginationData-array_User": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                        "$ref": "#/definitions/User"
                     }
                 },
                 "pageNo": {
@@ -4193,7 +4193,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ParameterRule": {
+        "ParameterRule": {
             "type": "object",
             "properties": {
                 "default": {
@@ -4248,7 +4248,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ParameterRuleListDataResponse": {
+        "ParameterRuleListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4260,7 +4260,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRule"
+                        "$ref": "#/definitions/ParameterRule"
                     }
                 },
                 "message": {
@@ -4270,7 +4270,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.Pricing": {
+        "Pricing": {
             "type": "object",
             "properties": {
                 "currency": {
@@ -4291,7 +4291,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.Provider": {
+        "Provider": {
             "type": "object",
             "properties": {
                 "background": {
@@ -4314,7 +4314,7 @@ const docTemplate = `{
                     "description": "帮助信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ProviderHelp"
+                            "$ref": "#/definitions/ProviderHelp"
                         }
                     ]
                 },
@@ -4352,7 +4352,7 @@ const docTemplate = `{
                     "description": "模型凭证配置",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.CredentialSchema"
+                            "$ref": "#/definitions/CredentialSchema"
                         }
                     ]
                 },
@@ -4360,7 +4360,7 @@ const docTemplate = `{
                     "description": "模型类型配置",
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.ModelTypeInfo"
+                        "$ref": "#/definitions/ModelTypeInfo"
                     }
                 },
                 "provider": {
@@ -4372,7 +4372,7 @@ const docTemplate = `{
                     "description": "提供商凭证配置",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.CredentialSchema"
+                            "$ref": "#/definitions/CredentialSchema"
                         }
                     ]
                 },
@@ -4389,7 +4389,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ProviderDataResponse": {
+        "ProviderDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4401,7 +4401,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
+                            "$ref": "#/definitions/Provider"
                         }
                     ]
                 },
@@ -4412,7 +4412,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ProviderHelp": {
+        "ProviderHelp": {
             "type": "object",
             "properties": {
                 "title": {
@@ -4431,7 +4431,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.ProviderListDataResponse": {
+        "ProviderListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4443,7 +4443,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
+                        "$ref": "#/definitions/Provider"
                     }
                 },
                 "message": {
@@ -4453,7 +4453,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.SendMessageRequest": {
+        "SendMessageRequest": {
             "type": "object",
             "required": [
                 "message",
@@ -4469,7 +4469,7 @@ const docTemplate = `{
                     "description": "AI高级参数（可选）",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.ChatOptions"
+                            "$ref": "#/definitions/ChatOptions"
                         }
                     ]
                 },
@@ -4480,7 +4480,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.SessionDataResponse": {
+        "SessionDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4492,7 +4492,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     ]
                 },
@@ -4503,7 +4503,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.SessionListResponse": {
+        "SessionListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4515,7 +4515,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse"
+                            "$ref": "#/definitions/PaginationData-array_SessionResponse"
                         }
                     ]
                 },
@@ -4526,7 +4526,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.SessionResponse": {
+        "SessionResponse": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -4553,7 +4553,7 @@ const docTemplate = `{
                     "description": "最后一条消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessagePreview"
+                            "$ref": "#/definitions/MessagePreview"
                         }
                     ]
                 },
@@ -4604,7 +4604,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.SuccessResponse": {
+        "SuccessResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4619,7 +4619,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.Tenant": {
+        "Tenant": {
             "description": "租户信息，包含租户的基本信息和状态",
             "type": "object",
             "properties": {
@@ -4678,7 +4678,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.TenantDataResponse": {
+        "TenantDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4690,7 +4690,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     ]
                 },
@@ -4701,7 +4701,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.TenantListResponse": {
+        "TenantListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4713,7 +4713,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant"
+                            "$ref": "#/definitions/PaginationData-array_Tenant"
                         }
                     ]
                 },
@@ -4724,7 +4724,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.UpdateSessionRequest": {
+        "UpdateSessionRequest": {
             "type": "object",
             "properties": {
                 "modelName": {
@@ -4760,7 +4760,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.Usage": {
+        "Usage": {
             "type": "object",
             "properties": {
                 "completionTokens": {
@@ -4780,7 +4780,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.User": {
+        "User": {
             "description": "用户信息，包含用户的基本信息、角色和状态",
             "type": "object",
             "properties": {
@@ -4875,7 +4875,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.UserDataResponse": {
+        "UserDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4887,7 +4887,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 },
@@ -4898,7 +4898,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_model.UserListResponse": {
+        "UserListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4910,7 +4910,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User"
+                            "$ref": "#/definitions/PaginationData-array_User"
                         }
                     ]
                 },
@@ -4921,7 +4921,7 @@ const docTemplate = `{
                 }
             }
         },
-        "genkit-ai-service_internal_service_health.HealthStatus": {
+        "HealthStatus": {
             "type": "object",
             "properties": {
                 "dependencies": {
@@ -4952,7 +4952,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.ChangePasswordRequest": {
+        "ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "newPassword",
@@ -4970,7 +4970,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.CreateTenantRequest": {
+        "CreateTenantRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -4996,7 +4996,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.CreateTenantWithAdminDataResponse": {
+        "CreateTenantWithAdminDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -5008,7 +5008,7 @@ const docTemplate = `{
                     "description": "创建租户响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/internal_api_handler.CreateTenantWithAdminResponse"
+                            "$ref": "#/definitions/CreateTenantWithAdminResponse"
                         }
                     ]
                 },
@@ -5019,7 +5019,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.CreateTenantWithAdminRequest": {
+        "CreateTenantWithAdminRequest": {
             "type": "object",
             "required": [
                 "tenantDomain",
@@ -5056,7 +5056,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.CreateTenantWithAdminResponse": {
+        "CreateTenantWithAdminResponse": {
             "type": "object",
             "properties": {
                 "adminPassword": {
@@ -5068,7 +5068,7 @@ const docTemplate = `{
                     "description": "管理员用户信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 },
@@ -5076,13 +5076,13 @@ const docTemplate = `{
                     "description": "租户信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     ]
                 }
             }
         },
-        "internal_api_handler.CreateUserRequest": {
+        "CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -5133,7 +5133,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.HealthStatusResponse": {
+        "HealthStatusResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -5141,7 +5141,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "$ref": "#/definitions/genkit-ai-service_internal_service_health.HealthStatus"
+                    "$ref": "#/definitions/HealthStatus"
                 },
                 "message": {
                     "type": "string",
@@ -5149,7 +5149,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.LoginRequest": {
+        "LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -5170,7 +5170,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.LogoutRequest": {
+        "LogoutRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -5182,7 +5182,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.RefreshRequest": {
+        "RefreshRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -5194,7 +5194,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.RegisterRequest": {
+        "RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -5225,7 +5225,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.ResendVerificationRequest": {
+        "ResendVerificationRequest": {
             "type": "object",
             "required": [
                 "tenantId",
@@ -5242,7 +5242,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.UnlockAccountRequest": {
+        "UnlockAccountRequest": {
             "type": "object",
             "required": [
                 "tenantId",
@@ -5259,7 +5259,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.UpdateTenantRequest": {
+        "UpdateTenantRequest": {
             "type": "object",
             "properties": {
                 "domain": {
@@ -5282,7 +5282,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.UpdateTenantStatusRequest": {
+        "UpdateTenantStatusRequest": {
             "type": "object",
             "properties": {
                 "status": {
@@ -5292,7 +5292,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.UpdateUserRequest": {
+        "UpdateUserRequest": {
             "type": "object",
             "properties": {
                 "displayName": {
@@ -5330,7 +5330,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.UpdateUserStatusRequest": {
+        "UpdateUserStatusRequest": {
             "type": "object",
             "required": [
                 "isActive"
@@ -5342,7 +5342,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_api_handler.VerifyEmailRequest": {
+        "VerifyEmailRequest": {
             "type": "object",
             "required": [
                 "token"

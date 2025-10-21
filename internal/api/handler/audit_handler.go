@@ -36,6 +36,7 @@ func NewAuditHandler(auditRepo repository.AuditRepository, log logger.Logger) *A
 }
 
 // AuditQueryRequest 审计日志查询请求（用于 Swagger）
+// @name AuditQueryRequest
 type AuditQueryRequest struct {
 	TenantID  string `json:"tenantId" example:"550e8400-e29b-41d4-a716-446655440000"`
 	UserID    string `json:"userId" example:"550e8400-e29b-41d4-a716-446655440000"`

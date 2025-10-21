@@ -1,6 +1,7 @@
 package model
 
 // Provider 提供商完整信息
+// @name Provider
 type Provider struct {
 	// 提供商ID（从文件夹名称获取）
 	ID string `yaml:"-" json:"id" example:"gemini"`

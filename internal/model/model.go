@@ -1,6 +1,7 @@
 package model
 
 // Model 模型完整信息
+// @name Model
 type Model struct {
 	// 模型标识
 	Model string `yaml:"model" json:"model" example:"gemini-1.5-flash"`
@@ -47,6 +48,7 @@ type ModelProperties struct {
 }
 
 // ParameterRule 参数规则
+// @name ParameterRule
 type ParameterRule struct {
 	// 参数名称
 	Name string `yaml:"name" json:"name" example:"temperature"`

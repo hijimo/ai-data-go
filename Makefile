@@ -55,6 +55,7 @@ swagger:
 		echo "请运行: make swagger-install"; \
 		exit 1; \
 	fi
+	@./scripts/fix_swagger_names.sh
 	@echo "✅ Swagger 文档生成完成"
 
 # 开发模式：生成文档并运行

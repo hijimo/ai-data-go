@@ -38,6 +38,7 @@ func NewTenantHandler(tenantService auth.TenantService, log logger.Logger) *Tena
 }
 
 // CreateTenantRequest 创建租户请求（用于 Swagger）
+// @name CreateTenantRequest
 type CreateTenantRequest struct {
 	Name      string                 `json:"name" validate:"required,min=1,max=255" example:"示例租户"`
 	Domain    string                 `json:"domain" validate:"omitempty,max=255" example:"example.com"`
@@ -46,6 +47,7 @@ type CreateTenantRequest struct {
 }
 
 // UpdateTenantRequest 更新租户请求（用于 Swagger）
+// @name UpdateTenantRequest
 type UpdateTenantRequest struct {
 	Name     *string                `json:"name" validate:"omitempty,min=1,max=255" example:"更新后的租户名"`
 	Domain   *string                `json:"domain" validate:"omitempty,max=255" example:"updated.com"`

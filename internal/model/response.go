@@ -37,6 +37,7 @@ type ResponsePaginationData[T any] struct {
 }
 
 // ErrorResponse 错误响应结构（用于 Swagger 文档）
+// @name ErrorResponse
 type ErrorResponse struct {
 	// 响应代码
 	Code int `json:"code" example:"400"`
@@ -45,9 +46,11 @@ type ErrorResponse struct {
 }
 
 // EmptyData 空数据结构（用于无数据返回的成功响应）
+// @name EmptyData
 type EmptyData struct{}
 
 // SuccessResponse 成功响应结构（无数据）
+// @name SuccessResponse
 type SuccessResponse struct {
 	// 响应代码
 	Code int `json:"code" example:"200"`
@@ -56,6 +59,7 @@ type SuccessResponse struct {
 }
 
 // MessagePreview 消息预览
+// @name MessagePreview
 type MessagePreview struct {
 	// 消息ID
 	ID string `json:"id" example:"msg-123456"`
@@ -68,6 +72,7 @@ type MessagePreview struct {
 }
 
 // SessionResponse 会话响应
+// @name SessionResponse
 type SessionResponse struct {
 	// 会话ID
 	ID string `json:"id" example:"session-123456"`
@@ -100,6 +105,7 @@ type SessionResponse struct {
 }
 
 // Message 消息结构
+// @name Message
 type Message struct {
 	// 消息ID
 	ID string `json:"id" example:"msg-123456"`
@@ -114,6 +120,7 @@ type Message struct {
 }
 
 // MessageResponse 消息响应
+// @name MessageResponse
 type MessageResponse struct {
 	// 消息ID
 	MessageID string `json:"messageId" example:"msg-123456"`
@@ -130,6 +137,7 @@ type MessageResponse struct {
 }
 
 // MessageDetailResponse 消息详情响应
+// @name MessageDetailResponse
 type MessageDetailResponse struct {
 	// 消息ID
 	ID string `json:"id" example:"msg-123456"`
@@ -154,6 +162,7 @@ type MessageDetailResponse struct {
 }
 
 // LoginResponse 登录响应（用于 Swagger）
+// @name LoginResponse
 type LoginResponse struct {
 	// 访问令牌
 	AccessToken string `json:"accessToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
@@ -168,6 +177,7 @@ type LoginResponse struct {
 }
 
 // AuthAuditItem 审计日志项（用于 Swagger）
+// @name AuthAuditItem
 type AuthAuditItem struct {
 	// 审计日志ID
 	ID string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
@@ -191,21 +201,27 @@ type AuthAuditItem struct {
 // 这些别名仅用于 Swagger 文档的可读性，实际代码应直接使用泛型类型
 
 // AuthAuditListResponse 审计日志列表响应（用于 Swagger）
+// @name AuthAuditListResponse
 type AuthAuditListResponse = ResponsePaginationData[[]AuthAuditItem]
 
 // TenantListResponse 租户列表响应（用于 Swagger）
+// @name TenantListResponse
 type TenantListResponse = ResponsePaginationData[[]Tenant]
 
 // UserListResponse 用户列表响应（用于 Swagger）
+// @name UserListResponse
 type UserListResponse = ResponsePaginationData[[]User]
 
 // SessionListResponse 会话列表响应（用于 Swagger）
+// @name SessionListResponse
 type SessionListResponse = ResponsePaginationData[[]SessionResponse]
 
 // MessageDetailListResponse 消息详情列表响应（用于 Swagger）
+// @name MessageDetailListResponse
 type MessageDetailListResponse = ResponsePaginationData[[]MessageDetailResponse]
 
 // CreateTenantWithAdminData 创建租户并自动生成管理员的响应数据（用于 Swagger）
+// @name CreateTenantWithAdminData
 type CreateTenantWithAdminData struct {
 	// 租户信息
 	Tenant *Tenant `json:"tenant"`
@@ -219,55 +235,72 @@ type CreateTenantWithAdminData struct {
 // 这些别名仅用于 Swagger 文档的可读性，实际代码应直接使用泛型类型
 
 // CreateTenantWithAdminResponse 创建租户并自动生成管理员的响应（用于 Swagger）
+// @name CreateTenantWithAdminResponse
 type CreateTenantWithAdminResponse = ResponseData[CreateTenantWithAdminData]
 
 // LoginDataResponse 登录数据响应（用于 Swagger）
+// @name LoginDataResponse
 type LoginDataResponse = ResponseData[LoginResponse]
 
 // SessionDataResponse 会话数据响应（用于 Swagger）
+// @name SessionDataResponse
 type SessionDataResponse = ResponseData[SessionResponse]
 
 // MessageResponseData 消息响应数据（用于 Swagger）
+// @name MessageResponseData
 type MessageResponseData = ResponseData[MessageResponse]
 
 // MessageDetailDataResponse 消息详情数据响应（用于 Swagger）
+// @name MessageDetailDataResponse
 type MessageDetailDataResponse = ResponseData[MessageDetailResponse]
 
 // ChatResponseData 对话响应数据（用于 Swagger）
+// @name ChatResponseData
 type ChatResponseData = ResponseData[ChatResponse]
 
 // ProviderListDataResponse 提供商列表数据响应（用于 Swagger）
+// @name ProviderListDataResponse
 type ProviderListDataResponse = ResponseData[[]Provider]
 
 // ProviderDataResponse 提供商数据响应（用于 Swagger）
+// @name ProviderDataResponse
 type ProviderDataResponse = ResponseData[Provider]
 
 // ModelListDataResponse 模型列表数据响应（用于 Swagger）
+// @name ModelListDataResponse
 type ModelListDataResponse = ResponseData[[]Model]
 
 // ModelDataResponse 模型数据响应（用于 Swagger）
+// @name ModelDataResponse
 type ModelDataResponse = ResponseData[Model]
 
 // ParameterRuleListDataResponse 参数规则列表数据响应（用于 Swagger）
+// @name ParameterRuleListDataResponse
 type ParameterRuleListDataResponse = ResponseData[[]ParameterRule]
 
 // MetricsDataResponse 指标数据响应（用于 Swagger）
+// @name MetricsDataResponse
 // 注意：使用 interface{} 避免与 internal/monitoring 包的循环依赖
 type MetricsDataResponse = ResponseData[interface{}]
 
 // AlertListDataResponse 告警列表数据响应（用于 Swagger）
+// @name AlertListDataResponse
 // 注意：使用 interface{} 避免与 internal/monitoring 包的循环依赖
 type AlertListDataResponse = ResponseData[interface{}]
 
 // HealthDataResponse 健康检查数据响应（用于 Swagger）
+// @name HealthDataResponse
 type HealthDataResponse = ResponseData[map[string]interface{}]
 
 // UserDataResponse 用户数据响应（用于 Swagger）
+// @name UserDataResponse
 type UserDataResponse = ResponseData[User]
 
 // TenantDataResponse 租户数据响应（用于 Swagger）
+// @name TenantDataResponse
 type TenantDataResponse = ResponseData[Tenant]
 
 // AnyDataResponse 任意数据响应（用于 Swagger）
+// @name AnyDataResponse
 // 用于返回空数据或任意类型数据的成功响应
 type AnyDataResponse = ResponseData[interface{}]

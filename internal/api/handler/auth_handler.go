@@ -38,6 +38,7 @@ func NewAuthHandler(authService auth.AuthService, emailService auth.EmailService
 }
 
 // RegisterRequest 用户注册请求（用于 Swagger）
+// @name RegisterRequest
 type RegisterRequest struct {
 	TenantID    string `json:"tenantId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email       string `json:"email" validate:"required,email" example:"user@example.com"`
@@ -47,6 +48,7 @@ type RegisterRequest struct {
 }
 
 // LoginRequest 用户登录请求（用于 Swagger）
+// @name LoginRequest
 type LoginRequest struct {
 	TenantID string `json:"tenantId" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email    string `json:"email" validate:"required,email" example:"user@example.com"`
@@ -54,16 +56,19 @@ type LoginRequest struct {
 }
 
 // RefreshRequest Token 刷新请求（用于 Swagger）
+// @name RefreshRequest
 type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 // LogoutRequest 用户注销请求（用于 Swagger）
+// @name LogoutRequest
 type LogoutRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 // ChangePasswordRequest 修改密码请求（用于 Swagger）
+// @name ChangePasswordRequest
 type ChangePasswordRequest struct {
 	OldPassword string `json:"oldPassword" validate:"required" example:"oldpassword123"`
 	NewPassword string `json:"newPassword" validate:"required,min=8" example:"newpassword123"`
@@ -409,6 +414,7 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 }
 
 // UnlockAccountRequest 解锁账户请求（用于 Swagger）
+// @name UnlockAccountRequest
 type UnlockAccountRequest struct {
 	TenantID string `json:"tenantId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 	UserID   string `json:"userId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
@@ -593,11 +599,13 @@ func (h *AuthHandler) writeValidationErrorResponse(w http.ResponseWriter, valida
 }
 
 // VerifyEmailRequest 邮箱验证请求（用于 Swagger）
+// @name VerifyEmailRequest
 type VerifyEmailRequest struct {
 	Token string `json:"token" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 // ResendVerificationRequest 重新发送验证邮件请求（用于 Swagger）
+// @name ResendVerificationRequest
 type ResendVerificationRequest struct {
 	TenantID string `json:"tenantId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 	UserID   string `json:"userId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`

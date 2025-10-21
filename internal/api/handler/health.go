@@ -26,6 +26,7 @@ func NewHealthHandler(healthService health.Service, logger logger.Logger) *Healt
 }
 
 // HealthStatusResponse 健康状态响应（用于 Swagger）
+// @name HealthStatusResponse
 type HealthStatusResponse struct {
 	Code    int                  `json:"code" example:"200"`
 	Message string               `json:"message" example:"success"`

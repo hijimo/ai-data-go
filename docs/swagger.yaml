@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  genkit-ai-service_internal_model.AbortRequest:
+  AbortRequest:
     properties:
       messageId:
         description: 消息ID（必填）
@@ -9,11 +9,11 @@ definitions:
     required:
     - messageId
     type: object
-  genkit-ai-service_internal_model.AlertListDataResponse:
+  AlertListDataResponse:
     type: object
-  genkit-ai-service_internal_model.AnyDataResponse:
+  AnyDataResponse:
     type: object
-  genkit-ai-service_internal_model.AuthAuditItem:
+  AuthAuditItem:
     properties:
       createdAt:
         description: 事件发生时间
@@ -46,7 +46,7 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
-  genkit-ai-service_internal_model.AuthAuditListResponse:
+  AuthAuditListResponse:
     properties:
       code:
         description: 响应代码
@@ -54,14 +54,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem'
+        - $ref: '#/definitions/PaginationData-array_AuthAuditItem'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.ChatOptions:
+  ChatOptions:
     properties:
       maxTokens:
         description: 最大token数
@@ -84,7 +84,7 @@ definitions:
         minimum: 0
         type: number
     type: object
-  genkit-ai-service_internal_model.ChatRequest:
+  ChatRequest:
     properties:
       message:
         description: 用户消息内容
@@ -96,12 +96,12 @@ definitions:
         type: string
       options:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatOptions'
+        - $ref: '#/definitions/ChatOptions'
         description: AI高级参数（可选）
     required:
     - message
     type: object
-  genkit-ai-service_internal_model.ChatResponse:
+  ChatResponse:
     properties:
       message:
         description: AI生成的消息内容
@@ -117,10 +117,10 @@ definitions:
         type: string
       usage:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
+        - $ref: '#/definitions/Usage'
         description: Token使用情况
     type: object
-  genkit-ai-service_internal_model.ChatResponseData:
+  ChatResponseData:
     properties:
       code:
         description: 响应代码
@@ -128,14 +128,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponse'
+        - $ref: '#/definitions/ChatResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.CreateSessionRequest:
+  CreateSessionRequest:
     properties:
       meta:
         additionalProperties: true
@@ -171,7 +171,7 @@ definitions:
     - modelName
     - title
     type: object
-  genkit-ai-service_internal_model.CredentialFormSchema:
+  CredentialFormSchema:
     properties:
       default:
         description: 默认值
@@ -184,7 +184,7 @@ definitions:
       options:
         description: 选项列表
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.FormOption'
+          $ref: '#/definitions/FormOption'
         type: array
       placeholder:
         additionalProperties:
@@ -201,15 +201,15 @@ definitions:
         description: 变量名
         type: string
     type: object
-  genkit-ai-service_internal_model.CredentialSchema:
+  CredentialSchema:
     properties:
       credential_form_schemas:
         description: 凭证表单配置列表
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.CredentialFormSchema'
+          $ref: '#/definitions/CredentialFormSchema'
         type: array
     type: object
-  genkit-ai-service_internal_model.ErrorResponse:
+  ErrorResponse:
     properties:
       code:
         description: 响应代码
@@ -220,7 +220,7 @@ definitions:
         example: 请求参数错误
         type: string
     type: object
-  genkit-ai-service_internal_model.FormOption:
+  FormOption:
     properties:
       label:
         additionalProperties:
@@ -231,9 +231,9 @@ definitions:
         description: 选项值
         type: string
     type: object
-  genkit-ai-service_internal_model.HealthDataResponse:
+  HealthDataResponse:
     type: object
-  genkit-ai-service_internal_model.LoginDataResponse:
+  LoginDataResponse:
     properties:
       code:
         description: 响应代码
@@ -241,14 +241,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.LoginResponse'
+        - $ref: '#/definitions/LoginResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.LoginResponse:
+  LoginResponse:
     properties:
       accessToken:
         description: 访问令牌
@@ -268,10 +268,10 @@ definitions:
         type: string
       user:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        - $ref: '#/definitions/User'
         description: 用户信息
     type: object
-  genkit-ai-service_internal_model.Message:
+  Message:
     properties:
       content:
         description: 消息内容
@@ -294,7 +294,7 @@ definitions:
         example: 1
         type: integer
     type: object
-  genkit-ai-service_internal_model.MessageDetailDataResponse:
+  MessageDetailDataResponse:
     properties:
       code:
         description: 响应代码
@@ -302,14 +302,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
+        - $ref: '#/definitions/MessageDetailResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.MessageDetailListResponse:
+  MessageDetailListResponse:
     properties:
       code:
         description: 响应代码
@@ -317,14 +317,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse'
+        - $ref: '#/definitions/PaginationData-array_MessageDetailResponse'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.MessageDetailResponse:
+  MessageDetailResponse:
     properties:
       content:
         description: 消息内容
@@ -367,7 +367,7 @@ definitions:
         description: 工具调用
         type: object
     type: object
-  genkit-ai-service_internal_model.MessagePreview:
+  MessagePreview:
     properties:
       content:
         description: 消息内容
@@ -386,11 +386,11 @@ definitions:
         example: user
         type: string
     type: object
-  genkit-ai-service_internal_model.MessageResponse:
+  MessageResponse:
     properties:
       aiMessage:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Message'
+        - $ref: '#/definitions/Message'
         description: AI消息
       messageId:
         description: 消息ID
@@ -406,14 +406,14 @@ definitions:
         type: string
       usage:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Usage'
+        - $ref: '#/definitions/Usage'
         description: 使用统计
       userMessage:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Message'
+        - $ref: '#/definitions/Message'
         description: 用户消息
     type: object
-  genkit-ai-service_internal_model.MessageResponseData:
+  MessageResponseData:
     properties:
       code:
         description: 响应代码
@@ -421,16 +421,16 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageResponse'
+        - $ref: '#/definitions/MessageResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.MetricsDataResponse:
+  MetricsDataResponse:
     type: object
-  genkit-ai-service_internal_model.Model:
+  Model:
     properties:
       deprecated:
         description: 是否已弃用
@@ -459,7 +459,7 @@ definitions:
         type: string
       model_properties:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ModelProperties'
+        - $ref: '#/definitions/ModelProperties'
         description: 模型属性
       model_type:
         description: 模型类型（llm、tts、text_embedding等）
@@ -468,14 +468,14 @@ definitions:
       parameter_rules:
         description: 参数规则
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
+          $ref: '#/definitions/ParameterRule'
         type: array
       pricing:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Pricing'
+        - $ref: '#/definitions/Pricing'
         description: 定价信息
     type: object
-  genkit-ai-service_internal_model.ModelDataResponse:
+  ModelDataResponse:
     properties:
       code:
         description: 响应代码
@@ -483,14 +483,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+        - $ref: '#/definitions/Model'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.ModelListDataResponse:
+  ModelListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -499,14 +499,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Model'
+          $ref: '#/definitions/Model'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.ModelProperties:
+  ModelProperties:
     properties:
       context_size:
         description: 上下文大小
@@ -515,7 +515,7 @@ definitions:
         description: 模式（chat、completion等）
         type: string
     type: object
-  genkit-ai-service_internal_model.ModelTypeInfo:
+  ModelTypeInfo:
     properties:
       position:
         description: 位置文件路径
@@ -526,12 +526,12 @@ definitions:
           type: string
         type: array
     type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem:
+  PaginationData-array_AuthAuditItem:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditItem'
+          $ref: '#/definitions/AuthAuditItem'
         type: array
       pageNo:
         description: 当前页码
@@ -550,12 +550,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse:
+  PaginationData-array_MessageDetailResponse:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
+          $ref: '#/definitions/MessageDetailResponse'
         type: array
       pageNo:
         description: 当前页码
@@ -574,12 +574,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse:
+  PaginationData-array_SessionResponse:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+          $ref: '#/definitions/SessionResponse'
         type: array
       pageNo:
         description: 当前页码
@@ -598,12 +598,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant:
+  PaginationData-array_Tenant:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+          $ref: '#/definitions/Tenant'
         type: array
       pageNo:
         description: 当前页码
@@ -622,12 +622,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User:
+  PaginationData-array_User:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.User'
+          $ref: '#/definitions/User'
         type: array
       pageNo:
         description: 当前页码
@@ -646,7 +646,7 @@ definitions:
         example: 10
         type: integer
     type: object
-  genkit-ai-service_internal_model.ParameterRule:
+  ParameterRule:
     properties:
       default:
         description: 默认值
@@ -686,7 +686,7 @@ definitions:
         example: temperature
         type: string
     type: object
-  genkit-ai-service_internal_model.ParameterRuleListDataResponse:
+  ParameterRuleListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -695,14 +695,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
+          $ref: '#/definitions/ParameterRule'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.Pricing:
+  Pricing:
     properties:
       currency:
         description: 货币
@@ -717,7 +717,7 @@ definitions:
         description: 单位
         type: string
     type: object
-  genkit-ai-service_internal_model.Provider:
+  Provider:
     properties:
       background:
         description: 背景色
@@ -733,7 +733,7 @@ definitions:
         type: array
       help:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ProviderHelp'
+        - $ref: '#/definitions/ProviderHelp'
         description: 帮助信息
       icon_large:
         additionalProperties:
@@ -759,11 +759,11 @@ definitions:
         type: object
       model_credential_schema:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.CredentialSchema'
+        - $ref: '#/definitions/CredentialSchema'
         description: 模型凭证配置
       models:
         additionalProperties:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ModelTypeInfo'
+          $ref: '#/definitions/ModelTypeInfo'
         description: 模型类型配置
         type: object
       provider:
@@ -772,7 +772,7 @@ definitions:
         type: string
       provider_credential_schema:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.CredentialSchema'
+        - $ref: '#/definitions/CredentialSchema'
         description: 提供商凭证配置
       supported_model_types:
         description: 支持的模型类型列表
@@ -783,7 +783,7 @@ definitions:
           type: string
         type: array
     type: object
-  genkit-ai-service_internal_model.ProviderDataResponse:
+  ProviderDataResponse:
     properties:
       code:
         description: 响应代码
@@ -791,14 +791,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
+        - $ref: '#/definitions/Provider'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.ProviderHelp:
+  ProviderHelp:
     properties:
       title:
         additionalProperties:
@@ -811,7 +811,7 @@ definitions:
         description: 帮助链接（多语言）
         type: object
     type: object
-  genkit-ai-service_internal_model.ProviderListDataResponse:
+  ProviderListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -820,14 +820,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
+          $ref: '#/definitions/Provider'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.SendMessageRequest:
+  SendMessageRequest:
     properties:
       message:
         description: 消息内容
@@ -835,7 +835,7 @@ definitions:
         type: string
       options:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.ChatOptions'
+        - $ref: '#/definitions/ChatOptions'
         description: AI高级参数（可选）
       sessionId:
         description: 会话ID
@@ -845,7 +845,7 @@ definitions:
     - message
     - sessionId
     type: object
-  genkit-ai-service_internal_model.SessionDataResponse:
+  SessionDataResponse:
     properties:
       code:
         description: 响应代码
@@ -853,14 +853,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        - $ref: '#/definitions/SessionResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.SessionListResponse:
+  SessionListResponse:
     properties:
       code:
         description: 响应代码
@@ -868,14 +868,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse'
+        - $ref: '#/definitions/PaginationData-array_SessionResponse'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.SessionResponse:
+  SessionResponse:
     properties:
       createdAt:
         description: 创建时间
@@ -895,7 +895,7 @@ definitions:
         type: boolean
       lastMessage:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.MessagePreview'
+        - $ref: '#/definitions/MessagePreview'
         description: 最后一条消息
       messageCount:
         description: 消息数量
@@ -934,7 +934,7 @@ definitions:
         example: user-123456
         type: string
     type: object
-  genkit-ai-service_internal_model.SuccessResponse:
+  SuccessResponse:
     properties:
       code:
         description: 响应代码
@@ -945,7 +945,7 @@ definitions:
         example: 操作成功
         type: string
     type: object
-  genkit-ai-service_internal_model.Tenant:
+  Tenant:
     description: 租户信息，包含租户的基本信息和状态
     properties:
       createdAt:
@@ -995,7 +995,7 @@ definitions:
         example: "2025-01-20T10:00:00Z"
         type: string
     type: object
-  genkit-ai-service_internal_model.TenantDataResponse:
+  TenantDataResponse:
     properties:
       code:
         description: 响应代码
@@ -1003,14 +1003,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+        - $ref: '#/definitions/Tenant'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.TenantListResponse:
+  TenantListResponse:
     properties:
       code:
         description: 响应代码
@@ -1018,14 +1018,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant'
+        - $ref: '#/definitions/PaginationData-array_Tenant'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.UpdateSessionRequest:
+  UpdateSessionRequest:
     properties:
       modelName:
         description: 模型名称（可选）
@@ -1054,7 +1054,7 @@ definitions:
         minimum: 0
         type: number
     type: object
-  genkit-ai-service_internal_model.Usage:
+  Usage:
     properties:
       completionTokens:
         description: 生成内容token数
@@ -1069,7 +1069,7 @@ definitions:
         example: 60
         type: integer
     type: object
-  genkit-ai-service_internal_model.User:
+  User:
     description: 用户信息，包含用户的基本信息、角色和状态
     properties:
       createdAt:
@@ -1146,7 +1146,7 @@ definitions:
         example: "2025-01-20T10:00:00Z"
         type: string
     type: object
-  genkit-ai-service_internal_model.UserDataResponse:
+  UserDataResponse:
     properties:
       code:
         description: 响应代码
@@ -1154,14 +1154,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        - $ref: '#/definitions/User'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_model.UserListResponse:
+  UserListResponse:
     properties:
       code:
         description: 响应代码
@@ -1169,14 +1169,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User'
+        - $ref: '#/definitions/PaginationData-array_User'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  genkit-ai-service_internal_service_health.HealthStatus:
+  HealthStatus:
     properties:
       dependencies:
         additionalProperties:
@@ -1199,7 +1199,7 @@ definitions:
         example: 1.0.0
         type: string
     type: object
-  internal_api_handler.ChangePasswordRequest:
+  ChangePasswordRequest:
     properties:
       newPassword:
         example: newpassword123
@@ -1212,7 +1212,7 @@ definitions:
     - newPassword
     - oldPassword
     type: object
-  internal_api_handler.CreateTenantRequest:
+  CreateTenantRequest:
     properties:
       createdBy:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1231,7 +1231,7 @@ definitions:
     required:
     - name
     type: object
-  internal_api_handler.CreateTenantWithAdminDataResponse:
+  CreateTenantWithAdminDataResponse:
     properties:
       code:
         description: 响应代码
@@ -1239,14 +1239,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/internal_api_handler.CreateTenantWithAdminResponse'
+        - $ref: '#/definitions/CreateTenantWithAdminResponse'
         description: 创建租户响应数据
       message:
         description: 响应信息
         example: 租户创建成功
         type: string
     type: object
-  internal_api_handler.CreateTenantWithAdminRequest:
+  CreateTenantWithAdminRequest:
     properties:
       adminDisplayName:
         description: 管理员显示名称（可选，最多255字符）
@@ -1275,7 +1275,7 @@ definitions:
     - tenantDomain
     - tenantName
     type: object
-  internal_api_handler.CreateTenantWithAdminResponse:
+  CreateTenantWithAdminResponse:
     properties:
       adminPassword:
         description: 管理员初始密码（请妥善保管并建议首次登录后修改）
@@ -1283,14 +1283,14 @@ definitions:
         type: string
       adminUser:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        - $ref: '#/definitions/User'
         description: 管理员用户信息
       tenant:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+        - $ref: '#/definitions/Tenant'
         description: 租户信息
     type: object
-  internal_api_handler.CreateUserRequest:
+  CreateUserRequest:
     properties:
       createdBy:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1327,18 +1327,18 @@ definitions:
     - password
     - tenantId
     type: object
-  internal_api_handler.HealthStatusResponse:
+  HealthStatusResponse:
     properties:
       code:
         example: 200
         type: integer
       data:
-        $ref: '#/definitions/genkit-ai-service_internal_service_health.HealthStatus'
+        $ref: '#/definitions/HealthStatus'
       message:
         example: success
         type: string
     type: object
-  internal_api_handler.LoginRequest:
+  LoginRequest:
     properties:
       email:
         example: user@example.com
@@ -1353,7 +1353,7 @@ definitions:
     - email
     - password
     type: object
-  internal_api_handler.LogoutRequest:
+  LogoutRequest:
     properties:
       refreshToken:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1361,7 +1361,7 @@ definitions:
     required:
     - refreshToken
     type: object
-  internal_api_handler.RefreshRequest:
+  RefreshRequest:
     properties:
       refreshToken:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1369,7 +1369,7 @@ definitions:
     required:
     - refreshToken
     type: object
-  internal_api_handler.RegisterRequest:
+  RegisterRequest:
     properties:
       displayName:
         example: 张三
@@ -1392,7 +1392,7 @@ definitions:
     - password
     - tenantId
     type: object
-  internal_api_handler.ResendVerificationRequest:
+  ResendVerificationRequest:
     properties:
       tenantId:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1404,7 +1404,7 @@ definitions:
     - tenantId
     - userId
     type: object
-  internal_api_handler.UnlockAccountRequest:
+  UnlockAccountRequest:
     properties:
       tenantId:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1416,7 +1416,7 @@ definitions:
     - tenantId
     - userId
     type: object
-  internal_api_handler.UpdateTenantRequest:
+  UpdateTenantRequest:
     properties:
       domain:
         example: updated.com
@@ -1433,14 +1433,14 @@ definitions:
         example: true
         type: boolean
     type: object
-  internal_api_handler.UpdateTenantStatusRequest:
+  UpdateTenantStatusRequest:
     properties:
       status:
         description: '租户状态（true: 启用, false: 禁用）'
         example: true
         type: boolean
     type: object
-  internal_api_handler.UpdateUserRequest:
+  UpdateUserRequest:
     properties:
       displayName:
         example: 李四
@@ -1467,7 +1467,7 @@ definitions:
           type: string
         type: array
     type: object
-  internal_api_handler.UpdateUserStatusRequest:
+  UpdateUserStatusRequest:
     properties:
       isActive:
         example: true
@@ -1475,7 +1475,7 @@ definitions:
     required:
     - isActive
     type: object
-  internal_api_handler.VerifyEmailRequest:
+  VerifyEmailRequest:
     properties:
       token:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -1544,23 +1544,23 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantListResponse'
+            $ref: '#/definitions/TenantListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户列表
@@ -1590,34 +1590,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.CreateTenantWithAdminRequest'
+          $ref: '#/definitions/CreateTenantWithAdminRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/internal_api_handler.CreateTenantWithAdminDataResponse'
+            $ref: '#/definitions/CreateTenantWithAdminDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建租户（带管理员）
@@ -1658,27 +1658,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误（如尝试删除平台租户）
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除租户
@@ -1717,34 +1717,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.UpdateTenantStatusRequest'
+          $ref: '#/definitions/UpdateTenantStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
+            $ref: '#/definitions/TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 启用/禁用租户
@@ -1792,23 +1792,23 @@ paths:
         "200":
           description: 查询成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditListResponse'
+            $ref: '#/definitions/AuthAuditListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未授权
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 查询审计日志
@@ -1825,30 +1825,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.ChangePasswordRequest'
+          $ref: '#/definitions/ChangePasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 修改成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证或旧密码错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 修改密码
@@ -1865,30 +1865,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.LoginRequest'
+          $ref: '#/definitions/LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 登录成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.LoginDataResponse'
+            $ref: '#/definitions/LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 认证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 用户登录
       tags:
       - Authentication
@@ -1903,30 +1903,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.LogoutRequest'
+          $ref: '#/definitions/LogoutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 注销成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: Token 无效
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 用户注销
       tags:
       - Authentication
@@ -1941,19 +1941,19 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取当前用户信息
@@ -1970,30 +1970,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.RefreshRequest'
+          $ref: '#/definitions/RefreshRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 刷新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.LoginDataResponse'
+            $ref: '#/definitions/LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: Token 无效或已过期
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 刷新访问令牌
       tags:
       - Authentication
@@ -2008,26 +2008,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.RegisterRequest'
+          $ref: '#/definitions/RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 注册成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 用户注册
       tags:
       - Authentication
@@ -2042,26 +2042,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.ResendVerificationRequest'
+          $ref: '#/definitions/ResendVerificationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 发送成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 重新发送验证邮件
       tags:
       - Authentication
@@ -2076,34 +2076,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.UnlockAccountRequest'
+          $ref: '#/definitions/UnlockAccountRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 解锁成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 解锁账户
@@ -2120,26 +2120,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.VerifyEmailRequest'
+          $ref: '#/definitions/VerifyEmailRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 验证成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 验证邮箱
       tags:
       - Authentication
@@ -2154,30 +2154,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ChatRequest'
+          $ref: '#/definitions/ChatRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功返回 AI 回复
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponseData'
+            $ref: '#/definitions/ChatResponseData'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "503":
           description: AI 服务不可用
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 发送对话消息
       tags:
       - chat
@@ -2192,30 +2192,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.AbortRequest'
+          $ref: '#/definitions/AbortRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功中止对话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SuccessResponse'
+            $ref: '#/definitions/SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 中止对话
       tags:
       - chat
@@ -2236,23 +2236,23 @@ paths:
         "200":
           description: 成功返回消息详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailDataResponse'
+            $ref: '#/definitions/MessageDetailDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取消息详情
       tags:
       - messages
@@ -2273,23 +2273,23 @@ paths:
         "200":
           description: 成功中止消息生成
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 中止消息生成
       tags:
       - messages
@@ -2332,19 +2332,19 @@ paths:
         "200":
           description: 成功返回会话列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SessionListResponse'
+            $ref: '#/definitions/SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取会话列表
       tags:
       - sessions
@@ -2358,26 +2358,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.CreateSessionRequest'
+          $ref: '#/definitions/CreateSessionRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功创建会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
+            $ref: '#/definitions/SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 创建新会话
       tags:
       - sessions
@@ -2398,23 +2398,23 @@ paths:
         "200":
           description: 成功删除会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 删除会话
       tags:
       - sessions
@@ -2434,23 +2434,23 @@ paths:
         "200":
           description: 成功返回会话详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
+            $ref: '#/definitions/SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取会话详情
       tags:
       - sessions
@@ -2469,34 +2469,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.UpdateSessionRequest'
+          $ref: '#/definitions/UpdateSessionRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功更新会话
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SessionDataResponse'
+            $ref: '#/definitions/SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 更新会话
       tags:
       - sessions
@@ -2522,23 +2522,23 @@ paths:
         "200":
           description: 成功更新归档状态
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 归档会话
       tags:
       - sessions
@@ -2574,27 +2574,27 @@ paths:
         "200":
           description: 成功返回消息历史
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailListResponse'
+            $ref: '#/definitions/MessageDetailListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取消息历史
       tags:
       - messages
@@ -2613,34 +2613,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.SendMessageRequest'
+          $ref: '#/definitions/SendMessageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功发送消息
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.MessageResponseData'
+            $ref: '#/definitions/MessageResponseData'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 发送消息
       tags:
       - messages
@@ -2666,23 +2666,23 @@ paths:
         "200":
           description: 成功更新置顶状态
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 置顶会话
       tags:
       - sessions
@@ -2718,19 +2718,19 @@ paths:
         "200":
           description: 成功返回搜索结果
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.SessionListResponse'
+            $ref: '#/definitions/SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 搜索会话
       tags:
       - sessions
@@ -2745,7 +2745,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/genkit-ai-service_internal_model.ChatRequest'
+          $ref: '#/definitions/ChatRequest'
       produces:
       - text/event-stream
       responses:
@@ -2756,19 +2756,19 @@ paths:
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "503":
           description: AI 服务不可用
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 发送流式对话消息
       tags:
       - chat
@@ -2783,15 +2783,15 @@ paths:
         "200":
           description: 服务健康
           schema:
-            $ref: '#/definitions/internal_api_handler.HealthStatusResponse'
+            $ref: '#/definitions/HealthStatusResponse'
         "500":
           description: 健康检查失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "503":
           description: 服务不健康
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 健康检查
       tags:
       - health
@@ -2804,7 +2804,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
       summary: 清空告警
       tags:
       - Monitoring
@@ -2816,7 +2816,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AlertListDataResponse'
+            $ref: '#/definitions/AlertListDataResponse'
       summary: 获取活跃告警
       tags:
       - Monitoring
@@ -2829,7 +2829,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.HealthDataResponse'
+            $ref: '#/definitions/HealthDataResponse'
       summary: 健康检查（含监控）
       tags:
       - Monitoring
@@ -2842,7 +2842,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.MetricsDataResponse'
+            $ref: '#/definitions/MetricsDataResponse'
       summary: 获取性能指标
       tags:
       - Monitoring
@@ -2855,7 +2855,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
       summary: 重置指标
       tags:
       - Monitoring
@@ -2870,11 +2870,11 @@ paths:
         "200":
           description: 成功返回提供商列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ProviderListDataResponse'
+            $ref: '#/definitions/ProviderListDataResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取所有提供商列表
       tags:
       - providers
@@ -2896,19 +2896,19 @@ paths:
         "200":
           description: 成功返回提供商详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ProviderDataResponse'
+            $ref: '#/definitions/ProviderDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 提供商不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取提供商详情
       tags:
       - providers
@@ -2930,19 +2930,19 @@ paths:
         "200":
           description: 成功返回模型列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ModelListDataResponse'
+            $ref: '#/definitions/ModelListDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 提供商不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取提供商的模型列表
       tags:
       - providers
@@ -2970,19 +2970,19 @@ paths:
         "200":
           description: 成功返回模型详情
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ModelDataResponse'
+            $ref: '#/definitions/ModelDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 提供商或模型不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取模型详情
       tags:
       - providers
@@ -3010,19 +3010,19 @@ paths:
         "200":
           description: 成功返回参数规则列表
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRuleListDataResponse'
+            $ref: '#/definitions/ParameterRuleListDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 提供商或模型不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 获取模型参数规则
       tags:
       - providers
@@ -3053,27 +3053,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantListResponse'
+            $ref: '#/definitions/TenantListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户列表
@@ -3089,34 +3089,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.CreateTenantRequest'
+          $ref: '#/definitions/CreateTenantRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
+            $ref: '#/definitions/TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建租户
@@ -3139,27 +3139,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除租户
@@ -3181,27 +3181,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
+            $ref: '#/definitions/TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户详情
@@ -3222,38 +3222,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.UpdateTenantRequest'
+          $ref: '#/definitions/UpdateTenantRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.TenantDataResponse'
+            $ref: '#/definitions/TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新租户
@@ -3291,27 +3291,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserListResponse'
+            $ref: '#/definitions/UserListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户用户列表
@@ -3332,34 +3332,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.CreateUserRequest'
+          $ref: '#/definitions/CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 在租户下创建用户
@@ -3387,27 +3387,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除用户
@@ -3434,38 +3434,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.UpdateUserStatusRequest'
+          $ref: '#/definitions/UpdateUserStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新用户状态
@@ -3498,27 +3498,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserListResponse'
+            $ref: '#/definitions/UserListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户列表
@@ -3534,34 +3534,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.CreateUserRequest'
+          $ref: '#/definitions/CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建用户
@@ -3584,27 +3584,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
+            $ref: '#/definitions/AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除用户
@@ -3626,27 +3626,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户详情
@@ -3667,38 +3667,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_api_handler.UpdateUserRequest'
+          $ref: '#/definitions/UpdateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.UserDataResponse'
+            $ref: '#/definitions/UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新用户

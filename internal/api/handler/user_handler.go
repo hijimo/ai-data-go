@@ -38,6 +38,7 @@ func NewUserHandler(userService auth.UserService, log logger.Logger) *UserHandle
 }
 
 // CreateUserRequest 创建用户请求（用于 Swagger）
+// @name CreateUserRequest
 type CreateUserRequest struct {
 	TenantID    string                 `json:"tenantId" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email       string                 `json:"email" validate:"required,email" example:"user@example.com"`
@@ -51,6 +52,7 @@ type CreateUserRequest struct {
 }
 
 // UpdateUserRequest 更新用户请求（用于 Swagger）
+// @name UpdateUserRequest
 type UpdateUserRequest struct {
 	Email       *string                `json:"email" validate:"omitempty,email" example:"newemail@example.com"`
 	DisplayName *string                `json:"displayName" example:"李四"`
@@ -752,6 +754,7 @@ func (h *UserHandler) HandleTenantListUsers(w http.ResponseWriter, r *http.Reque
 }
 
 // UpdateUserStatusRequest 更新用户状态请求
+// @name UpdateUserStatusRequest
 type UpdateUserStatusRequest struct {
 	IsActive bool `json:"isActive" validate:"required" example:"true"`
 }

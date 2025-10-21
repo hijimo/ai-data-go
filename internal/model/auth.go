@@ -49,6 +49,7 @@ const (
 
 // Tenant 租户模型
 // @Description 租户信息，包含租户的基本信息和状态
+// @name Tenant
 type Tenant struct {
 	// 租户ID
 	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
@@ -81,6 +82,7 @@ func (Tenant) TableName() string {
 
 // User 用户模型
 // @Description 用户信息，包含用户的基本信息、角色和状态
+// @name User
 type User struct {
 	// 用户ID
 	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id" example:"660e8400-e29b-41d4-a716-446655440001"`

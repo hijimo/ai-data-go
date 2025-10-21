@@ -1,6 +1,7 @@
 package model
 
 // ChatResponse 对话响应
+// @name ChatResponse
 type ChatResponse struct {
 	// 会话ID
 	SessionID string `json:"sessionId" example:"session-123456"`
@@ -13,6 +14,7 @@ type ChatResponse struct {
 }
 
 // Usage Token使用情况
+// @name Usage
 type Usage struct {
 	// 提示词token数
 	PromptTokens int `json:"promptTokens" example:"10"`

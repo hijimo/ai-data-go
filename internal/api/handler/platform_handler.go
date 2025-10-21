@@ -147,6 +147,7 @@ func (h *PlatformHandler) writePaginationResponse(w http.ResponseWriter, data []
 
 
 // CreateTenantWithAdminRequest 创建租户（带管理员）请求（用于 Swagger）
+// @name CreateTenantWithAdminRequest
 type CreateTenantWithAdminRequest struct {
 	// 租户名称（必填，1-255字符）
 	TenantName string `json:"tenantName" validate:"required,min=1,max=255" example:"示例公司"`
@@ -161,6 +162,7 @@ type CreateTenantWithAdminRequest struct {
 }
 
 // CreateTenantWithAdminResponse 创建租户（带管理员）响应（用于 Swagger）
+// @name CreateTenantWithAdminResponse
 type CreateTenantWithAdminResponse struct {
 	// 租户信息
 	Tenant *model.Tenant `json:"tenant"`
@@ -171,6 +173,7 @@ type CreateTenantWithAdminResponse struct {
 }
 
 // CreateTenantWithAdminDataResponse 创建租户数据响应（用于 Swagger）
+// @name CreateTenantWithAdminDataResponse
 type CreateTenantWithAdminDataResponse struct {
 	// 响应代码
 	Code int `json:"code" example:"201"`
@@ -370,6 +373,7 @@ func (h *PlatformHandler) HandleListTenants(w http.ResponseWriter, r *http.Reque
 
 
 // UpdateTenantStatusRequest 更新租户状态请求（用于 Swagger）
+// @name UpdateTenantStatusRequest
 type UpdateTenantStatusRequest struct {
 	// 租户状态（true: 启用, false: 禁用）
 	Status bool `json:"status" example:"true"`
