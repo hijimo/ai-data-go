@@ -196,7 +196,7 @@ type CreateTenantWithAdminDataResponse struct {
 // @Description - 管理员邮箱如未指定，默认为 admin@{tenantDomain}
 // @Description - 请妥善保管返回的初始密码，建议首次登录后立即修改
 // @Description - 租户域名必须唯一
-// @Tags 平台管理
+// @Tags Platform Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -283,7 +283,7 @@ func (h *PlatformHandler) HandleCreateTenant(w http.ResponseWriter, r *http.Requ
 // @Description **租户类型：**
 // @Description - system: 平台租户（系统级租户，用于承载平台管理员）
 // @Description - tenant: 业务租户（普通租户，用于实际业务使用）
-// @Tags 平台管理
+// @Tags Platform Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -393,7 +393,7 @@ type UpdateTenantStatusRequest struct {
 // @Description **注意事项：**
 // @Description - 不允许禁用平台租户（type = "system"）
 // @Description - 禁用操作会立即生效
-// @Tags 平台管理
+// @Tags Platform Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -506,7 +506,7 @@ func (h *PlatformHandler) HandleUpdateTenantStatus(w http.ResponseWriter, r *htt
 // @Description - 删除操作不可逆（除非通过数据库直接恢复）
 // @Description - 建议在删除前先禁用租户，观察一段时间后再删除
 // @Description - 删除租户会影响该租户下的所有用户和数据
-// @Tags 平台管理
+// @Tags Platform Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth

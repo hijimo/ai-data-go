@@ -1565,7 +1565,7 @@ paths:
       - BearerAuth: []
       summary: 获取租户列表
       tags:
-      - 平台管理
+      - Platform Management
     post:
       consumes:
       - application/json
@@ -1622,7 +1622,7 @@ paths:
       - BearerAuth: []
       summary: 创建租户（带管理员）
       tags:
-      - 平台管理
+      - Platform Management
   /api/v1/platform/tenants/{id}:
     delete:
       consumes:
@@ -1683,7 +1683,7 @@ paths:
       - BearerAuth: []
       summary: 删除租户
       tags:
-      - 平台管理
+      - Platform Management
   /api/v1/platform/tenants/{id}/status:
     patch:
       consumes:
@@ -1749,7 +1749,7 @@ paths:
       - BearerAuth: []
       summary: 启用/禁用租户
       tags:
-      - 平台管理
+      - Platform Management
   /audit/auth:
     get:
       consumes:
@@ -1813,7 +1813,7 @@ paths:
       - BearerAuth: []
       summary: 查询审计日志
       tags:
-      - 审计
+      - Audit
   /auth/change-password:
     post:
       consumes:
@@ -1853,7 +1853,7 @@ paths:
       - BearerAuth: []
       summary: 修改密码
       tags:
-      - 认证
+      - Authentication
   /auth/login:
     post:
       consumes:
@@ -1891,7 +1891,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 用户登录
       tags:
-      - 认证
+      - Authentication
   /auth/logout:
     post:
       consumes:
@@ -1929,7 +1929,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 用户注销
       tags:
-      - 认证
+      - Authentication
   /auth/me:
     get:
       consumes:
@@ -1958,7 +1958,7 @@ paths:
       - BearerAuth: []
       summary: 获取当前用户信息
       tags:
-      - 认证
+      - Authentication
   /auth/refresh:
     post:
       consumes:
@@ -1996,7 +1996,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 刷新访问令牌
       tags:
-      - 认证
+      - Authentication
   /auth/register:
     post:
       consumes:
@@ -2030,7 +2030,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 用户注册
       tags:
-      - 认证
+      - Authentication
   /auth/resend-verification:
     post:
       consumes:
@@ -2064,7 +2064,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 重新发送验证邮件
       tags:
-      - 认证
+      - Authentication
   /auth/unlock-account:
     post:
       consumes:
@@ -2108,7 +2108,7 @@ paths:
       - BearerAuth: []
       summary: 解锁账户
       tags:
-      - 认证
+      - Authentication
   /auth/verify-email:
     post:
       consumes:
@@ -2142,7 +2142,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.ErrorResponse'
       summary: 验证邮箱
       tags:
-      - 认证
+      - Authentication
   /chat:
     post:
       consumes:
@@ -2807,7 +2807,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
       summary: 清空告警
       tags:
-      - 监控
+      - Monitoring
     get:
       description: 获取当前活跃的告警列表
       produces:
@@ -2819,7 +2819,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.AlertListDataResponse'
       summary: 获取活跃告警
       tags:
-      - 监控
+      - Monitoring
   /monitoring/health:
     get:
       description: 获取系统健康状态和关键监控指标
@@ -2832,7 +2832,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.HealthDataResponse'
       summary: 健康检查（含监控）
       tags:
-      - 监控
+      - Monitoring
   /monitoring/metrics:
     get:
       description: 获取认证系统的性能监控指标
@@ -2845,7 +2845,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.MetricsDataResponse'
       summary: 获取性能指标
       tags:
-      - 监控
+      - Monitoring
   /monitoring/metrics/reset:
     post:
       description: 重置所有性能监控指标
@@ -2858,7 +2858,7 @@ paths:
             $ref: '#/definitions/genkit-ai-service_internal_model.AnyDataResponse'
       summary: 重置指标
       tags:
-      - 监控
+      - Monitoring
   /providers:
     get:
       consumes:
@@ -3078,7 +3078,7 @@ paths:
       - BearerAuth: []
       summary: 获取租户列表
       tags:
-      - 租户管理
+      - Tenant Management
     post:
       consumes:
       - application/json
@@ -3121,7 +3121,7 @@ paths:
       - BearerAuth: []
       summary: 创建租户
       tags:
-      - 租户管理
+      - Tenant Management
   /tenants/{id}:
     delete:
       consumes:
@@ -3164,7 +3164,7 @@ paths:
       - BearerAuth: []
       summary: 删除租户
       tags:
-      - 租户管理
+      - Tenant Management
     get:
       consumes:
       - application/json
@@ -3206,7 +3206,7 @@ paths:
       - BearerAuth: []
       summary: 获取租户详情
       tags:
-      - 租户管理
+      - Tenant Management
     put:
       consumes:
       - application/json
@@ -3258,7 +3258,7 @@ paths:
       - BearerAuth: []
       summary: 更新租户
       tags:
-      - 租户管理
+      - Tenant Management
   /tenants/{tenantId}/users:
     get:
       consumes:
@@ -3316,7 +3316,7 @@ paths:
       - BearerAuth: []
       summary: 获取租户用户列表
       tags:
-      - 租户用户管理
+      - Tenant User Management
     post:
       consumes:
       - application/json
@@ -3364,7 +3364,7 @@ paths:
       - BearerAuth: []
       summary: 在租户下创建用户
       tags:
-      - 租户用户管理
+      - Tenant User Management
   /tenants/{tenantId}/users/{userId}:
     delete:
       consumes:
@@ -3412,7 +3412,7 @@ paths:
       - BearerAuth: []
       summary: 删除用户
       tags:
-      - 租户用户管理
+      - Tenant User Management
   /tenants/{tenantId}/users/{userId}/status:
     patch:
       consumes:
@@ -3470,7 +3470,7 @@ paths:
       - BearerAuth: []
       summary: 更新用户状态
       tags:
-      - 租户用户管理
+      - Tenant User Management
   /users:
     get:
       consumes:
@@ -3523,7 +3523,7 @@ paths:
       - BearerAuth: []
       summary: 获取用户列表
       tags:
-      - 用户管理
+      - User Management
     post:
       consumes:
       - application/json
@@ -3566,7 +3566,7 @@ paths:
       - BearerAuth: []
       summary: 创建用户
       tags:
-      - 用户管理
+      - User Management
   /users/{id}:
     delete:
       consumes:
@@ -3609,7 +3609,7 @@ paths:
       - BearerAuth: []
       summary: 删除用户
       tags:
-      - 用户管理
+      - User Management
     get:
       consumes:
       - application/json
@@ -3651,7 +3651,7 @@ paths:
       - BearerAuth: []
       summary: 获取用户详情
       tags:
-      - 用户管理
+      - User Management
     put:
       consumes:
       - application/json
@@ -3703,7 +3703,7 @@ paths:
       - BearerAuth: []
       summary: 更新用户
       tags:
-      - 用户管理
+      - User Management
 schemes:
 - http
 - https
@@ -3716,14 +3716,26 @@ securityDefinitions:
 swagger: "2.0"
 tags:
 - description: 用户认证相关接口（注册、登录、Token 刷新、注销等）
-  name: 认证
+  name: Authentication
 - description: 租户管理接口（需要管理员权限）
-  name: 租户管理
+  name: Tenant Management
 - description: 用户管理接口（需要租户管理员权限）
-  name: 用户管理
+  name: User Management
+- description: 租户用户管理接口（需要租户管理员或平台管理员权限）
+  name: Tenant User Management
+- description: 平台管理接口（需要平台管理员权限）
+  name: Platform Management
+- description: 审计日志接口
+  name: Audit
+- description: 监控接口
+  name: Monitoring
 - description: 模型提供商管理接口
   name: providers
 - description: AI 对话接口
   name: chat
+- description: 会话管理接口
+  name: sessions
+- description: 消息管理接口
+  name: messages
 - description: 健康检查接口
   name: health

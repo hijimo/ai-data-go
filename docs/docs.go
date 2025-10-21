@@ -37,7 +37,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "平台管理"
+                    "Platform Management"
                 ],
                 "summary": "获取租户列表",
                 "parameters": [
@@ -119,7 +119,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "平台管理"
+                    "Platform Management"
                 ],
                 "summary": "创建租户（带管理员）",
                 "parameters": [
@@ -188,7 +188,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "平台管理"
+                    "Platform Management"
                 ],
                 "summary": "删除租户",
                 "parameters": [
@@ -256,7 +256,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "平台管理"
+                    "Platform Management"
                 ],
                 "summary": "启用/禁用租户",
                 "parameters": [
@@ -333,7 +333,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "审计"
+                    "Audit"
                 ],
                 "summary": "查询审计日志",
                 "parameters": [
@@ -431,7 +431,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "修改密码",
                 "parameters": [
@@ -489,7 +489,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "用户登录",
                 "parameters": [
@@ -547,7 +547,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "用户注销",
                 "parameters": [
@@ -610,7 +610,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "获取当前用户信息",
                 "responses": {
@@ -651,7 +651,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "刷新访问令牌",
                 "parameters": [
@@ -709,7 +709,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "用户注册",
                 "parameters": [
@@ -761,7 +761,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "重新发送验证邮件",
                 "parameters": [
@@ -818,7 +818,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "解锁账户",
                 "parameters": [
@@ -882,7 +882,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "认证"
+                    "Authentication"
                 ],
                 "summary": "验证邮箱",
                 "parameters": [
@@ -1906,7 +1906,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "监控"
+                    "Monitoring"
                 ],
                 "summary": "获取活跃告警",
                 "responses": {
@@ -1924,7 +1924,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "监控"
+                    "Monitoring"
                 ],
                 "summary": "清空告警",
                 "responses": {
@@ -1944,7 +1944,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "监控"
+                    "Monitoring"
                 ],
                 "summary": "健康检查（含监控）",
                 "responses": {
@@ -1964,7 +1964,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "监控"
+                    "Monitoring"
                 ],
                 "summary": "获取性能指标",
                 "responses": {
@@ -1984,7 +1984,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "监控"
+                    "Monitoring"
                 ],
                 "summary": "重置指标",
                 "responses": {
@@ -2261,7 +2261,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户管理"
+                    "Tenant Management"
                 ],
                 "summary": "获取租户列表",
                 "parameters": [
@@ -2338,7 +2338,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户管理"
+                    "Tenant Management"
                 ],
                 "summary": "创建租户",
                 "parameters": [
@@ -2407,7 +2407,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户管理"
+                    "Tenant Management"
                 ],
                 "summary": "获取租户详情",
                 "parameters": [
@@ -2472,7 +2472,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户管理"
+                    "Tenant Management"
                 ],
                 "summary": "更新租户",
                 "parameters": [
@@ -2552,7 +2552,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户管理"
+                    "Tenant Management"
                 ],
                 "summary": "删除租户",
                 "parameters": [
@@ -2619,7 +2619,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户用户管理"
+                    "Tenant User Management"
                 ],
                 "summary": "获取租户用户列表",
                 "parameters": [
@@ -2703,7 +2703,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户用户管理"
+                    "Tenant User Management"
                 ],
                 "summary": "在租户下创建用户",
                 "parameters": [
@@ -2779,7 +2779,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户用户管理"
+                    "Tenant User Management"
                 ],
                 "summary": "删除用户",
                 "parameters": [
@@ -2853,7 +2853,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "租户用户管理"
+                    "Tenant User Management"
                 ],
                 "summary": "更新用户状态",
                 "parameters": [
@@ -2942,7 +2942,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "User Management"
                 ],
                 "summary": "获取用户列表",
                 "parameters": [
@@ -3019,7 +3019,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "User Management"
                 ],
                 "summary": "创建用户",
                 "parameters": [
@@ -3088,7 +3088,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "User Management"
                 ],
                 "summary": "获取用户详情",
                 "parameters": [
@@ -3153,7 +3153,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "User Management"
                 ],
                 "summary": "更新用户",
                 "parameters": [
@@ -3233,7 +3233,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户管理"
+                    "User Management"
                 ],
                 "summary": "删除用户",
                 "parameters": [
@@ -5366,15 +5366,31 @@ const docTemplate = `{
     "tags": [
         {
             "description": "用户认证相关接口（注册、登录、Token 刷新、注销等）",
-            "name": "认证"
+            "name": "Authentication"
         },
         {
             "description": "租户管理接口（需要管理员权限）",
-            "name": "租户管理"
+            "name": "Tenant Management"
         },
         {
             "description": "用户管理接口（需要租户管理员权限）",
-            "name": "用户管理"
+            "name": "User Management"
+        },
+        {
+            "description": "租户用户管理接口（需要租户管理员或平台管理员权限）",
+            "name": "Tenant User Management"
+        },
+        {
+            "description": "平台管理接口（需要平台管理员权限）",
+            "name": "Platform Management"
+        },
+        {
+            "description": "审计日志接口",
+            "name": "Audit"
+        },
+        {
+            "description": "监控接口",
+            "name": "Monitoring"
         },
         {
             "description": "模型提供商管理接口",
@@ -5383,6 +5399,14 @@ const docTemplate = `{
         {
             "description": "AI 对话接口",
             "name": "chat"
+        },
+        {
+            "description": "会话管理接口",
+            "name": "sessions"
+        },
+        {
+            "description": "消息管理接口",
+            "name": "messages"
         },
         {
             "description": "健康检查接口",

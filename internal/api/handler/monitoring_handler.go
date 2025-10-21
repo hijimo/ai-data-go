@@ -23,7 +23,7 @@ func NewMonitoringHandler(alertManager *monitoring.AlertManager) *MonitoringHand
 // HandleMetrics 处理 metrics 请求
 // @Summary 获取性能指标
 // @Description 获取认证系统的性能监控指标
-// @Tags 监控
+// @Tags Monitoring
 // @Produce json
 // @Success 200 {object} model.MetricsDataResponse
 // @Router /monitoring/metrics [get]
@@ -44,7 +44,7 @@ func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request
 // HandleAlerts 处理告警查询请求
 // @Summary 获取活跃告警
 // @Description 获取当前活跃的告警列表
-// @Tags 监控
+// @Tags Monitoring
 // @Produce json
 // @Success 200 {object} model.AlertListDataResponse
 // @Router /monitoring/alerts [get]
@@ -65,7 +65,7 @@ func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request)
 // HandleClearAlerts 处理清空告警请求
 // @Summary 清空告警
 // @Description 清空所有活跃告警
-// @Tags 监控
+// @Tags Monitoring
 // @Produce json
 // @Success 200 {object} model.AnyDataResponse
 // @Router /monitoring/alerts [delete]
@@ -86,7 +86,7 @@ func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Req
 // HandleResetMetrics 处理重置指标请求
 // @Summary 重置指标
 // @Description 重置所有性能监控指标
-// @Tags 监控
+// @Tags Monitoring
 // @Produce json
 // @Success 200 {object} model.AnyDataResponse
 // @Router /monitoring/metrics/reset [post]
@@ -107,7 +107,7 @@ func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Re
 // HandleHealthCheck 处理健康检查请求（包含监控信息）
 // @Summary 健康检查（含监控）
 // @Description 获取系统健康状态和关键监控指标
-// @Tags 监控
+// @Tags Monitoring
 // @Produce json
 // @Success 200 {object} model.HealthDataResponse
 // @Router /monitoring/health [get]

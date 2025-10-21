@@ -64,7 +64,7 @@ type UpdateUserRequest struct {
 // HandleCreate 处理创建用户
 // @Summary 创建用户
 // @Description 在指定租户下创建新用户（需要租户管理员权限）
-// @Tags 用户管理
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -149,7 +149,7 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // HandleGet 处理获取用户详情
 // @Summary 获取用户详情
 // @Description 根据用户ID获取用户详细信息（需要租户管理员权限）
-// @Tags 用户管理
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -223,7 +223,7 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // HandleUpdate 处理更新用户
 // @Summary 更新用户
 // @Description 更新用户信息（需要租户管理员权限）
-// @Tags 用户管理
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -314,7 +314,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // HandleDelete 处理删除用户
 // @Summary 删除用户
 // @Description 软删除指定的用户（需要租户管理员权限）
-// @Tags 用户管理
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -389,7 +389,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // HandleList 处理获取用户列表
 // @Summary 获取用户列表
 // @Description 获取当前租户下的用户列表，支持分页（需要租户管理员权限）
-// @Tags 用户管理
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -581,7 +581,7 @@ func (h *UserHandler) writePaginationResponse(w http.ResponseWriter, data []*mod
 // HandleTenantCreateUser 处理在指定租户下创建用户
 // @Summary 在租户下创建用户
 // @Description 在指定租户下创建新用户（需要租户管理员或平台管理员权限）
-// @Tags 租户用户管理
+// @Tags Tenant User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -669,7 +669,7 @@ func (h *UserHandler) HandleTenantCreateUser(w http.ResponseWriter, r *http.Requ
 // HandleTenantListUsers 处理获取指定租户下的用户列表
 // @Summary 获取租户用户列表
 // @Description 获取指定租户下的用户列表，支持分页（需要租户管理员或平台管理员权限）
-// @Tags 租户用户管理
+// @Tags Tenant User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -759,7 +759,7 @@ type UpdateUserStatusRequest struct {
 // HandleTenantUpdateUserStatus 处理更新指定租户下用户的状态
 // @Summary 更新用户状态
 // @Description 启用或禁用指定租户下的用户（需要租户管理员或平台管理员权限）
-// @Tags 租户用户管理
+// @Tags Tenant User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -860,7 +860,7 @@ func (h *UserHandler) HandleTenantUpdateUserStatus(w http.ResponseWriter, r *htt
 // HandleTenantDeleteUser 处理删除指定租户下的用户
 // @Summary 删除用户
 // @Description 软删除指定租户下的用户（需要租户管理员或平台管理员权限）
-// @Tags 租户用户管理
+// @Tags Tenant User Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth

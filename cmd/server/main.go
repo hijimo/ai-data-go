@@ -50,20 +50,38 @@ import (
 // @name Authorization
 // @description 输入 "Bearer {token}" 格式的 JWT 令牌进行身份认证
 
-// @tag.name 认证
+// @tag.name Authentication
 // @tag.description 用户认证相关接口（注册、登录、Token 刷新、注销等）
 
-// @tag.name 租户管理
+// @tag.name Tenant Management
 // @tag.description 租户管理接口（需要管理员权限）
 
-// @tag.name 用户管理
+// @tag.name User Management
 // @tag.description 用户管理接口（需要租户管理员权限）
+
+// @tag.name Tenant User Management
+// @tag.description 租户用户管理接口（需要租户管理员或平台管理员权限）
+
+// @tag.name Platform Management
+// @tag.description 平台管理接口（需要平台管理员权限）
+
+// @tag.name Audit
+// @tag.description 审计日志接口
+
+// @tag.name Monitoring
+// @tag.description 监控接口
 
 // @tag.name providers
 // @tag.description 模型提供商管理接口
 
 // @tag.name chat
 // @tag.description AI 对话接口
+
+// @tag.name sessions
+// @tag.description 会话管理接口
+
+// @tag.name messages
+// @tag.description 消息管理接口
 
 // @tag.name health
 // @tag.description 健康检查接口

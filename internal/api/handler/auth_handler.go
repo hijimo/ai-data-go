@@ -72,7 +72,7 @@ type ChangePasswordRequest struct {
 // HandleRegister 处理用户注册
 // @Summary 用户注册
 // @Description 注册新用户账户
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body RegisterRequest true "注册请求"
@@ -136,7 +136,7 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 // HandleLogin 处理用户登录
 // @Summary 用户登录
 // @Description 使用邮箱和密码登录系统
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body LoginRequest true "登录请求"
@@ -206,7 +206,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 // HandleRefresh 处理 Token 刷新
 // @Summary 刷新访问令牌
 // @Description 使用 Refresh Token 获取新的 Access Token
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body RefreshRequest true "刷新请求"
@@ -264,7 +264,7 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 // HandleLogout 处理用户注销
 // @Summary 用户注销
 // @Description 注销用户并撤销 Refresh Token
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body LogoutRequest true "注销请求"
@@ -333,7 +333,7 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 // HandleChangePassword 处理密码修改
 // @Summary 修改密码
 // @Description 修改当前用户的密码
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -417,7 +417,7 @@ type UnlockAccountRequest struct {
 // HandleUnlockAccount 处理账户解锁
 // @Summary 解锁账户
 // @Description 解锁被锁定的用户账户（需要管理员权限）
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -484,7 +484,7 @@ func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request
 // HandleMe 获取当前用户信息
 // @Summary 获取当前用户信息
 // @Description 获取当前登录用户的详细信息
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -606,7 +606,7 @@ type ResendVerificationRequest struct {
 // HandleVerifyEmail 处理邮箱验证
 // @Summary 验证邮箱
 // @Description 使用验证令牌验证用户邮箱
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body VerifyEmailRequest true "验证请求"
@@ -666,7 +666,7 @@ func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) 
 // HandleResendVerification 处理重新发送验证邮件
 // @Summary 重新发送验证邮件
 // @Description 重新发送邮箱验证邮件
-// @Tags 认证
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Param request body ResendVerificationRequest true "重发请求"

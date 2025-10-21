@@ -56,7 +56,7 @@ type UpdateTenantRequest struct {
 // HandleCreate 处理创建租户
 // @Summary 创建租户
 // @Description 创建新的租户（需要管理员权限）
-// @Tags 租户管理
+// @Tags Tenant Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -128,7 +128,7 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 // HandleGet 处理获取租户详情
 // @Summary 获取租户详情
 // @Description 根据租户ID获取租户详细信息（需要管理员权限）
-// @Tags 租户管理
+// @Tags Tenant Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -191,7 +191,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // HandleUpdate 处理更新租户
 // @Summary 更新租户
 // @Description 更新租户信息（需要管理员权限）
-// @Tags 租户管理
+// @Tags Tenant Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -271,7 +271,7 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 // HandleDelete 处理删除租户
 // @Summary 删除租户
 // @Description 软删除指定的租户（需要管理员权限）
-// @Tags 租户管理
+// @Tags Tenant Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -335,7 +335,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // HandleList 处理获取租户列表
 // @Summary 获取租户列表
 // @Description 获取租户列表，支持分页（需要管理员权限）
-// @Tags 租户管理
+// @Tags Tenant Management
 // @Accept json
 // @Produce json
 // @Security BearerAuth

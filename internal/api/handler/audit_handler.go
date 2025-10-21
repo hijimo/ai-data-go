@@ -49,7 +49,7 @@ type AuditQueryRequest struct {
 // HandleListAuditLogs 处理审计日志查询
 // @Summary 查询审计日志
 // @Description 查询认证审计日志，支持多条件过滤和分页
-// @Tags 审计
+// @Tags Audit
 // @Accept json
 // @Produce json
 // @Security BearerAuth
