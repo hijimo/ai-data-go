@@ -3301,40 +3301,10 @@ const docTemplate = `{
             }
         },
         "genkit-ai-service_internal_model.AlertListDataResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "告警列表数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "操作成功"
-                }
-            }
+            "type": "object"
         },
         "genkit-ai-service_internal_model.AnyDataResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "操作成功"
-                }
-            }
+            "type": "object"
         },
         "genkit-ai-service_internal_model.AuthAuditItem": {
             "type": "object",
@@ -3391,46 +3361,14 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditPaginationData"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem"
                         }
                     ]
                 },
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "查询审计日志成功"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.AuthAuditPaginationData": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditItem"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
+                    "example": "success"
                 }
             }
         },
@@ -3526,7 +3464,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "对话响应数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.ChatResponse"
@@ -3536,7 +3474,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -3671,24 +3609,7 @@ const docTemplate = `{
             }
         },
         "genkit-ai-service_internal_model.HealthDataResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "健康检查数据",
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "操作成功"
-                }
-            }
+            "type": "object"
         },
         "genkit-ai-service_internal_model.LoginDataResponse": {
             "type": "object",
@@ -3699,7 +3620,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "登录数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.LoginResponse"
@@ -3709,7 +3630,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "登录成功"
+                    "example": "success"
                 }
             }
         },
@@ -3785,7 +3706,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "消息详情数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
@@ -3795,7 +3716,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -3811,46 +3732,14 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailPaginationData"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse"
                         }
                     ]
                 },
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "获取消息列表成功"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.MessageDetailPaginationData": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
+                    "example": "success"
                 }
             }
         },
@@ -3987,7 +3876,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "消息响应数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.MessageResponse"
@@ -3997,27 +3886,12 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
         "genkit-ai-service_internal_model.MetricsDataResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "description": "指标数据"
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "操作成功"
-                }
-            }
+            "type": "object"
         },
         "genkit-ai-service_internal_model.Model": {
             "type": "object",
@@ -4094,7 +3968,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "模型数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
@@ -4104,7 +3978,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4117,7 +3991,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "模型列表数据",
+                    "description": "响应数据",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/genkit-ai-service_internal_model.Model"
@@ -4126,7 +4000,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4156,6 +4030,166 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.AuthAuditItem"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.MessageDetailResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -4223,7 +4257,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "参数规则列表数据",
+                    "description": "响应数据",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/genkit-ai-service_internal_model.ParameterRule"
@@ -4232,7 +4266,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4364,7 +4398,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "提供商数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
@@ -4374,7 +4408,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4406,7 +4440,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "提供商列表数据",
+                    "description": "响应数据",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/genkit-ai-service_internal_model.Provider"
@@ -4415,7 +4449,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4455,7 +4489,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "会话数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
@@ -4465,7 +4499,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4481,46 +4515,14 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.SessionPaginationData"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse"
                         }
                     ]
                 },
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "获取会话列表成功"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.SessionPaginationData": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.SessionResponse"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
+                    "example": "success"
                 }
             }
         },
@@ -4685,7 +4687,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "租户数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
@@ -4695,7 +4697,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4711,46 +4713,14 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.TenantPaginationData"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant"
                         }
                     ]
                 },
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "获取租户列表成功"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.TenantPaginationData": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.Tenant"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
+                    "example": "success"
                 }
             }
         },
@@ -4914,7 +4884,7 @@ const docTemplate = `{
                     "example": 200
                 },
                 "data": {
-                    "description": "用户数据",
+                    "description": "响应数据",
                     "allOf": [
                         {
                             "$ref": "#/definitions/genkit-ai-service_internal_model.User"
@@ -4924,7 +4894,7 @@ const docTemplate = `{
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "操作成功"
+                    "example": "success"
                 }
             }
         },
@@ -4940,46 +4910,14 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/genkit-ai-service_internal_model.UserPaginationData"
+                            "$ref": "#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User"
                         }
                     ]
                 },
                 "message": {
                     "description": "响应信息",
                     "type": "string",
-                    "example": "获取用户列表成功"
-                }
-            }
-        },
-        "genkit-ai-service_internal_model.UserPaginationData": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "数据",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/genkit-ai-service_internal_model.User"
-                    }
-                },
-                "pageNo": {
-                    "description": "当前页码",
-                    "type": "integer",
-                    "example": 1
-                },
-                "pageSize": {
-                    "description": "每页大小",
-                    "type": "integer",
-                    "example": 10
-                },
-                "totalCount": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 100
-                },
-                "totalPage": {
-                    "description": "总页数",
-                    "type": "integer",
-                    "example": 10
+                    "example": "success"
                 }
             }
         },

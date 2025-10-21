@@ -10,30 +10,8 @@ definitions:
     - messageId
     type: object
   genkit-ai-service_internal_model.AlertListDataResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 告警列表数据
-      message:
-        description: 响应信息
-        example: 操作成功
-        type: string
     type: object
   genkit-ai-service_internal_model.AnyDataResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 数据
-      message:
-        description: 响应信息
-        example: 操作成功
-        type: string
     type: object
   genkit-ai-service_internal_model.AuthAuditItem:
     properties:
@@ -76,36 +54,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditPaginationData'
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem'
         description: 分页数据
       message:
         description: 响应信息
-        example: 查询审计日志成功
+        example: success
         type: string
-    type: object
-  genkit-ai-service_internal_model.AuthAuditPaginationData:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditItem'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_model.ChatOptions:
     properties:
@@ -175,10 +129,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.ChatResponse'
-        description: 对话响应数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.CreateSessionRequest:
@@ -278,19 +232,6 @@ definitions:
         type: string
     type: object
   genkit-ai-service_internal_model.HealthDataResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        additionalProperties: true
-        description: 健康检查数据
-        type: object
-      message:
-        description: 响应信息
-        example: 操作成功
-        type: string
     type: object
   genkit-ai-service_internal_model.LoginDataResponse:
     properties:
@@ -301,10 +242,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.LoginResponse'
-        description: 登录数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 登录成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.LoginResponse:
@@ -362,10 +303,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
-        description: 消息详情数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.MessageDetailListResponse:
@@ -376,36 +317,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailPaginationData'
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse'
         description: 分页数据
       message:
         description: 响应信息
-        example: 获取消息列表成功
+        example: success
         type: string
-    type: object
-  genkit-ai-service_internal_model.MessageDetailPaginationData:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_model.MessageDetailResponse:
     properties:
@@ -505,24 +422,13 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.MessageResponse'
-        description: 消息响应数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.MetricsDataResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 200
-        type: integer
-      data:
-        description: 指标数据
-      message:
-        description: 响应信息
-        example: 操作成功
-        type: string
     type: object
   genkit-ai-service_internal_model.Model:
     properties:
@@ -578,10 +484,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Model'
-        description: 模型数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.ModelListDataResponse:
@@ -591,13 +497,13 @@ definitions:
         example: 200
         type: integer
       data:
-        description: 模型列表数据
+        description: 响应数据
         items:
           $ref: '#/definitions/genkit-ai-service_internal_model.Model'
         type: array
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.ModelProperties:
@@ -619,6 +525,126 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_AuthAuditItem:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.AuthAuditItem'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_MessageDetailResponse:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.MessageDetailResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
+    type: object
+  genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User:
+    properties:
+      data:
+        description: 数据
+        items:
+          $ref: '#/definitions/genkit-ai-service_internal_model.User'
+        type: array
+      pageNo:
+        description: 当前页码
+        example: 1
+        type: integer
+      pageSize:
+        description: 每页大小
+        example: 10
+        type: integer
+      totalCount:
+        description: 总记录数
+        example: 100
+        type: integer
+      totalPage:
+        description: 总页数
+        example: 10
+        type: integer
     type: object
   genkit-ai-service_internal_model.ParameterRule:
     properties:
@@ -667,13 +693,13 @@ definitions:
         example: 200
         type: integer
       data:
-        description: 参数规则列表数据
+        description: 响应数据
         items:
           $ref: '#/definitions/genkit-ai-service_internal_model.ParameterRule'
         type: array
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.Pricing:
@@ -766,10 +792,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
-        description: 提供商数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.ProviderHelp:
@@ -792,13 +818,13 @@ definitions:
         example: 200
         type: integer
       data:
-        description: 提供商列表数据
+        description: 响应数据
         items:
           $ref: '#/definitions/genkit-ai-service_internal_model.Provider'
         type: array
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.SendMessageRequest:
@@ -828,10 +854,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
-        description: 会话数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.SessionListResponse:
@@ -842,36 +868,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.SessionPaginationData'
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_SessionResponse'
         description: 分页数据
       message:
         description: 响应信息
-        example: 获取会话列表成功
+        example: success
         type: string
-    type: object
-  genkit-ai-service_internal_model.SessionPaginationData:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.SessionResponse'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_model.SessionResponse:
     properties:
@@ -1002,10 +1004,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
-        description: 租户数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.TenantListResponse:
@@ -1016,36 +1018,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.TenantPaginationData'
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_Tenant'
         description: 分页数据
       message:
         description: 响应信息
-        example: 获取租户列表成功
+        example: success
         type: string
-    type: object
-  genkit-ai-service_internal_model.TenantPaginationData:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.Tenant'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_model.UpdateSessionRequest:
     properties:
@@ -1177,10 +1155,10 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/genkit-ai-service_internal_model.User'
-        description: 用户数据
+        description: 响应数据
       message:
         description: 响应信息
-        example: 操作成功
+        example: success
         type: string
     type: object
   genkit-ai-service_internal_model.UserListResponse:
@@ -1191,36 +1169,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/genkit-ai-service_internal_model.UserPaginationData'
+        - $ref: '#/definitions/genkit-ai-service_internal_model.PaginationData-array_genkit-ai-service_internal_model_User'
         description: 分页数据
       message:
         description: 响应信息
-        example: 获取用户列表成功
+        example: success
         type: string
-    type: object
-  genkit-ai-service_internal_model.UserPaginationData:
-    properties:
-      data:
-        description: 数据
-        items:
-          $ref: '#/definitions/genkit-ai-service_internal_model.User'
-        type: array
-      pageNo:
-        description: 当前页码
-        example: 1
-        type: integer
-      pageSize:
-        description: 每页大小
-        example: 10
-        type: integer
-      totalCount:
-        description: 总记录数
-        example: 100
-        type: integer
-      totalPage:
-        description: 总页数
-        example: 10
-        type: integer
     type: object
   genkit-ai-service_internal_service_health.HealthStatus:
     properties:
