@@ -247,8 +247,17 @@ func main() {
 
 	// 11. 注册 Swagger UI 路由
 	serveMux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+	
+	// 11.1 提供 swagger.yaml 静态文件访问
+	serveMux.HandleFunc("GET /swagger/doc.yaml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/x-yaml")
+		http.ServeFile(w, r, "docs/swagger.yaml")
+	})
+	
 	log.Info("Swagger UI 已启用", logger.Fields{
-		"url": fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
+		"swagger_ui": fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
+		"swagger_json": fmt.Sprintf("http://%s:%s/swagger/doc.json", cfg.Server.Host, cfg.Server.Port),
+		"swagger_yaml": fmt.Sprintf("http://%s:%s/swagger/doc.yaml", cfg.Server.Host, cfg.Server.Port),
 	})
 	
 	// 12. 应用中间件（按顺序：Recovery -> Logger -> CORS）
