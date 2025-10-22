@@ -650,7 +650,7 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	)
 
 	// 4. 创建 Handler 层实例
-	authHandler := handler.NewAuthHandler(authService, emailService, log)
+	authHandler := handler.NewAuthHandler(authService, emailService, userService, log)
 	tenantHandler := handler.NewTenantHandler(tenantService, log)
 	userHandler := handler.NewUserHandler(userService, log)
 	auditHandler := handler.NewAuditHandler(auditRepo, log)

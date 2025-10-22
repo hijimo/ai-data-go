@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"genkit-ai-service/internal/api/middleware"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/pkg/errors"
@@ -17,6 +18,7 @@ import (
 type AuthHandler struct {
 	authService  auth.AuthService
 	emailService auth.EmailService
+	userService  auth.UserService
 	logger       logger.Logger
 	validator    *validator.Validator
 }
@@ -25,13 +27,15 @@ type AuthHandler struct {
 // 参数：
 //   - authService: 认证服务接口
 //   - emailService: 邮箱服务接口
+//   - userService: 用户服务接口
 //   - log: 日志记录器
 // 返回：
 //   - *AuthHandler: 认证处理器实例
-func NewAuthHandler(authService auth.AuthService, emailService auth.EmailService, log logger.Logger) *AuthHandler {
+func NewAuthHandler(authService auth.AuthService, emailService auth.EmailService, userService auth.UserService, log logger.Logger) *AuthHandler {
 	return &AuthHandler{
 		authService:  authService,
 		emailService: emailService,
+		userService:  userService,
 		logger:       log,
 		validator:    validator.New(),
 	}
@@ -343,14 +347,14 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	// 1. 从上下文获取用户信息（由 JWT 中间件注入）
-	userID, ok := ctx.Value("user_id").(string)
+	userID, ok := ctx.Value(middleware.UserIDContextKey).(string)
 	if !ok || userID == "" {
 		h.logger.Warn("未找到用户ID")
 		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenant_id").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok || tenantID == "" {
 		h.logger.Warn("未找到租户ID")
 		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
@@ -493,14 +497,14 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// 1. 从上下文获取用户信息（由 JWT 中间件注入）
-	userID, ok := ctx.Value("user_id").(string)
+	userID, ok := ctx.Value(middleware.UserIDContextKey).(string)
 	if !ok || userID == "" {
 		h.logger.Warn("未找到用户ID")
 		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenant_id").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok || tenantID == "" {
 		h.logger.Warn("未找到租户ID")
 		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
@@ -513,15 +517,27 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		"tenantId": tenantID,
 	})
 
-	// 3. 这里需要通过 UserService 获取用户信息
-	// 由于当前 AuthHandler 只依赖 AuthService，我们可以：
-	// 选项1：在 AuthService 中添加 GetUser 方法
-	// 选项2：在 AuthHandler 中注入 UserService
-	// 选项3：从 JWT claims 中返回基本用户信息（临时方案）
-	
-	// 临时实现：返回错误提示需要实现
-	h.logger.Warn("HandleMe 方法需要实现 UserService 集成")
-	h.writeErrorResponse(w, errors.NewInternalError(nil))
+	// 3. 通过 UserService 获取用户信息
+	user, err := h.userService.Get(ctx, tenantID, userID)
+	if err != nil {
+		h.logger.Error("获取用户信息失败", logger.Fields{
+			"error":    err,
+			"userId":   userID,
+			"tenantId": tenantID,
+		})
+		h.writeErrorResponse(w, errors.NewNotFoundError("用户不存在"))
+		return
+	}
+
+	// 4. 记录响应日志
+	h.logger.Info("获取用户信息成功", logger.Fields{
+		"userId":   userID,
+		"tenantId": tenantID,
+	})
+
+	// 5. 返回成功响应
+	resp := response.SuccessWithMessage("获取成功", user)
+	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
 // getClientIP 获取客户端 IP 地址
