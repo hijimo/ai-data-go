@@ -50,7 +50,6 @@ type RegisterRequest struct {
 // LoginRequest 用户登录请求（用于 Swagger）
 // @name LoginRequest
 type LoginRequest struct {
-	TenantID string `json:"tenantId" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email    string `json:"email" validate:"required,email" example:"user@example.com"`
 	Password string `json:"password" validate:"required" example:"password123"`
 }
@@ -81,10 +80,10 @@ type ChangePasswordRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body RegisterRequest true "注册请求"
-// @Success 201 {object} genkit-ai-service_internal_model.UserDataResponse "注册成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 201 {object} model.UserDataResponse "注册成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/register [post]
 func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -145,11 +144,11 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param request body LoginRequest true "登录请求"
-// @Success 200 {object} genkit-ai-service_internal_model.LoginDataResponse "登录成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "认证失败"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.LoginDataResponse "登录成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "认证失败"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/login [post]
 func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -162,48 +161,39 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 如果请求中没有 TenantID，尝试从上下文获取
-	if req.TenantID == "" {
-		if tenantID, ok := ctx.Value("tenant_id").(string); ok {
-			req.TenantID = tenantID
-		}
-	}
-
-	// 3. 验证请求参数
+	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("登录请求参数验证失败", logger.Fields{"errors": validationErrors})
 		h.writeValidationErrorResponse(w, validationErrors)
 		return
 	}
 
-	// 4. 记录请求日志
+	// 3. 记录请求日志
 	h.logger.Info("收到用户登录请求", logger.Fields{
-		"tenantId": req.TenantID,
-		"email":    req.Email,
-		"ip":       h.getClientIP(r),
+		"email": req.Email,
+		"ip":    h.getClientIP(r),
 	})
 
-	// 5. 调用服务层登录
+	// 4. 调用服务层登录
 	loginResp, err := h.authService.Login(ctx, req)
 	if err != nil {
 		h.logger.Error("用户登录失败", logger.Fields{
-			"error":    err,
-			"tenantId": req.TenantID,
-			"email":    req.Email,
+			"error": err,
+			"email": req.Email,
 		})
 		// 登录失败返回 401 Unauthorized
 		h.writeErrorResponse(w, errors.NewUnauthorizedError("邮箱或密码错误"))
 		return
 	}
 
-	// 6. 记录响应日志
+	// 5. 记录响应日志
 	h.logger.Info("用户登录成功", logger.Fields{
 		"userId":   loginResp.User.ID,
 		"tenantId": loginResp.User.TenantID,
 		"email":    loginResp.User.Email,
 	})
 
-	// 7. 返回成功响应
+	// 6. 返回成功响应
 	resp := response.SuccessWithMessage("登录成功", loginResp)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
@@ -215,11 +205,11 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param request body RefreshRequest true "刷新请求"
-// @Success 200 {object} genkit-ai-service_internal_model.LoginDataResponse "刷新成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "Token 无效或已过期"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.LoginDataResponse "刷新成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "Token 无效或已过期"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/refresh [post]
 func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -273,11 +263,11 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param request body LogoutRequest true "注销请求"
-// @Success 200 {object} genkit-ai-service_internal_model.SuccessResponse "注销成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "Token 无效"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.SuccessResponse "注销成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "Token 无效"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/logout [post]
 func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -343,11 +333,11 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param request body ChangePasswordRequest true "修改密码请求"
-// @Success 200 {object} genkit-ai-service_internal_model.SuccessResponse "修改成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "未认证或旧密码错误"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.SuccessResponse "修改成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证或旧密码错误"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/change-password [post]
 func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -428,12 +418,12 @@ type UnlockAccountRequest struct {
 // @Produce json
 // @Security BearerAuth
 // @Param request body UnlockAccountRequest true "解锁请求"
-// @Success 200 {object} genkit-ai-service_internal_model.SuccessResponse "解锁成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "未认证"
-// @Failure 403 {object} genkit-ai-service_internal_model.ErrorResponse "权限不足"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.SuccessResponse "解锁成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 403 {object} model.ErrorResponse "权限不足"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/unlock-account [post]
 func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -494,10 +484,10 @@ func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} genkit-ai-service_internal_model.UserDataResponse "获取成功"
-// @Failure 401 {object} genkit-ai-service_internal_model.ErrorResponse "未认证"
-// @Failure 404 {object} genkit-ai-service_internal_model.ErrorResponse "用户不存在"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.UserDataResponse "获取成功"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 404 {object} model.ErrorResponse "用户不存在"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/me [get]
 func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -618,10 +608,10 @@ type ResendVerificationRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body VerifyEmailRequest true "验证请求"
-// @Success 200 {object} genkit-ai-service_internal_model.SuccessResponse "验证成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.SuccessResponse "验证成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/verify-email [post]
 func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -678,10 +668,10 @@ func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param request body ResendVerificationRequest true "重发请求"
-// @Success 200 {object} genkit-ai-service_internal_model.SuccessResponse "发送成功"
-// @Failure 400 {object} genkit-ai-service_internal_model.ErrorResponse "请求参数错误"
-// @Failure 422 {object} genkit-ai-service_internal_model.ErrorResponse "参数验证失败"
-// @Failure 500 {object} genkit-ai-service_internal_model.ErrorResponse "服务器内部错误"
+// @Success 200 {object} model.SuccessResponse "发送成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /auth/resend-verification [post]
 func (h *AuthHandler) HandleResendVerification(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

@@ -22,6 +22,9 @@ type UserRepository interface {
 	// GetByEmail 根据邮箱获取用户
 	GetByEmail(ctx context.Context, tenantID string, email string) (*model.User, error)
 
+	// GetByEmailOnly 仅根据邮箱获取用户（不需要租户ID）
+	GetByEmailOnly(ctx context.Context, email string) (*model.User, error)
+
 	// Update 更新用户
 	Update(ctx context.Context, user *model.User) error
 
@@ -117,6 +120,28 @@ func (r *userRepository) GetByEmail(ctx context.Context, tenantID string, email 
 
 	err := r.db.WithContext(ctx).
 		Where("tenant_id = ? AND email = ? AND is_deleted = ?", tenantID, email, false).
+		First(&user).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// GetByEmailOnly 仅根据邮箱获取用户（不需要租户ID）
+func (r *userRepository) GetByEmailOnly(ctx context.Context, email string) (*model.User, error) {
+	if email == "" {
+		return nil, errors.New("email cannot be empty")
+	}
+
+	var user model.User
+
+	err := r.db.WithContext(ctx).
+		Where("email = ? AND is_deleted = ?", email, false).
 		First(&user).Error
 
 	if err != nil {

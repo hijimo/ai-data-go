@@ -26,7 +26,6 @@ type RegisterRequest struct {
 
 // LoginRequest 用户登录请求
 type LoginRequest struct {
-	TenantID string `json:"tenantId"`                        // 租户 ID（可选，可从其他方式识别）
 	Email    string `json:"email" validate:"required,email"` // 邮箱
 	Password string `json:"password" validate:"required"`    // 密码
 }
@@ -168,8 +167,8 @@ func NewAuthService(
 
 // Register 用户注册
 func (s *authService) Register(ctx context.Context, req RegisterRequest) (*model.User, error) {
-	// 1. 验证邮箱唯一性
-	existingUser, err := s.userRepo.GetByEmail(ctx, req.TenantID, req.Email)
+	// 1. 验证邮箱全局唯一性
+	existingUser, err := s.userRepo.GetByEmailOnly(ctx, req.Email)
 	if err == nil && existingUser != nil {
 		return nil, errors.New("邮箱已被注册")
 	}
@@ -208,11 +207,11 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*model
 
 // Login 用户登录
 func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
-	// 1. 验证租户和邮箱，获取用户
-	user, err := s.userRepo.GetByEmail(ctx, req.TenantID, req.Email)
+	// 1. 根据邮箱获取用户（邮箱全局唯一）
+	user, err := s.userRepo.GetByEmailOnly(ctx, req.Email)
 	if err != nil {
 		// 记录登录失败审计日志
-		s.createAuditLog(ctx, parseUUIDPointer(req.TenantID), nil, "failed_login", map[string]interface{}{
+		s.createAuditLog(ctx, nil, nil, "failed_login", map[string]interface{}{
 			"email":  req.Email,
 			"reason": "user_not_found",
 		})
@@ -271,7 +270,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*LoginRespon
 		}
 
 		// 重新获取用户信息以获取最新的失败次数
-		user, _ = s.userRepo.GetByEmail(ctx, req.TenantID, req.Email)
+		user, _ = s.userRepo.GetByEmailOnly(ctx, req.Email)
 		if user != nil {
 			tenantIDStr = user.TenantID.String()
 			userIDStr = user.ID.String()

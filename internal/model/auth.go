@@ -88,8 +88,8 @@ type User struct {
 	ID uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id" example:"660e8400-e29b-41d4-a716-446655440001"`
 	// 所属租户ID
 	TenantID uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_tenant_email" json:"tenantId" example:"550e8400-e29b-41d4-a716-446655440000"`
-	// 用户邮箱，在租户内唯一
-	Email string `gorm:"type:varchar(320);not null;uniqueIndex:idx_tenant_email" json:"email" example:"user@example.com"`
+	// 用户邮箱，全局唯一
+	Email string `gorm:"type:varchar(320);not null;uniqueIndex" json:"email" example:"user@example.com"`
 	// 邮箱是否已验证
 	EmailVerified bool `gorm:"default:false" json:"emailVerified" example:"false"`
 	// 手机号码

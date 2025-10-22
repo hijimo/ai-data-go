@@ -1,6 +1,310 @@
 basePath: /api/v1
 definitions:
-  AbortRequest:
+  handler.ChangePasswordRequest:
+    properties:
+      newPassword:
+        example: newpassword123
+        minLength: 8
+        type: string
+      oldPassword:
+        example: oldpassword123
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  handler.CreateTenantRequest:
+    properties:
+      createdBy:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      domain:
+        example: example.com
+        maxLength: 255
+        type: string
+      metadata:
+        type: object
+      name:
+        example: 示例租户
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  handler.CreateTenantWithAdminDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 201
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/handler.CreateTenantWithAdminResponse'
+        description: 创建租户响应数据
+      message:
+        description: 响应信息
+        example: 租户创建成功
+        type: string
+    type: object
+  handler.CreateTenantWithAdminRequest:
+    properties:
+      adminDisplayName:
+        description: 管理员显示名称（可选，最多255字符）
+        example: 管理员
+        maxLength: 255
+        type: string
+      adminEmail:
+        description: 管理员邮箱（可选，默认为 admin@{tenantDomain}）
+        example: admin@example.com
+        type: string
+      tenantDomain:
+        description: 租户域名（必填，最多255字符）
+        example: example.com
+        maxLength: 255
+        type: string
+      tenantMetadata:
+        description: 租户元数据（可选，JSON对象）
+        type: object
+      tenantName:
+        description: 租户名称（必填，1-255字符）
+        example: 示例公司
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - tenantDomain
+    - tenantName
+    type: object
+  handler.CreateTenantWithAdminResponse:
+    properties:
+      adminPassword:
+        description: 管理员初始密码（请妥善保管并建议首次登录后修改）
+        example: Xy9#mK2$pL5@qR8!
+        type: string
+      adminUser:
+        allOf:
+        - $ref: '#/definitions/model.User'
+        description: 管理员用户信息
+      tenant:
+        allOf:
+        - $ref: '#/definitions/model.Tenant'
+        description: 租户信息
+    type: object
+  handler.CreateUserRequest:
+    properties:
+      createdBy:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      displayName:
+        example: 张三
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      isAdmin:
+        example: false
+        type: boolean
+      meta:
+        type: object
+      password:
+        example: password123
+        minLength: 8
+        type: string
+      phone:
+        example: "13800138000"
+        type: string
+      roles:
+        example:
+        - '["user"]'
+        items:
+          type: string
+        type: array
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - email
+    - password
+    - tenantId
+    type: object
+  handler.HealthStatusResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/health.HealthStatus'
+      message:
+        example: success
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.LogoutRequest:
+    properties:
+      refreshToken:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - refreshToken
+    type: object
+  handler.RefreshRequest:
+    properties:
+      refreshToken:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - refreshToken
+    type: object
+  handler.RegisterRequest:
+    properties:
+      displayName:
+        example: 张三
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: password123
+        minLength: 8
+        type: string
+      phone:
+        example: "13800138000"
+        type: string
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - email
+    - password
+    - tenantId
+    type: object
+  handler.ResendVerificationRequest:
+    properties:
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - tenantId
+    - userId
+    type: object
+  handler.UnlockAccountRequest:
+    properties:
+      tenantId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - tenantId
+    - userId
+    type: object
+  handler.UpdateTenantRequest:
+    properties:
+      domain:
+        example: updated.com
+        maxLength: 255
+        type: string
+      metadata:
+        type: object
+      name:
+        example: 更新后的租户名
+        maxLength: 255
+        minLength: 1
+        type: string
+      status:
+        example: true
+        type: boolean
+    type: object
+  handler.UpdateTenantStatusRequest:
+    properties:
+      status:
+        description: '租户状态（true: 启用, false: 禁用）'
+        example: true
+        type: boolean
+    type: object
+  handler.UpdateUserRequest:
+    properties:
+      displayName:
+        example: 李四
+        type: string
+      email:
+        example: newemail@example.com
+        type: string
+      isActive:
+        example: true
+        type: boolean
+      isAdmin:
+        example: false
+        type: boolean
+      meta:
+        type: object
+      phone:
+        example: "13900139000"
+        type: string
+      roles:
+        example:
+        - '["user"'
+        - '"moderator"]'
+        items:
+          type: string
+        type: array
+    type: object
+  handler.UpdateUserStatusRequest:
+    properties:
+      isActive:
+        example: true
+        type: boolean
+    required:
+    - isActive
+    type: object
+  handler.VerifyEmailRequest:
+    properties:
+      token:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - token
+    type: object
+  health.HealthStatus:
+    properties:
+      dependencies:
+        additionalProperties:
+          type: string
+        description: 依赖服务状态
+        example:
+          database: connected
+          genkit: connected
+        type: object
+      status:
+        description: 整体状态：healthy, unhealthy
+        example: healthy
+        type: string
+      uptime:
+        description: 运行时间
+        example: 2h30m15s
+        type: string
+      version:
+        description: 服务版本
+        example: 1.0.0
+        type: string
+    type: object
+  model.AbortRequest:
     properties:
       messageId:
         description: 消息ID（必填）
@@ -9,11 +313,11 @@ definitions:
     required:
     - messageId
     type: object
-  AlertListDataResponse:
+  model.AlertListDataResponse:
     type: object
-  AnyDataResponse:
+  model.AnyDataResponse:
     type: object
-  AuthAuditItem:
+  model.AuthAuditItem:
     properties:
       createdAt:
         description: 事件发生时间
@@ -46,7 +350,7 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
-  AuthAuditListResponse:
+  model.AuthAuditListResponse:
     properties:
       code:
         description: 响应代码
@@ -54,14 +358,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/PaginationData-array_AuthAuditItem'
+        - $ref: '#/definitions/model.PaginationData-array_model_AuthAuditItem'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  ChatOptions:
+  model.ChatOptions:
     properties:
       maxTokens:
         description: 最大token数
@@ -84,7 +388,7 @@ definitions:
         minimum: 0
         type: number
     type: object
-  ChatRequest:
+  model.ChatRequest:
     properties:
       message:
         description: 用户消息内容
@@ -96,12 +400,12 @@ definitions:
         type: string
       options:
         allOf:
-        - $ref: '#/definitions/ChatOptions'
+        - $ref: '#/definitions/model.ChatOptions'
         description: AI高级参数（可选）
     required:
     - message
     type: object
-  ChatResponse:
+  model.ChatResponse:
     properties:
       message:
         description: AI生成的消息内容
@@ -117,10 +421,10 @@ definitions:
         type: string
       usage:
         allOf:
-        - $ref: '#/definitions/Usage'
+        - $ref: '#/definitions/model.Usage'
         description: Token使用情况
     type: object
-  ChatResponseData:
+  model.ChatResponseData:
     properties:
       code:
         description: 响应代码
@@ -128,14 +432,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/ChatResponse'
+        - $ref: '#/definitions/model.ChatResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  CreateSessionRequest:
+  model.CreateSessionRequest:
     properties:
       meta:
         additionalProperties: true
@@ -171,7 +475,7 @@ definitions:
     - modelName
     - title
     type: object
-  CredentialFormSchema:
+  model.CredentialFormSchema:
     properties:
       default:
         description: 默认值
@@ -184,7 +488,7 @@ definitions:
       options:
         description: 选项列表
         items:
-          $ref: '#/definitions/FormOption'
+          $ref: '#/definitions/model.FormOption'
         type: array
       placeholder:
         additionalProperties:
@@ -201,15 +505,15 @@ definitions:
         description: 变量名
         type: string
     type: object
-  CredentialSchema:
+  model.CredentialSchema:
     properties:
       credential_form_schemas:
         description: 凭证表单配置列表
         items:
-          $ref: '#/definitions/CredentialFormSchema'
+          $ref: '#/definitions/model.CredentialFormSchema'
         type: array
     type: object
-  ErrorResponse:
+  model.ErrorResponse:
     properties:
       code:
         description: 响应代码
@@ -220,7 +524,7 @@ definitions:
         example: 请求参数错误
         type: string
     type: object
-  FormOption:
+  model.FormOption:
     properties:
       label:
         additionalProperties:
@@ -231,9 +535,9 @@ definitions:
         description: 选项值
         type: string
     type: object
-  HealthDataResponse:
+  model.HealthDataResponse:
     type: object
-  LoginDataResponse:
+  model.LoginDataResponse:
     properties:
       code:
         description: 响应代码
@@ -241,14 +545,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/LoginResponse'
+        - $ref: '#/definitions/model.LoginResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  LoginResponse:
+  model.LoginResponse:
     properties:
       accessToken:
         description: 访问令牌
@@ -268,10 +572,10 @@ definitions:
         type: string
       user:
         allOf:
-        - $ref: '#/definitions/User'
+        - $ref: '#/definitions/model.User'
         description: 用户信息
     type: object
-  Message:
+  model.Message:
     properties:
       content:
         description: 消息内容
@@ -294,7 +598,7 @@ definitions:
         example: 1
         type: integer
     type: object
-  MessageDetailDataResponse:
+  model.MessageDetailDataResponse:
     properties:
       code:
         description: 响应代码
@@ -302,14 +606,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/MessageDetailResponse'
+        - $ref: '#/definitions/model.MessageDetailResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  MessageDetailListResponse:
+  model.MessageDetailListResponse:
     properties:
       code:
         description: 响应代码
@@ -317,14 +621,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/PaginationData-array_MessageDetailResponse'
+        - $ref: '#/definitions/model.PaginationData-array_model_MessageDetailResponse'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  MessageDetailResponse:
+  model.MessageDetailResponse:
     properties:
       content:
         description: 消息内容
@@ -367,7 +671,7 @@ definitions:
         description: 工具调用
         type: object
     type: object
-  MessagePreview:
+  model.MessagePreview:
     properties:
       content:
         description: 消息内容
@@ -386,11 +690,11 @@ definitions:
         example: user
         type: string
     type: object
-  MessageResponse:
+  model.MessageResponse:
     properties:
       aiMessage:
         allOf:
-        - $ref: '#/definitions/Message'
+        - $ref: '#/definitions/model.Message'
         description: AI消息
       messageId:
         description: 消息ID
@@ -406,14 +710,14 @@ definitions:
         type: string
       usage:
         allOf:
-        - $ref: '#/definitions/Usage'
+        - $ref: '#/definitions/model.Usage'
         description: 使用统计
       userMessage:
         allOf:
-        - $ref: '#/definitions/Message'
+        - $ref: '#/definitions/model.Message'
         description: 用户消息
     type: object
-  MessageResponseData:
+  model.MessageResponseData:
     properties:
       code:
         description: 响应代码
@@ -421,16 +725,16 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/MessageResponse'
+        - $ref: '#/definitions/model.MessageResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  MetricsDataResponse:
+  model.MetricsDataResponse:
     type: object
-  Model:
+  model.Model:
     properties:
       deprecated:
         description: 是否已弃用
@@ -459,7 +763,7 @@ definitions:
         type: string
       model_properties:
         allOf:
-        - $ref: '#/definitions/ModelProperties'
+        - $ref: '#/definitions/model.ModelProperties'
         description: 模型属性
       model_type:
         description: 模型类型（llm、tts、text_embedding等）
@@ -468,14 +772,14 @@ definitions:
       parameter_rules:
         description: 参数规则
         items:
-          $ref: '#/definitions/ParameterRule'
+          $ref: '#/definitions/model.ParameterRule'
         type: array
       pricing:
         allOf:
-        - $ref: '#/definitions/Pricing'
+        - $ref: '#/definitions/model.Pricing'
         description: 定价信息
     type: object
-  ModelDataResponse:
+  model.ModelDataResponse:
     properties:
       code:
         description: 响应代码
@@ -483,14 +787,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/Model'
+        - $ref: '#/definitions/model.Model'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  ModelListDataResponse:
+  model.ModelListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -499,14 +803,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/Model'
+          $ref: '#/definitions/model.Model'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  ModelProperties:
+  model.ModelProperties:
     properties:
       context_size:
         description: 上下文大小
@@ -515,7 +819,7 @@ definitions:
         description: 模式（chat、completion等）
         type: string
     type: object
-  ModelTypeInfo:
+  model.ModelTypeInfo:
     properties:
       position:
         description: 位置文件路径
@@ -526,12 +830,12 @@ definitions:
           type: string
         type: array
     type: object
-  PaginationData-array_AuthAuditItem:
+  model.PaginationData-array_model_AuthAuditItem:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/AuthAuditItem'
+          $ref: '#/definitions/model.AuthAuditItem'
         type: array
       pageNo:
         description: 当前页码
@@ -550,12 +854,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  PaginationData-array_MessageDetailResponse:
+  model.PaginationData-array_model_MessageDetailResponse:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/MessageDetailResponse'
+          $ref: '#/definitions/model.MessageDetailResponse'
         type: array
       pageNo:
         description: 当前页码
@@ -574,12 +878,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  PaginationData-array_SessionResponse:
+  model.PaginationData-array_model_SessionResponse:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/SessionResponse'
+          $ref: '#/definitions/model.SessionResponse'
         type: array
       pageNo:
         description: 当前页码
@@ -598,12 +902,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  PaginationData-array_Tenant:
+  model.PaginationData-array_model_Tenant:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/Tenant'
+          $ref: '#/definitions/model.Tenant'
         type: array
       pageNo:
         description: 当前页码
@@ -622,12 +926,12 @@ definitions:
         example: 10
         type: integer
     type: object
-  PaginationData-array_User:
+  model.PaginationData-array_model_User:
     properties:
       data:
         description: 数据
         items:
-          $ref: '#/definitions/User'
+          $ref: '#/definitions/model.User'
         type: array
       pageNo:
         description: 当前页码
@@ -646,7 +950,7 @@ definitions:
         example: 10
         type: integer
     type: object
-  ParameterRule:
+  model.ParameterRule:
     properties:
       default:
         description: 默认值
@@ -686,7 +990,7 @@ definitions:
         example: temperature
         type: string
     type: object
-  ParameterRuleListDataResponse:
+  model.ParameterRuleListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -695,14 +999,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/ParameterRule'
+          $ref: '#/definitions/model.ParameterRule'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  Pricing:
+  model.Pricing:
     properties:
       currency:
         description: 货币
@@ -717,7 +1021,7 @@ definitions:
         description: 单位
         type: string
     type: object
-  Provider:
+  model.Provider:
     properties:
       background:
         description: 背景色
@@ -733,7 +1037,7 @@ definitions:
         type: array
       help:
         allOf:
-        - $ref: '#/definitions/ProviderHelp'
+        - $ref: '#/definitions/model.ProviderHelp'
         description: 帮助信息
       icon_large:
         additionalProperties:
@@ -759,11 +1063,11 @@ definitions:
         type: object
       model_credential_schema:
         allOf:
-        - $ref: '#/definitions/CredentialSchema'
+        - $ref: '#/definitions/model.CredentialSchema'
         description: 模型凭证配置
       models:
         additionalProperties:
-          $ref: '#/definitions/ModelTypeInfo'
+          $ref: '#/definitions/model.ModelTypeInfo'
         description: 模型类型配置
         type: object
       provider:
@@ -772,7 +1076,7 @@ definitions:
         type: string
       provider_credential_schema:
         allOf:
-        - $ref: '#/definitions/CredentialSchema'
+        - $ref: '#/definitions/model.CredentialSchema'
         description: 提供商凭证配置
       supported_model_types:
         description: 支持的模型类型列表
@@ -783,7 +1087,7 @@ definitions:
           type: string
         type: array
     type: object
-  ProviderDataResponse:
+  model.ProviderDataResponse:
     properties:
       code:
         description: 响应代码
@@ -791,14 +1095,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/Provider'
+        - $ref: '#/definitions/model.Provider'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  ProviderHelp:
+  model.ProviderHelp:
     properties:
       title:
         additionalProperties:
@@ -811,7 +1115,7 @@ definitions:
         description: 帮助链接（多语言）
         type: object
     type: object
-  ProviderListDataResponse:
+  model.ProviderListDataResponse:
     properties:
       code:
         description: 响应代码
@@ -820,14 +1124,14 @@ definitions:
       data:
         description: 响应数据
         items:
-          $ref: '#/definitions/Provider'
+          $ref: '#/definitions/model.Provider'
         type: array
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  SendMessageRequest:
+  model.SendMessageRequest:
     properties:
       message:
         description: 消息内容
@@ -835,7 +1139,7 @@ definitions:
         type: string
       options:
         allOf:
-        - $ref: '#/definitions/ChatOptions'
+        - $ref: '#/definitions/model.ChatOptions'
         description: AI高级参数（可选）
       sessionId:
         description: 会话ID
@@ -845,7 +1149,7 @@ definitions:
     - message
     - sessionId
     type: object
-  SessionDataResponse:
+  model.SessionDataResponse:
     properties:
       code:
         description: 响应代码
@@ -853,14 +1157,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/SessionResponse'
+        - $ref: '#/definitions/model.SessionResponse'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  SessionListResponse:
+  model.SessionListResponse:
     properties:
       code:
         description: 响应代码
@@ -868,14 +1172,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/PaginationData-array_SessionResponse'
+        - $ref: '#/definitions/model.PaginationData-array_model_SessionResponse'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  SessionResponse:
+  model.SessionResponse:
     properties:
       createdAt:
         description: 创建时间
@@ -895,7 +1199,7 @@ definitions:
         type: boolean
       lastMessage:
         allOf:
-        - $ref: '#/definitions/MessagePreview'
+        - $ref: '#/definitions/model.MessagePreview'
         description: 最后一条消息
       messageCount:
         description: 消息数量
@@ -934,7 +1238,7 @@ definitions:
         example: user-123456
         type: string
     type: object
-  SuccessResponse:
+  model.SuccessResponse:
     properties:
       code:
         description: 响应代码
@@ -945,7 +1249,7 @@ definitions:
         example: 操作成功
         type: string
     type: object
-  Tenant:
+  model.Tenant:
     description: 租户信息，包含租户的基本信息和状态
     properties:
       createdAt:
@@ -995,7 +1299,7 @@ definitions:
         example: "2025-01-20T10:00:00Z"
         type: string
     type: object
-  TenantDataResponse:
+  model.TenantDataResponse:
     properties:
       code:
         description: 响应代码
@@ -1003,14 +1307,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/Tenant'
+        - $ref: '#/definitions/model.Tenant'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  TenantListResponse:
+  model.TenantListResponse:
     properties:
       code:
         description: 响应代码
@@ -1018,14 +1322,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/PaginationData-array_Tenant'
+        - $ref: '#/definitions/model.PaginationData-array_model_Tenant'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  UpdateSessionRequest:
+  model.UpdateSessionRequest:
     properties:
       modelName:
         description: 模型名称（可选）
@@ -1054,7 +1358,7 @@ definitions:
         minimum: 0
         type: number
     type: object
-  Usage:
+  model.Usage:
     properties:
       completionTokens:
         description: 生成内容token数
@@ -1069,7 +1373,7 @@ definitions:
         example: 60
         type: integer
     type: object
-  User:
+  model.User:
     description: 用户信息，包含用户的基本信息、角色和状态
     properties:
       createdAt:
@@ -1085,7 +1389,7 @@ definitions:
         example: 张三
         type: string
       email:
-        description: 用户邮箱，在租户内唯一
+        description: 用户邮箱，全局唯一
         example: user@example.com
         type: string
       emailVerified:
@@ -1146,7 +1450,7 @@ definitions:
         example: "2025-01-20T10:00:00Z"
         type: string
     type: object
-  UserDataResponse:
+  model.UserDataResponse:
     properties:
       code:
         description: 响应代码
@@ -1154,14 +1458,14 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/User'
+        - $ref: '#/definitions/model.User'
         description: 响应数据
       message:
         description: 响应信息
         example: success
         type: string
     type: object
-  UserListResponse:
+  model.UserListResponse:
     properties:
       code:
         description: 响应代码
@@ -1169,319 +1473,12 @@ definitions:
         type: integer
       data:
         allOf:
-        - $ref: '#/definitions/PaginationData-array_User'
+        - $ref: '#/definitions/model.PaginationData-array_model_User'
         description: 分页数据
       message:
         description: 响应信息
         example: success
         type: string
-    type: object
-  HealthStatus:
-    properties:
-      dependencies:
-        additionalProperties:
-          type: string
-        description: 依赖服务状态
-        example:
-          database: connected
-          genkit: connected
-        type: object
-      status:
-        description: 整体状态：healthy, unhealthy
-        example: healthy
-        type: string
-      uptime:
-        description: 运行时间
-        example: 2h30m15s
-        type: string
-      version:
-        description: 服务版本
-        example: 1.0.0
-        type: string
-    type: object
-  ChangePasswordRequest:
-    properties:
-      newPassword:
-        example: newpassword123
-        minLength: 8
-        type: string
-      oldPassword:
-        example: oldpassword123
-        type: string
-    required:
-    - newPassword
-    - oldPassword
-    type: object
-  CreateTenantRequest:
-    properties:
-      createdBy:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      domain:
-        example: example.com
-        maxLength: 255
-        type: string
-      metadata:
-        type: object
-      name:
-        example: 示例租户
-        maxLength: 255
-        minLength: 1
-        type: string
-    required:
-    - name
-    type: object
-  CreateTenantWithAdminDataResponse:
-    properties:
-      code:
-        description: 响应代码
-        example: 201
-        type: integer
-      data:
-        allOf:
-        - $ref: '#/definitions/CreateTenantWithAdminResponse'
-        description: 创建租户响应数据
-      message:
-        description: 响应信息
-        example: 租户创建成功
-        type: string
-    type: object
-  CreateTenantWithAdminRequest:
-    properties:
-      adminDisplayName:
-        description: 管理员显示名称（可选，最多255字符）
-        example: 管理员
-        maxLength: 255
-        type: string
-      adminEmail:
-        description: 管理员邮箱（可选，默认为 admin@{tenantDomain}）
-        example: admin@example.com
-        type: string
-      tenantDomain:
-        description: 租户域名（必填，最多255字符）
-        example: example.com
-        maxLength: 255
-        type: string
-      tenantMetadata:
-        description: 租户元数据（可选，JSON对象）
-        type: object
-      tenantName:
-        description: 租户名称（必填，1-255字符）
-        example: 示例公司
-        maxLength: 255
-        minLength: 1
-        type: string
-    required:
-    - tenantDomain
-    - tenantName
-    type: object
-  CreateTenantWithAdminResponse:
-    properties:
-      adminPassword:
-        description: 管理员初始密码（请妥善保管并建议首次登录后修改）
-        example: Xy9#mK2$pL5@qR8!
-        type: string
-      adminUser:
-        allOf:
-        - $ref: '#/definitions/User'
-        description: 管理员用户信息
-      tenant:
-        allOf:
-        - $ref: '#/definitions/Tenant'
-        description: 租户信息
-    type: object
-  CreateUserRequest:
-    properties:
-      createdBy:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      displayName:
-        example: 张三
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      isAdmin:
-        example: false
-        type: boolean
-      meta:
-        type: object
-      password:
-        example: password123
-        minLength: 8
-        type: string
-      phone:
-        example: "13800138000"
-        type: string
-      roles:
-        example:
-        - '["user"]'
-        items:
-          type: string
-        type: array
-      tenantId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - email
-    - password
-    - tenantId
-    type: object
-  HealthStatusResponse:
-    properties:
-      code:
-        example: 200
-        type: integer
-      data:
-        $ref: '#/definitions/HealthStatus'
-      message:
-        example: success
-        type: string
-    type: object
-  LoginRequest:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      password:
-        example: password123
-        type: string
-      tenantId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  LogoutRequest:
-    properties:
-      refreshToken:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - refreshToken
-    type: object
-  RefreshRequest:
-    properties:
-      refreshToken:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - refreshToken
-    type: object
-  RegisterRequest:
-    properties:
-      displayName:
-        example: 张三
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      password:
-        example: password123
-        minLength: 8
-        type: string
-      phone:
-        example: "13800138000"
-        type: string
-      tenantId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - email
-    - password
-    - tenantId
-    type: object
-  ResendVerificationRequest:
-    properties:
-      tenantId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      userId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - tenantId
-    - userId
-    type: object
-  UnlockAccountRequest:
-    properties:
-      tenantId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      userId:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - tenantId
-    - userId
-    type: object
-  UpdateTenantRequest:
-    properties:
-      domain:
-        example: updated.com
-        maxLength: 255
-        type: string
-      metadata:
-        type: object
-      name:
-        example: 更新后的租户名
-        maxLength: 255
-        minLength: 1
-        type: string
-      status:
-        example: true
-        type: boolean
-    type: object
-  UpdateTenantStatusRequest:
-    properties:
-      status:
-        description: '租户状态（true: 启用, false: 禁用）'
-        example: true
-        type: boolean
-    type: object
-  UpdateUserRequest:
-    properties:
-      displayName:
-        example: 李四
-        type: string
-      email:
-        example: newemail@example.com
-        type: string
-      isActive:
-        example: true
-        type: boolean
-      isAdmin:
-        example: false
-        type: boolean
-      meta:
-        type: object
-      phone:
-        example: "13900139000"
-        type: string
-      roles:
-        example:
-        - '["user"'
-        - '"moderator"]'
-        items:
-          type: string
-        type: array
-    type: object
-  UpdateUserStatusRequest:
-    properties:
-      isActive:
-        example: true
-        type: boolean
-    required:
-    - isActive
-    type: object
-  VerifyEmailRequest:
-    properties:
-      token:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - token
     type: object
 host: localhost:8080
 info:
@@ -1544,23 +1541,23 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/TenantListResponse'
+            $ref: '#/definitions/model.TenantListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户列表
@@ -1590,34 +1587,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateTenantWithAdminRequest'
+          $ref: '#/definitions/handler.CreateTenantWithAdminRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/CreateTenantWithAdminDataResponse'
+            $ref: '#/definitions/handler.CreateTenantWithAdminDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建租户（带管理员）
@@ -1658,27 +1655,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误（如尝试删除平台租户）
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除租户
@@ -1717,34 +1714,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateTenantStatusRequest'
+          $ref: '#/definitions/handler.UpdateTenantStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/TenantDataResponse'
+            $ref: '#/definitions/model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足（需要 system_admin 角色）
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 启用/禁用租户
@@ -1792,23 +1789,23 @@ paths:
         "200":
           description: 查询成功
           schema:
-            $ref: '#/definitions/AuthAuditListResponse'
+            $ref: '#/definitions/model.AuthAuditListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未授权
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 查询审计日志
@@ -1825,30 +1822,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/ChangePasswordRequest'
+          $ref: '#/definitions/handler.ChangePasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 修改成功
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证或旧密码错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 修改密码
@@ -1865,30 +1862,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/LoginRequest'
+          $ref: '#/definitions/handler.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 登录成功
           schema:
-            $ref: '#/definitions/LoginDataResponse'
+            $ref: '#/definitions/model.LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 认证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 用户登录
       tags:
       - Authentication
@@ -1903,30 +1900,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/LogoutRequest'
+          $ref: '#/definitions/handler.LogoutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 注销成功
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: Token 无效
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 用户注销
       tags:
       - Authentication
@@ -1941,19 +1938,19 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取当前用户信息
@@ -1970,30 +1967,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/RefreshRequest'
+          $ref: '#/definitions/handler.RefreshRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 刷新成功
           schema:
-            $ref: '#/definitions/LoginDataResponse'
+            $ref: '#/definitions/model.LoginDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: Token 无效或已过期
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 刷新访问令牌
       tags:
       - Authentication
@@ -2008,26 +2005,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/RegisterRequest'
+          $ref: '#/definitions/handler.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 注册成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 用户注册
       tags:
       - Authentication
@@ -2042,26 +2039,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/ResendVerificationRequest'
+          $ref: '#/definitions/handler.ResendVerificationRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 发送成功
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 重新发送验证邮件
       tags:
       - Authentication
@@ -2076,34 +2073,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UnlockAccountRequest'
+          $ref: '#/definitions/handler.UnlockAccountRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 解锁成功
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 解锁账户
@@ -2120,26 +2117,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/VerifyEmailRequest'
+          $ref: '#/definitions/handler.VerifyEmailRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 验证成功
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 验证邮箱
       tags:
       - Authentication
@@ -2154,30 +2151,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/ChatRequest'
+          $ref: '#/definitions/model.ChatRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功返回 AI 回复
           schema:
-            $ref: '#/definitions/ChatResponseData'
+            $ref: '#/definitions/model.ChatResponseData'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "503":
           description: AI 服务不可用
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 发送对话消息
       tags:
       - chat
@@ -2192,30 +2189,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/AbortRequest'
+          $ref: '#/definitions/model.AbortRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功中止对话
           schema:
-            $ref: '#/definitions/SuccessResponse'
+            $ref: '#/definitions/model.SuccessResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 中止对话
       tags:
       - chat
@@ -2236,23 +2233,23 @@ paths:
         "200":
           description: 成功返回消息详情
           schema:
-            $ref: '#/definitions/MessageDetailDataResponse'
+            $ref: '#/definitions/model.MessageDetailDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取消息详情
       tags:
       - messages
@@ -2273,23 +2270,23 @@ paths:
         "200":
           description: 成功中止消息生成
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 消息不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 中止消息生成
       tags:
       - messages
@@ -2332,19 +2329,19 @@ paths:
         "200":
           description: 成功返回会话列表
           schema:
-            $ref: '#/definitions/SessionListResponse'
+            $ref: '#/definitions/model.SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取会话列表
       tags:
       - sessions
@@ -2358,26 +2355,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateSessionRequest'
+          $ref: '#/definitions/model.CreateSessionRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功创建会话
           schema:
-            $ref: '#/definitions/SessionDataResponse'
+            $ref: '#/definitions/model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 创建新会话
       tags:
       - sessions
@@ -2398,23 +2395,23 @@ paths:
         "200":
           description: 成功删除会话
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 删除会话
       tags:
       - sessions
@@ -2434,23 +2431,23 @@ paths:
         "200":
           description: 成功返回会话详情
           schema:
-            $ref: '#/definitions/SessionDataResponse'
+            $ref: '#/definitions/model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取会话详情
       tags:
       - sessions
@@ -2469,34 +2466,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateSessionRequest'
+          $ref: '#/definitions/model.UpdateSessionRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功更新会话
           schema:
-            $ref: '#/definitions/SessionDataResponse'
+            $ref: '#/definitions/model.SessionDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 更新会话
       tags:
       - sessions
@@ -2522,23 +2519,23 @@ paths:
         "200":
           description: 成功更新归档状态
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 归档会话
       tags:
       - sessions
@@ -2574,27 +2571,27 @@ paths:
         "200":
           description: 成功返回消息历史
           schema:
-            $ref: '#/definitions/MessageDetailListResponse'
+            $ref: '#/definitions/model.MessageDetailListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取消息历史
       tags:
       - messages
@@ -2613,34 +2610,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/SendMessageRequest'
+          $ref: '#/definitions/model.SendMessageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 成功发送消息
           schema:
-            $ref: '#/definitions/MessageResponseData'
+            $ref: '#/definitions/model.MessageResponseData'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 发送消息
       tags:
       - messages
@@ -2666,23 +2663,23 @@ paths:
         "200":
           description: 成功更新置顶状态
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 无权访问
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 会话不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 置顶会话
       tags:
       - sessions
@@ -2718,19 +2715,19 @@ paths:
         "200":
           description: 成功返回搜索结果
           schema:
-            $ref: '#/definitions/SessionListResponse'
+            $ref: '#/definitions/model.SessionListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 搜索会话
       tags:
       - sessions
@@ -2745,7 +2742,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/ChatRequest'
+          $ref: '#/definitions/model.ChatRequest'
       produces:
       - text/event-stream
       responses:
@@ -2756,19 +2753,19 @@ paths:
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "503":
           description: AI 服务不可用
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 发送流式对话消息
       tags:
       - chat
@@ -2783,15 +2780,15 @@ paths:
         "200":
           description: 服务健康
           schema:
-            $ref: '#/definitions/HealthStatusResponse'
+            $ref: '#/definitions/handler.HealthStatusResponse'
         "500":
           description: 健康检查失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "503":
           description: 服务不健康
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 健康检查
       tags:
       - health
@@ -2804,7 +2801,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
       summary: 清空告警
       tags:
       - Monitoring
@@ -2816,7 +2813,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/AlertListDataResponse'
+            $ref: '#/definitions/model.AlertListDataResponse'
       summary: 获取活跃告警
       tags:
       - Monitoring
@@ -2829,7 +2826,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/HealthDataResponse'
+            $ref: '#/definitions/model.HealthDataResponse'
       summary: 健康检查（含监控）
       tags:
       - Monitoring
@@ -2842,7 +2839,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/MetricsDataResponse'
+            $ref: '#/definitions/model.MetricsDataResponse'
       summary: 获取性能指标
       tags:
       - Monitoring
@@ -2855,7 +2852,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
       summary: 重置指标
       tags:
       - Monitoring
@@ -2870,11 +2867,11 @@ paths:
         "200":
           description: 成功返回提供商列表
           schema:
-            $ref: '#/definitions/ProviderListDataResponse'
+            $ref: '#/definitions/model.ProviderListDataResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取所有提供商列表
       tags:
       - providers
@@ -2896,19 +2893,19 @@ paths:
         "200":
           description: 成功返回提供商详情
           schema:
-            $ref: '#/definitions/ProviderDataResponse'
+            $ref: '#/definitions/model.ProviderDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 提供商不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取提供商详情
       tags:
       - providers
@@ -2930,19 +2927,19 @@ paths:
         "200":
           description: 成功返回模型列表
           schema:
-            $ref: '#/definitions/ModelListDataResponse'
+            $ref: '#/definitions/model.ModelListDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 提供商不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取提供商的模型列表
       tags:
       - providers
@@ -2970,19 +2967,19 @@ paths:
         "200":
           description: 成功返回模型详情
           schema:
-            $ref: '#/definitions/ModelDataResponse'
+            $ref: '#/definitions/model.ModelDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 提供商或模型不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取模型详情
       tags:
       - providers
@@ -3010,19 +3007,19 @@ paths:
         "200":
           description: 成功返回参数规则列表
           schema:
-            $ref: '#/definitions/ParameterRuleListDataResponse'
+            $ref: '#/definitions/model.ParameterRuleListDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 提供商或模型不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       summary: 获取模型参数规则
       tags:
       - providers
@@ -3053,27 +3050,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/TenantListResponse'
+            $ref: '#/definitions/model.TenantListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户列表
@@ -3089,34 +3086,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateTenantRequest'
+          $ref: '#/definitions/handler.CreateTenantRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/TenantDataResponse'
+            $ref: '#/definitions/model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建租户
@@ -3139,27 +3136,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除租户
@@ -3181,27 +3178,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/TenantDataResponse'
+            $ref: '#/definitions/model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户详情
@@ -3222,38 +3219,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateTenantRequest'
+          $ref: '#/definitions/handler.UpdateTenantRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/TenantDataResponse'
+            $ref: '#/definitions/model.TenantDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 租户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新租户
@@ -3291,27 +3288,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/UserListResponse'
+            $ref: '#/definitions/model.UserListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取租户用户列表
@@ -3332,34 +3329,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateUserRequest'
+          $ref: '#/definitions/handler.CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 在租户下创建用户
@@ -3387,27 +3384,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除用户
@@ -3434,38 +3431,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateUserStatusRequest'
+          $ref: '#/definitions/handler.UpdateUserStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新用户状态
@@ -3498,27 +3495,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/UserListResponse'
+            $ref: '#/definitions/model.UserListResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户列表
@@ -3534,34 +3531,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateUserRequest'
+          $ref: '#/definitions/handler.CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: 创建成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建用户
@@ -3584,27 +3581,27 @@ paths:
         "200":
           description: 删除成功
           schema:
-            $ref: '#/definitions/AnyDataResponse'
+            $ref: '#/definitions/model.AnyDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除用户
@@ -3626,27 +3623,27 @@ paths:
         "200":
           description: 获取成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取用户详情
@@ -3667,38 +3664,38 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateUserRequest'
+          $ref: '#/definitions/handler.UpdateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 更新成功
           schema:
-            $ref: '#/definitions/UserDataResponse'
+            $ref: '#/definitions/model.UserDataResponse'
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: 未认证
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: 权限不足
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: 参数验证失败
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/ErrorResponse'
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新用户

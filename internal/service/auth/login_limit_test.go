@@ -32,13 +32,30 @@ func (m *mockUserRepoForLoginLimit) GetByEmail(ctx context.Context, tenantID str
 	key := tenantID + ":" + email
 	if user, ok := m.users[key]; ok {
 		// 更新失败次数和锁定状态
-		if attempts, ok := m.failedAttempts[user.ID]; ok {
+		if attempts, ok := m.failedAttempts[user.ID.String()]; ok {
 			user.FailedLoginAttempts = attempts
 		}
-		if locked, ok := m.lockedUntil[user.ID]; ok {
+		if locked, ok := m.lockedUntil[user.ID.String()]; ok {
 			user.LockedUntil = locked
 		}
 		return user, nil
+	}
+	return nil, nil
+}
+
+func (m *mockUserRepoForLoginLimit) GetByEmailOnly(ctx context.Context, email string) (*model.User, error) {
+	// 在所有用户中查找匹配的邮箱
+	for _, user := range m.users {
+		if user.Email == email {
+			// 更新失败次数和锁定状态
+			if attempts, ok := m.failedAttempts[user.ID.String()]; ok {
+				user.FailedLoginAttempts = attempts
+			}
+			if locked, ok := m.lockedUntil[user.ID.String()]; ok {
+				user.LockedUntil = locked
+			}
+			return user, nil
+		}
 	}
 	return nil, nil
 }
@@ -93,7 +110,7 @@ func (m *mockUserRepoForLoginLimit) Create(ctx context.Context, user *model.User
 func (m *mockUserRepoForLoginLimit) GetByID(ctx context.Context, tenantID, userID string) (*model.User, error) {
 	// 在 users map 中查找用户
 	for _, user := range m.users {
-		if user.ID == userID && user.TenantID == tenantID {
+		if user.ID.String() == userID && user.TenantID.String() == tenantID {
 			return user, nil
 		}
 	}
@@ -116,6 +133,46 @@ func (m *mockUserRepoForLoginLimit) UpdateLastLogin(ctx context.Context, tenantI
 	return nil
 }
 
+// mockTenantRepoForLoginLimit 用于登录限制测试的 mock TenantRepository
+type mockTenantRepoForLoginLimit struct {
+	tenants map[string]*model.Tenant
+}
+
+func (m *mockTenantRepoForLoginLimit) Create(ctx context.Context, tenant *model.Tenant) error {
+	return nil
+}
+
+func (m *mockTenantRepoForLoginLimit) GetByID(ctx context.Context, tenantID string) (*model.Tenant, error) {
+	if tenant, ok := m.tenants[tenantID]; ok {
+		return tenant, nil
+	}
+	return nil, nil
+}
+
+func (m *mockTenantRepoForLoginLimit) GetByName(ctx context.Context, name string) (*model.Tenant, error) {
+	return nil, nil
+}
+
+func (m *mockTenantRepoForLoginLimit) GetByDomain(ctx context.Context, domain string) (*model.Tenant, error) {
+	return nil, nil
+}
+
+func (m *mockTenantRepoForLoginLimit) Update(ctx context.Context, tenant *model.Tenant) error {
+	return nil
+}
+
+func (m *mockTenantRepoForLoginLimit) Delete(ctx context.Context, tenantID string) error {
+	return nil
+}
+
+func (m *mockTenantRepoForLoginLimit) List(ctx context.Context, page, pageSize int) ([]*model.Tenant, int64, error) {
+	return nil, 0, nil
+}
+
+func (m *mockTenantRepoForLoginLimit) GetSystemTenant(ctx context.Context) (*model.Tenant, error) {
+	return nil, nil
+}
+
 // mockTokenServiceForLoginLimit 用于登录限制测试的 mock TokenService
 type mockTokenServiceForLoginLimit struct{}
 
@@ -125,7 +182,7 @@ func (m *mockTokenServiceForLoginLimit) GenerateAccessToken(user *model.User) (s
 
 func (m *mockTokenServiceForLoginLimit) GenerateRefreshToken(user *model.User) (string, *model.RefreshToken, error) {
 	token := &model.RefreshToken{
-		ID:       uuid.New().String(),
+		ID:       uuid.New(),
 		UserID:   user.ID,
 		TenantID: user.TenantID,
 	}
@@ -185,8 +242,8 @@ func (m *mockRefreshTokenRepoForLoginLimit) DeleteExpired(ctx context.Context) e
 // TestLoginFailureLimit 测试登录失败限制功能
 func TestLoginFailureLimit(t *testing.T) {
 	// 准备测试数据
-	tenantID := uuid.New().String()
-	userID := uuid.New().String()
+	tenantID := uuid.New()
+	userID := uuid.New()
 	email := "test@example.com"
 	password := "password123"
 	passwordHash, _ := crypto.HashPassword(password)
@@ -207,18 +264,29 @@ func TestLoginFailureLimit(t *testing.T) {
 		failedAttempts: make(map[string]int),
 		lockedUntil:    make(map[string]*time.Time),
 	}
-	userRepo.users[tenantID+":"+email] = user
+	userRepo.users[tenantID.String()+":"+email] = user
 
 	tokenService := &mockTokenServiceForLoginLimit{}
 	auditRepo := &mockAuditRepoForLoginLimit{}
 	refreshTokenRepo := &mockRefreshTokenRepoForLoginLimit{}
+	tenantRepo := &mockTenantRepoForLoginLimit{
+		tenants: map[string]*model.Tenant{
+			tenantID.String(): {
+				ID:     tenantID,
+				Name:   "Test Tenant",
+				Status: true,
+			},
+		},
+	}
 
 	// 创建 AuthService，设置最大失败次数为 3
 	authService := NewAuthService(
 		userRepo,
+		tenantRepo,
 		tokenService,
 		auditRepo,
 		refreshTokenRepo,
+		nil, // blacklistService
 		60*time.Minute,
 		3, // maxLoginAttempts
 		15*time.Minute, // lockDuration
@@ -229,7 +297,6 @@ func TestLoginFailureLimit(t *testing.T) {
 	// 测试场景1：连续失败登录，但未达到最大次数
 	t.Run("Failed login attempts increment", func(t *testing.T) {
 		req := LoginRequest{
-			TenantID: tenantID,
 			Email:    email,
 			Password: "wrongpassword",
 		}
@@ -239,8 +306,8 @@ func TestLoginFailureLimit(t *testing.T) {
 		if err == nil {
 			t.Error("Expected login to fail with wrong password")
 		}
-		if userRepo.failedAttempts[userID] != 1 {
-			t.Errorf("Expected 1 failed attempt, got %d", userRepo.failedAttempts[userID])
+		if userRepo.failedAttempts[userID.String()] != 1 {
+			t.Errorf("Expected 1 failed attempt, got %d", userRepo.failedAttempts[userID.String()])
 		}
 
 		// 第二次失败
@@ -248,15 +315,14 @@ func TestLoginFailureLimit(t *testing.T) {
 		if err == nil {
 			t.Error("Expected login to fail with wrong password")
 		}
-		if userRepo.failedAttempts[userID] != 2 {
-			t.Errorf("Expected 2 failed attempts, got %d", userRepo.failedAttempts[userID])
+		if userRepo.failedAttempts[userID.String()] != 2 {
+			t.Errorf("Expected 2 failed attempts, got %d", userRepo.failedAttempts[userID.String()])
 		}
 	})
 
 	// 测试场景2：达到最大失败次数，账户被锁定
 	t.Run("Account locked after max attempts", func(t *testing.T) {
 		req := LoginRequest{
-			TenantID: tenantID,
 			Email:    email,
 			Password: "wrongpassword",
 		}
@@ -268,7 +334,7 @@ func TestLoginFailureLimit(t *testing.T) {
 		}
 
 		// 验证账户已被锁定
-		isLocked, _ := userRepo.IsAccountLocked(ctx, tenantID, userID)
+		isLocked, _ := userRepo.IsAccountLocked(ctx, tenantID.String(), userID.String())
 		if !isLocked {
 			t.Error("Expected account to be locked")
 		}
@@ -277,7 +343,6 @@ func TestLoginFailureLimit(t *testing.T) {
 	// 测试场景3：账户锁定后尝试登录
 	t.Run("Login blocked when account is locked", func(t *testing.T) {
 		req := LoginRequest{
-			TenantID: tenantID,
 			Email:    email,
 			Password: password, // 使用正确的密码
 		}
@@ -293,30 +358,29 @@ func TestLoginFailureLimit(t *testing.T) {
 
 	// 测试场景4：解锁账户
 	t.Run("Unlock account", func(t *testing.T) {
-		err := authService.UnlockAccount(ctx, tenantID, userID)
+		err := authService.UnlockAccount(ctx, tenantID.String(), userID.String())
 		if err != nil {
 			t.Errorf("Failed to unlock account: %v", err)
 		}
 
 		// 验证账户已解锁
-		isLocked, _ := userRepo.IsAccountLocked(ctx, tenantID, userID)
+		isLocked, _ := userRepo.IsAccountLocked(ctx, tenantID.String(), userID.String())
 		if isLocked {
 			t.Error("Expected account to be unlocked")
 		}
 
 		// 验证失败次数已重置
-		if userRepo.failedAttempts[userID] != 0 {
-			t.Errorf("Expected failed attempts to be reset, got %d", userRepo.failedAttempts[userID])
+		if userRepo.failedAttempts[userID.String()] != 0 {
+			t.Errorf("Expected failed attempts to be reset, got %d", userRepo.failedAttempts[userID.String()])
 		}
 	})
 
 	// 测试场景5：成功登录后重置失败次数
 	t.Run("Successful login resets failed attempts", func(t *testing.T) {
 		// 先增加一些失败次数
-		userRepo.failedAttempts[userID] = 2
+		userRepo.failedAttempts[userID.String()] = 2
 
 		req := LoginRequest{
-			TenantID: tenantID,
 			Email:    email,
 			Password: password, // 正确的密码
 		}
@@ -327,8 +391,8 @@ func TestLoginFailureLimit(t *testing.T) {
 		}
 
 		// 验证失败次数已重置
-		if userRepo.failedAttempts[userID] != 0 {
-			t.Errorf("Expected failed attempts to be reset after successful login, got %d", userRepo.failedAttempts[userID])
+		if userRepo.failedAttempts[userID.String()] != 0 {
+			t.Errorf("Expected failed attempts to be reset after successful login, got %d", userRepo.failedAttempts[userID.String()])
 		}
 	})
 }
