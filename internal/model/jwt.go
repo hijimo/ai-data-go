@@ -11,6 +11,8 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 	// 租户 ID，标识用户所属的租户
 	TenantID string `json:"tid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 用户显示名称，用于在创建数据时记录创建者名称
+	DisplayName string `json:"displayName" example:"张三"`
 	// 用户角色列表，用于权限验证
 	// 可选值：system_admin（平台管理员，可管理所有租户）, tenant_admin（租户管理员，可管理本租户用户）, user（普通用户）
 	Roles []string `json:"roles" example:"[\"user\"]"`

@@ -56,8 +56,6 @@ type CreateTenantRequest struct {
 	Type string `json:"type" validate:"omitempty,oneof=system tenant"`
 	// 租户元数据
 	Metadata map[string]interface{} `json:"metadata"`
-	// 创建者用户ID
-	CreatedBy *string `json:"createdBy"`
 }
 
 // CreateTenantWithAdminRequest 创建租户并自动生成管理员请求
@@ -141,24 +139,18 @@ func (s *tenantService) Create(ctx context.Context, req CreateTenantRequest) (*m
 		}
 	}
 
-	// 创建租户对象
-	var createdByUUID *uuid.UUID
-	if req.CreatedBy != nil {
-		parsed := parseUUIDPointer(*req.CreatedBy)
-		if parsed == nil {
-			return nil, errors.New("创建者用户ID格式无效")
-		}
-		createdByUUID = parsed
-	}
+	// 从 Context 获取创建者信息
+	createdByUUID, createdByName := GetCreatorInfoFromContext(ctx)
 
 	tenant := &model.Tenant{
-		ID:        uuid.New(),
-		Name:      req.Name,
-		Domain:    req.Domain,
-		Type:      tenantType,
-		Status:    true, // 默认启用
-		CreatedBy: createdByUUID,
-		IsDeleted: false,
+		ID:            uuid.New(),
+		Name:          req.Name,
+		Domain:        req.Domain,
+		Type:          tenantType,
+		Status:        true, // 默认启用
+		CreatedBy:     createdByUUID,
+		CreatedByName: createdByName,
+		IsDeleted:     false,
 	}
 
 	// 设置元数据
@@ -191,6 +183,11 @@ func (s *tenantService) Get(ctx context.Context, id string) (*model.Tenant, erro
 		return nil, fmt.Errorf("获取租户失败: %w", err)
 	}
 
+	// 验证租户访问权限
+	if !s.canAccessTenant(ctx, tenant.ID.String()) {
+		return nil, errors.New("权限不足：无法访问其他租户的数据")
+	}
+
 	// 验证租户状态
 	if !tenant.Status {
 		return nil, errors.New("租户已被禁用")
@@ -210,6 +207,16 @@ func (s *tenantService) Update(ctx context.Context, id string, req UpdateTenantR
 	tenant, err := s.tenantRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("租户不存在: %w", err)
+	}
+
+	// 验证租户访问权限
+	if !s.canAccessTenant(ctx, tenant.ID.String()) {
+		return nil, errors.New("权限不足：无法访问其他租户的数据")
+	}
+
+	// 验证字段级权限
+	if err := s.validateUpdateFields(ctx, req); err != nil {
+		return nil, err
 	}
 
 	// 防止修改平台租户的类型
@@ -302,6 +309,27 @@ func (s *tenantService) List(ctx context.Context, page, pageSize int, tenantType
 		pageSize = 100
 	}
 
+	// 获取JWT Claims
+	claims, ok := GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return nil, 0, errors.New("未找到身份认证信息")
+	}
+
+	// 检查用户角色
+	isSystemAdmin := hasSystemAdminRole(claims)
+
+	// 如果是租户管理员，只返回当前用户所属的租户
+	if !isSystemAdmin {
+		// 获取当前用户的租户
+		tenant, err := s.tenantRepo.GetByID(ctx, claims.TenantID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("获取租户失败: %w", err)
+		}
+		// 返回单个租户作为列表
+		return []*model.Tenant{tenant}, 1, nil
+	}
+
+	// 平台管理员：返回所有租户或按类型过滤的租户
 	// 如果指定了租户类型，使用类型过滤
 	if len(tenantType) > 0 && tenantType[0] != "" {
 		// 验证租户类型
@@ -362,14 +390,19 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 		return nil, fmt.Errorf("域名 %s 已被使用", req.TenantDomain)
 	}
 
-	// 3. 创建业务租户（type = "tenant"）
+	// 3. 从 Context 获取创建者信息
+	createdByUUID, createdByName := GetCreatorInfoFromContext(ctx)
+
+	// 4. 创建业务租户（type = "tenant"）
 	tenant := &model.Tenant{
-		ID:        uuid.New(),
-		Name:      req.TenantName,
-		Domain:    req.TenantDomain,
-		Type:      model.TenantTypeBusiness, // 业务租户
-		Status:    true,                     // 默认启用
-		IsDeleted: false,
+		ID:            uuid.New(),
+		Name:          req.TenantName,
+		Domain:        req.TenantDomain,
+		Type:          model.TenantTypeBusiness, // 业务租户
+		Status:        true,                     // 默认启用
+		CreatedBy:     createdByUUID,
+		CreatedByName: createdByName,
+		IsDeleted:     false,
 	}
 
 	// 设置元数据
@@ -386,13 +419,13 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 		return nil, fmt.Errorf("创建租户失败: %w", err)
 	}
 
-	// 4. 生成租户管理员邮箱
+	// 5. 生成租户管理员邮箱
 	adminEmail := req.AdminEmail
 	if adminEmail == "" {
 		adminEmail = fmt.Sprintf("admin@%s", req.TenantDomain)
 	}
 
-	// 5. 生成 16 位随机强密码
+	// 6. 生成 16 位随机强密码
 	adminPassword, err := crypto.GenerateSecurePassword(16)
 	if err != nil {
 		// 如果生成失败，尝试回滚租户创建
@@ -400,7 +433,7 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 		return nil, fmt.Errorf("生成管理员密码失败: %w", err)
 	}
 
-	// 6. 对密码进行哈希
+	// 7. 对密码进行哈希
 	passwordHash, err := crypto.HashPassword(adminPassword)
 	if err != nil {
 		// 回滚租户创建
@@ -408,21 +441,23 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 		return nil, fmt.Errorf("密码哈希失败: %w", err)
 	}
 
-	// 7. 创建租户管理员用户
+	// 8. 创建租户管理员用户
 	adminDisplayName := req.AdminDisplayName
 	if adminDisplayName == "" {
 		adminDisplayName = fmt.Sprintf("%s Admin", req.TenantName)
 	}
 
 	adminUser := &model.User{
-		ID:           uuid.New(),
-		TenantID:     tenant.ID,
-		Email:        adminEmail,
-		PasswordHash: passwordHash,
-		DisplayName:  adminDisplayName,
-		IsActive:     true,
-		IsAdmin:      true,
-		IsDeleted:    false,
+		ID:            uuid.New(),
+		TenantID:      tenant.ID,
+		Email:         adminEmail,
+		PasswordHash:  passwordHash,
+		DisplayName:   adminDisplayName,
+		IsActive:      true,
+		IsAdmin:       true,
+		CreatedBy:     createdByUUID,
+		CreatedByName: createdByName,
+		IsDeleted:     false,
 	}
 
 	// 设置角色为 tenant_admin
@@ -441,7 +476,7 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 		return nil, fmt.Errorf("创建管理员用户失败: %w", err)
 	}
 
-	// 8. 记录审计日志
+	// 9. 记录审计日志
 	auditLog := &model.AuthAudit{
 		TenantID: &tenant.ID,
 		Event:    model.AuditEventTenantCreated,
@@ -450,7 +485,7 @@ func (s *tenantService) CreateWithAdmin(ctx context.Context, req CreateTenantWit
 	// 尝试记录审计日志，但不因为日志失败而影响主流程
 	_ = s.auditRepo.Create(ctx, auditLog)
 
-	// 9. 返回租户信息和管理员初始密码
+	// 10. 返回租户信息和管理员初始密码
 	return &CreateTenantWithAdminResponse{
 		Tenant:        tenant,
 		AdminUser:     adminUser,
@@ -540,6 +575,53 @@ func (s *tenantService) DisableTenant(ctx context.Context, id string) error {
 		Meta:     datatypes.JSON([]byte(fmt.Sprintf(`{"tenantId":"%s","tenantName":"%s"}`, tenant.ID, tenant.Name))),
 	}
 	_ = s.auditRepo.Create(ctx, auditLog)
+
+	return nil
+}
+
+// canAccessTenant 验证用户是否有权访问指定租户
+// 平台管理员可以访问所有租户，租户管理员只能访问自己的租户
+func (s *tenantService) canAccessTenant(ctx context.Context, tenantID string) bool {
+	// 获取JWT Claims
+	claims, ok := GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return false
+	}
+
+	// 检查是否为平台管理员
+	if hasSystemAdminRole(claims) {
+		return true
+	}
+
+	// 租户管理员只能访问自己的租户
+	return claims.TenantID == tenantID
+}
+
+// validateUpdateFields 验证租户更新请求的字段级权限
+// 租户管理员只能修改name字段，平台管理员可以修改所有字段
+func (s *tenantService) validateUpdateFields(ctx context.Context, req UpdateTenantRequest) error {
+	// 获取JWT Claims
+	claims, ok := GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return errors.New("未找到身份认证信息")
+	}
+
+	// 平台管理员可以修改所有字段
+	if hasSystemAdminRole(claims) {
+		return nil
+	}
+
+	// 租户管理员只能修改name字段
+	// 检查是否尝试修改其他字段
+	if req.Domain != nil {
+		return errors.New("权限不足：租户管理员只能修改租户名称")
+	}
+	if req.Metadata != nil {
+		return errors.New("权限不足：租户管理员只能修改租户名称")
+	}
+	if req.Status != nil {
+		return errors.New("权限不足：租户管理员只能修改租户名称")
+	}
 
 	return nil
 }

@@ -25,6 +25,9 @@ type UserRepository interface {
 	// GetByEmailOnly 仅根据邮箱获取用户（不需要租户ID）
 	GetByEmailOnly(ctx context.Context, email string) (*model.User, error)
 
+	// GetByIDOnly 仅根据用户ID获取用户（不需要租户ID，用于平台管理员）
+	GetByIDOnly(ctx context.Context, userID string) (*model.User, error)
+
 	// Update 更新用户
 	Update(ctx context.Context, user *model.User) error
 
@@ -33,6 +36,9 @@ type UserRepository interface {
 
 	// List 列出租户下的用户（支持分页）
 	List(ctx context.Context, tenantID string, page, pageSize int) ([]*model.User, int64, error)
+
+	// ListAll 列出所有租户的用户（支持分页，用于平台管理员）
+	ListAll(ctx context.Context, page, pageSize int) ([]*model.User, int64, error)
 
 	// UpdateLastLogin 更新最后登录时间
 	UpdateLastLogin(ctx context.Context, tenantID, userID string) error
@@ -154,6 +160,28 @@ func (r *userRepository) GetByEmailOnly(ctx context.Context, email string) (*mod
 	return &user, nil
 }
 
+// GetByIDOnly 仅根据用户ID获取用户（不需要租户ID，用于平台管理员）
+func (r *userRepository) GetByIDOnly(ctx context.Context, userID string) (*model.User, error) {
+	if userID == "" {
+		return nil, errors.New("user_id cannot be empty")
+	}
+
+	var user model.User
+
+	err := r.db.WithContext(ctx).
+		Where("id = ? AND is_deleted = ?", userID, false).
+		First(&user).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // Update 更新用户
 func (r *userRepository) Update(ctx context.Context, user *model.User) error {
 	if user == nil {
@@ -238,6 +266,46 @@ func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSi
 	// 查询数据（确保包含租户隔离）
 	if err := r.db.WithContext(ctx).
 		Where("tenant_id = ? AND is_deleted = ?", tenantID, false).
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}
+
+// ListAll 列出所有租户的用户（支持分页，用于平台管理员）
+func (r *userRepository) ListAll(ctx context.Context, page, pageSize int) ([]*model.User, int64, error) {
+	// 参数验证
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	var users []*model.User
+	var total int64
+
+	// 计算偏移量
+	offset := (page - 1) * pageSize
+
+	// 查询总数（不包含租户隔离）
+	if err := r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("is_deleted = ?", false).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 查询数据（不包含租户隔离）
+	if err := r.db.WithContext(ctx).
+		Where("is_deleted = ?", false).
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

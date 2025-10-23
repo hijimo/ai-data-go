@@ -59,11 +59,6 @@ import (
 // @tag.name User Management
 // @tag.description 用户管理接口（需要租户管理员权限）
 
-// @tag.name Tenant User Management
-// @tag.description 租户用户管理接口（需要租户管理员或平台管理员权限）
-
-// @tag.name Platform Management
-// @tag.description 平台管理接口（需要平台管理员权限）
 
 // @tag.name Audit
 // @tag.description 审计日志接口
@@ -184,7 +179,7 @@ func main() {
 	if db != nil {
 		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW := initAuthHandlers(db, cfg, log)
 		routes.RegisterAuthRoutes(serveMux, authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW)
-		log.Info("认证路由已注册", logger.Fields{
+		log.Info("认证和管理路由已注册", logger.Fields{
 			"routes": []string{
 				"/api/v1/auth/register",
 				"/api/v1/auth/login",
@@ -193,19 +188,12 @@ func main() {
 				"/api/v1/auth/change-password",
 				"/api/v1/auth/me",
 				"/api/v1/tenants",
+				"/api/v1/tenants/{id}",
+				"/api/v1/tenants/{id}/status",
 				"/api/v1/users",
+				"/api/v1/users/{id}",
+				"/api/v1/users/{id}/status",
 				"/api/v1/audit/auth",
-			},
-		})
-		
-		// 注册平台管理路由
-		platformHandler := initPlatformHandler(db, log)
-		routes.RegisterPlatformRoutes(serveMux, platformHandler, jwtAuthMW, rbacMW)
-		log.Info("平台管理路由已注册", logger.Fields{
-			"routes": []string{
-				"/api/v1/platform/tenants",
-				"/api/v1/platform/tenants/{id}/status",
-				"/api/v1/platform/tenants/{id}",
 			},
 		})
 		
@@ -759,29 +747,4 @@ func runSystemBootstrap(db database.Database, cfg *config.Config, log logger.Log
 	return nil
 }
 
-// initPlatformHandler 初始化平台管理处理器
-func initPlatformHandler(db database.Database, log logger.Logger) *handler.PlatformHandler {
-	log.Info("初始化平台管理服务...", nil)
 
-	// 1. 获取 GORM 数据库实例
-	gormDB := db.GetDB()
-
-	// 2. 创建 Repository 层实例
-	tenantRepo := repository.NewTenantRepository(gormDB)
-	userRepo := repository.NewUserRepository(gormDB)
-	auditRepo := repository.NewAuditRepository(gormDB)
-
-	// 3. 创建 TenantService 实例
-	tenantService := auth.NewTenantService(tenantRepo, userRepo, auditRepo)
-
-	// 4. 创建 PlatformHandler 实例
-	platformHandler := handler.NewPlatformHandler(tenantService, log)
-
-	log.Info("平台管理服务初始化成功", logger.Fields{
-		"repositories": []string{"TenantRepository", "UserRepository"},
-		"services":     []string{"TenantService"},
-		"handlers":     []string{"PlatformHandler"},
-	})
-
-	return platformHandler
-}

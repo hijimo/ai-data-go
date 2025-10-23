@@ -349,7 +349,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*L
 		return nil, fmt.Errorf("刷新令牌无效: %w", err)
 	}
 
-	// 2. 获取用户信息
+	// 2. 重新查询用户信息以获取最新的 DisplayName 和其他字段
 	user, err := s.userRepo.GetByID(ctx, token.TenantID.String(), token.UserID.String())
 	if err != nil {
 		return nil, fmt.Errorf("用户不存在: %w", err)
@@ -371,7 +371,7 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*L
 		return nil, errors.New("用户账户未激活")
 	}
 
-	// 5. 生成新的 Access Token
+	// 5. 生成新的 Access Token（包含最新的 DisplayName）
 	newAccessToken, err := s.tokenService.GenerateAccessToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("生成访问令牌失败: %w", err)

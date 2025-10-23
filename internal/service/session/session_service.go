@@ -7,6 +7,7 @@ import (
 
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
+	"genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/pkg/errors"
 
 	"github.com/google/uuid"
@@ -60,21 +61,33 @@ func (s *sessionService) CreateSession(ctx context.Context, userID string, req *
 		return nil, errors.NewBadRequestError("用户ID格式无效")
 	}
 
+	// 从 Context 获取创建者信息
+	createdByUUID, createdByName := auth.GetCreatorInfoFromContext(ctx)
+
+	// 如果无法从 JWT 获取创建者ID，使用当前用户ID作为回退
+	var createdBy uuid.UUID
+	if createdByUUID != nil {
+		createdBy = *createdByUUID
+	} else {
+		createdBy = userUUID
+	}
+
 	// 创建会话实体
 	session := &model.ChatSession{
-		UserID:       userUUID,
-		Title:        req.Title,
-		ModelName:    req.ModelName,
-		SystemPrompt: req.SystemPrompt,
-		Temperature:  req.Temperature,
-		TopP:         req.TopP,
-		CreatedBy:    userUUID,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		MessageCount: 0,
-		IsPinned:     false,
-		IsArchived:   false,
-		IsDeleted:    false,
+		UserID:        userUUID,
+		Title:         req.Title,
+		ModelName:     req.ModelName,
+		SystemPrompt:  req.SystemPrompt,
+		Temperature:   req.Temperature,
+		TopP:          req.TopP,
+		CreatedBy:     createdBy,
+		CreatedByName: createdByName,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		MessageCount:  0,
+		IsPinned:      false,
+		IsArchived:    false,
+		IsDeleted:     false,
 	}
 
 	// 处理元数据

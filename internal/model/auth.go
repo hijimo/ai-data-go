@@ -71,6 +71,8 @@ type Tenant struct {
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updatedAt" example:"2025-01-20T10:00:00Z"`
 	// 创建者用户ID
 	CreatedBy *uuid.UUID `gorm:"type:uuid" json:"createdBy" example:"660e8400-e29b-41d4-a716-446655440000"`
+	// 创建者显示名称
+	CreatedByName *string `gorm:"type:varchar(255)" json:"createdByName" example:"张三"`
 	// 软删除标记
 	IsDeleted bool `gorm:"default:false" json:"isDeleted" example:"false"`
 }
@@ -116,6 +118,8 @@ type User struct {
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updatedAt" example:"2025-01-20T10:00:00Z"`
 	// 创建者用户ID
 	CreatedBy *uuid.UUID `gorm:"type:uuid" json:"createdBy" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 创建者显示名称
+	CreatedByName *string `gorm:"type:varchar(255)" json:"createdByName" example:"张三"`
 	// 软删除标记
 	IsDeleted bool `gorm:"default:false" json:"isDeleted" example:"false"`
 	// 登录失败次数，用于账户锁定策略

@@ -40,88 +40,83 @@ func RegisterAuthRoutes(
 	// ========== 需要认证的路由 ==========
 	
 	// POST /api/v1/auth/logout - 用户注销（需要认证）
+	// 注意：不需要 tenantMiddleware，因为 JWT 中已包含租户信息
 	mux.Handle("POST /api/v1/auth/logout",
-		tenantMiddleware(jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleLogout))))
+		jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleLogout)))
 
 	// POST /api/v1/auth/change-password - 修改密码（需要认证）
+	// 注意：不需要 tenantMiddleware，因为 JWT 中已包含租户信息
 	mux.Handle("POST /api/v1/auth/change-password",
-		tenantMiddleware(jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleChangePassword))))
+		jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleChangePassword)))
 
 	// GET /api/v1/auth/me - 获取当前用户信息（需要认证）
+	// 注意：不需要 tenantMiddleware，因为 JWT 中已包含租户信息
 	mux.Handle("GET /api/v1/auth/me",
-		tenantMiddleware(jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleMe))))
+		jwtAuthMiddleware(http.HandlerFunc(authHandler.HandleMe)))
 
 	// POST /api/v1/auth/unlock-account - 解锁账户（需要管理员权限）
+	// 注意：不需要 tenantMiddleware，因为 JWT 中已包含租户信息
 	mux.Handle("POST /api/v1/auth/unlock-account",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(authHandler.HandleUnlockAccount)))))
+		jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(authHandler.HandleUnlockAccount))))
 
-	// ========== 租户管理路由（需要系统管理员权限）==========
+	// ========== 租户管理路由（需要租户管理员或平台管理员权限）==========
 	
-	// POST /api/v1/tenants - 创建租户（需要系统管理员权限）
+	// POST /api/v1/tenants - 创建租户（需要平台管理员权限）
 	mux.Handle("POST /api/v1/tenants",
 		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleCreate))))
 
-	// GET /api/v1/tenants - 列出租户（需要系统管理员权限）
+	// GET /api/v1/tenants - 列出租户（需要租户管理员或平台管理员权限）
 	mux.Handle("GET /api/v1/tenants",
-		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleList))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(tenantHandler.HandleList))))
 
-	// GET /api/v1/tenants/{id} - 获取租户详情（需要系统管理员权限）
+	// GET /api/v1/tenants/{id} - 获取租户详情（需要租户管理员或平台管理员权限）
 	mux.Handle("GET /api/v1/tenants/{id}",
-		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleGet))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(tenantHandler.HandleGet))))
 
-	// PUT /api/v1/tenants/{id} - 更新租户（需要系统管理员权限）
+	// PUT /api/v1/tenants/{id} - 更新租户（需要租户管理员或平台管理员权限）
 	mux.Handle("PUT /api/v1/tenants/{id}",
-		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleUpdate))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(tenantHandler.HandleUpdate))))
 
-	// DELETE /api/v1/tenants/{id} - 删除租户（需要系统管理员权限）
+	// PATCH /api/v1/tenants/{id}/status - 启用/禁用租户（需要平台管理员权限）
+	mux.Handle("PATCH /api/v1/tenants/{id}/status",
+		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleUpdateStatus))))
+
+	// DELETE /api/v1/tenants/{id} - 删除租户（需要平台管理员权限）
 	mux.Handle("DELETE /api/v1/tenants/{id}",
 		jwtAuthMiddleware(rbacMiddleware("system_admin")(http.HandlerFunc(tenantHandler.HandleDelete))))
 
-	// ========== 用户管理路由（需要租户管理员权限）==========
+	// ========== 用户管理路由（需要租户管理员或平台管理员权限）==========
 	
-	// POST /api/v1/users - 创建用户（需要租户管理员权限）
+	// POST /api/v1/users - 创建用户（需要租户管理员或平台管理员权限）
 	mux.Handle("POST /api/v1/users",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(userHandler.HandleCreate)))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleCreate))))
 
-	// GET /api/v1/users - 列出用户（需要租户管理员权限）
+	// GET /api/v1/users - 列出用户（需要租户管理员或平台管理员权限）
 	mux.Handle("GET /api/v1/users",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(userHandler.HandleList)))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleList))))
 
-	// GET /api/v1/users/{id} - 获取用户详情（需要租户管理员权限）
+	// GET /api/v1/users/{id} - 获取用户详情（需要租户管理员或平台管理员权限）
 	mux.Handle("GET /api/v1/users/{id}",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(userHandler.HandleGet)))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleGet))))
 
-	// PUT /api/v1/users/{id} - 更新用户（需要租户管理员权限）
+	// PUT /api/v1/users/{id} - 更新用户（需要租户管理员或平台管理员权限）
 	mux.Handle("PUT /api/v1/users/{id}",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(userHandler.HandleUpdate)))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleUpdate))))
 
-	// DELETE /api/v1/users/{id} - 删除用户（需要租户管理员权限）
+	// PATCH /api/v1/users/{id}/status - 更新用户状态（需要租户管理员或平台管理员权限）
+	mux.Handle("PATCH /api/v1/users/{id}/status",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleUpdateStatus))))
+
+	// DELETE /api/v1/users/{id} - 删除用户（需要租户管理员或平台管理员权限）
 	mux.Handle("DELETE /api/v1/users/{id}",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(userHandler.HandleDelete)))))
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleDelete))))
 
 	// ========== 审计日志路由（需要管理员权限）==========
 	
 	// GET /api/v1/audit/auth - 查询审计日志（需要管理员权限）
+	// 注意：不需要 tenantMiddleware，因为 JWT 中已包含租户信息
 	mux.Handle("GET /api/v1/audit/auth",
-		tenantMiddleware(jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(auditHandler.HandleListAuditLogs)))))
-
-	// ========== 租户用户管理路由（需要租户管理员或平台管理员权限）==========
-	
-	// POST /api/v1/tenants/{tenantId}/users - 在租户下创建用户（需要租户管理员或平台管理员权限）
-	mux.Handle("POST /api/v1/tenants/{tenantId}/users",
-		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantCreateUser))))
-
-	// GET /api/v1/tenants/{tenantId}/users - 列出租户用户（需要租户管理员或平台管理员权限）
-	mux.Handle("GET /api/v1/tenants/{tenantId}/users",
-		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantListUsers))))
-
-	// PATCH /api/v1/tenants/{tenantId}/users/{userId}/status - 启用/禁用用户（需要租户管理员或平台管理员权限）
-	mux.Handle("PATCH /api/v1/tenants/{tenantId}/users/{userId}/status",
-		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantUpdateUserStatus))))
-
-	// DELETE /api/v1/tenants/{tenantId}/users/{userId} - 删除用户（需要租户管理员或平台管理员权限）
-	mux.Handle("DELETE /api/v1/tenants/{tenantId}/users/{userId}",
-		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(userHandler.HandleTenantDeleteUser))))
+		jwtAuthMiddleware(rbacMiddleware("admin")(http.HandlerFunc(auditHandler.HandleListAuditLogs))))
 }
 
 // WrapAuthMiddleware 包装认证中间件，用于简化路由注册

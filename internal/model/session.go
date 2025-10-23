@@ -25,6 +25,8 @@ type ChatSession struct {
 	TopP *float64 `gorm:"type:float" json:"topP"`
 	// 创建者ID
 	CreatedBy uuid.UUID `gorm:"type:uuid;not null" json:"createdBy"`
+	// 创建者显示名称
+	CreatedByName *string `gorm:"type:varchar(255)" json:"createdByName" example:"张三"`
 	// 创建时间
 	CreatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	// 更新时间

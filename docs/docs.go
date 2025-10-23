@@ -22,302 +22,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/platform/tenants": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "获取所有租户列表，支持分页和类型过滤。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 支持分页查询（默认每页10条，最多100条）\n- 支持按租户类型过滤（system: 平台租户, tenant: 业务租户）\n- 返回租户的完整信息，包括名称、域名、类型、状态等\n\n**租户类型：**\n- system: 平台租户（系统级租户，用于承载平台管理员）\n- tenant: 业务租户（普通租户，用于实际业务使用）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Platform Management"
-                ],
-                "summary": "获取租户列表",
-                "parameters": [
-                    {
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 1,
-                        "example": 1,
-                        "description": "页码（从1开始）",
-                        "name": "pageNo",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 10,
-                        "example": 10,
-                        "description": "每页大小（1-100）",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            "system",
-                            "tenant"
-                        ],
-                        "type": "string",
-                        "example": "tenant",
-                        "description": "租户类型过滤",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.TenantListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足（需要 system_admin 角色）",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "创建新的业务租户并自动生成租户管理员账户。系统会自动为租户创建一个管理员账户，并生成随机强密码。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 创建类型为 \"tenant\" 的业务租户\n- 自动生成租户管理员账户（角色为 tenant_admin）\n- 生成16位随机强密码（包含大小写字母、数字和特殊字符）\n- 返回租户信息和管理员初始密码\n\n**注意事项：**\n- 管理员邮箱如未指定，默认为 admin@{tenantDomain}\n- 请妥善保管返回的初始密码，建议首次登录后立即修改\n- 租户域名必须唯一",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Platform Management"
-                ],
-                "summary": "创建租户（带管理员）",
-                "parameters": [
-                    {
-                        "description": "创建租户请求",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateTenantWithAdminRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "创建成功",
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateTenantWithAdminDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足（需要 system_admin 角色）",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "参数验证失败",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/platform/tenants/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "软删除指定的业务租户。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 执行软删除操作，设置 is_deleted = true\n- 不会物理删除数据库记录，保留数据用于审计和恢复\n- 删除后的租户不会出现在租户列表中\n\n**限制条件：**\n- 不允许删除平台租户（type = \"system\"）\n- 删除租户时会级联处理相关数据（根据数据库外键约束）\n\n**注意事项：**\n- 删除操作不可逆（除非通过数据库直接恢复）\n- 建议在删除前先禁用租户，观察一段时间后再删除\n- 删除租户会影响该租户下的所有用户和数据",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Platform Management"
-                ],
-                "summary": "删除租户",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
-                        "description": "租户ID（UUID格式）",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "删除成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误（如尝试删除平台租户）",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足（需要 system_admin 角色）",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "租户不存在",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/platform/tenants/{id}/status": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "更新租户的启用/禁用状态。需要平台管理员权限（system_admin角色）。\n\n**权限要求：** system_admin\n\n**功能说明：**\n- 启用租户：设置 status = true，该租户下的用户可以正常登录和访问系统\n- 禁用租户：设置 status = false，该租户下的所有用户将无法登录和访问系统\n\n**影响范围：**\n- 禁用租户后，该租户下所有用户的登录请求将被拒绝\n- 禁用租户后，该租户下所有用户的 API 访问请求将被拒绝\n- 启用租户后，该租户下用户恢复正常访问\n\n**注意事项：**\n- 不允许禁用平台租户（type = \"system\"）\n- 禁用操作会立即生效",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Platform Management"
-                ],
-                "summary": "启用/禁用租户",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "example": "\"550e8400-e29b-41d4-a716-446655440000\"",
-                        "description": "租户ID（UUID格式）",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新租户状态请求",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateTenantStatusRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "更新成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.TenantDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足（需要 system_admin 角色）",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "租户不存在",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/audit/auth": {
             "get": {
                 "security": [
@@ -2253,7 +1957,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取租户列表，支持分页（需要管理员权限）",
+                "description": "获取租户列表，支持分页，不同角色返回不同的数据\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户列表\n- 租户管理员（tenant_admin）：只能查看自己所属的租户信息\n\n**返回数据差异**：\n- 平台管理员：返回所有租户的分页列表，可能包含多条记录\n- 租户管理员：只返回当前用户所属租户的信息（单条记录），忽略分页参数\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n\n**注意事项**：\n- 租户管理员调用此接口时，分页参数会被忽略\n- 租户管理员始终只能看到自己的租户信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -2271,8 +1975,7 @@ const docTemplate = `{
                         "default": 1,
                         "description": "页码",
                         "name": "pageNo",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "maximum": 100,
@@ -2281,8 +1984,7 @@ const docTemplate = `{
                         "default": 20,
                         "description": "每页大小",
                         "name": "pageSize",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2330,7 +2032,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "创建新的租户（需要管理员权限）",
+                "description": "创建新的租户并自动生成租户管理员账户\n\n**权限要求**：\n- 仅平台管理员（system_admin）可以调用此接口\n- 租户管理员和普通用户将收到 403 权限不足错误\n\n**功能说明**：\n- 创建租户时会自动生成一个租户管理员账户\n- 管理员邮箱默认为 admin@{tenantDomain}，也可以通过 adminEmail 参数自定义\n- 系统会生成16位随机强密码，并在响应中返回（仅此一次）\n- 建议管理员首次登录后立即修改密码\n\n**参数说明**：\n- name: 租户名称（必填，1-255字符）\n- domain: 租户域名（可选，最多255字符）\n- metadata: 租户元数据（可选，JSON对象）\n- adminEmail: 管理员邮箱（可选，默认为 admin@{domain}）\n- adminDisplayName: 管理员显示名称（可选）",
                 "consumes": [
                     "application/json"
                 ],
@@ -2340,7 +2042,7 @@ const docTemplate = `{
                 "tags": [
                     "Tenant Management"
                 ],
-                "summary": "创建租户",
+                "summary": "创建租户（仅平台管理员）",
                 "parameters": [
                     {
                         "description": "创建租户请求",
@@ -2354,7 +2056,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "创建成功",
+                        "description": "创建成功，返回租户信息和管理员初始密码",
                         "schema": {
                             "$ref": "#/definitions/model.TenantDataResponse"
                         }
@@ -2372,7 +2074,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：需要平台管理员权限",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -2399,7 +2101,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "根据租户ID获取租户详细信息（需要管理员权限）",
+                "description": "根据租户ID获取租户详细信息\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看任意租户的详细信息\n- 租户管理员（tenant_admin）：只能查看自己所属租户的信息\n\n**访问控制**：\n- 租户管理员尝试访问其他租户时，将收到 403 权限不足错误\n- 系统会自动验证目标租户ID是否与当前用户的租户ID匹配\n\n**参数说明**：\n- id: 租户ID（UUID格式）",
                 "consumes": [
                     "application/json"
                 ],
@@ -2439,7 +2141,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：无法访问其他租户的数据",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -2464,7 +2166,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "更新租户信息（需要管理员权限）",
+                "description": "更新租户信息，支持字段级权限控制\n\n**权限要求**：\n- 平台管理员（system_admin）：可以修改任意租户的所有字段\n- 租户管理员（tenant_admin）：只能修改自己租户的 name 字段\n\n**字段级权限控制**：\n- 租户管理员可修改字段：name（租户名称）\n- 租户管理员不可修改字段：domain（域名）、metadata（元数据）、status（状态）\n- 租户管理员尝试修改受限字段时，将收到 403 权限不足错误\n- 平台管理员可以修改所有字段\n\n**访问控制**：\n- 租户管理员只能更新自己所属的租户\n- 租户管理员尝试更新其他租户时，将收到 403 权限不足错误\n\n**参数说明**：\n- id: 租户ID（UUID格式）\n- name: 租户名称（可选，1-255字符）\n- domain: 租户域名（可选，最多255字符，仅平台管理员可修改）\n- metadata: 租户元数据（可选，JSON对象，仅平台管理员可修改）\n- status: 租户状态（可选，布尔值，仅平台管理员可修改）",
                 "consumes": [
                     "application/json"
                 ],
@@ -2513,7 +2215,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：租户管理员只能修改租户名称，或无法访问其他租户",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -2544,7 +2246,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "软删除指定的租户（需要管理员权限）",
+                "description": "软删除指定的租户\n\n**权限要求**：\n- 仅平台管理员（system_admin）可以调用此接口\n- 租户管理员和普通用户将收到 403 权限不足错误\n\n**功能说明**：\n- 执行软删除操作（设置 is_deleted=true）\n- 不允许删除平台租户（type=\"system\"）\n- 删除后的租户数据仍保留在数据库中，但不再可见\n\n**参数说明**：\n- id: 租户ID（UUID格式）",
                 "consumes": [
                     "application/json"
                 ],
@@ -2554,7 +2256,7 @@ const docTemplate = `{
                 "tags": [
                     "Tenant Management"
                 ],
-                "summary": "删除租户",
+                "summary": "删除租户（仅平台管理员）",
                 "parameters": [
                     {
                         "type": "string",
@@ -2584,7 +2286,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：需要平台管理员权限",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -2604,248 +2306,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/tenants/{tenantId}/users": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "获取指定租户下的用户列表，支持分页（需要租户管理员或平台管理员权限）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tenant User Management"
-                ],
-                "summary": "获取租户用户列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "租户ID",
-                        "name": "tenantId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 1,
-                        "description": "页码",
-                        "name": "pageNo",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 20,
-                        "description": "每页大小",
-                        "name": "pageSize",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "获取成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.UserListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "参数验证失败",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "在指定租户下创建新用户（需要租户管理员或平台管理员权限）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tenant User Management"
-                ],
-                "summary": "在租户下创建用户",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "租户ID",
-                        "name": "tenantId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "创建用户请求",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CreateUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "创建成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "参数验证失败",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/tenants/{tenantId}/users/{userId}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "软删除指定租户下的用户（需要租户管理员或平台管理员权限）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tenant User Management"
-                ],
-                "summary": "删除用户",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "租户ID",
-                        "name": "tenantId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户ID",
-                        "name": "userId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "删除成功",
-                        "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "未认证",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "权限不足",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "用户不存在",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/tenants/{tenantId}/users/{userId}/status": {
+        "/tenants/{id}/status": {
             "patch": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "启用或禁用指定租户下的用户（需要租户管理员或平台管理员权限）",
+                "description": "启用或禁用租户\n\n**权限要求**：\n- 仅平台管理员（system_admin）可以调用此接口\n- 租户管理员和普通用户将收到 403 权限不足错误\n\n**功能说明**：\n- 启用租户（status=true）：租户下的所有用户可以正常访问系统\n- 禁用租户（status=false）：租户下的所有用户将无法访问系统\n- 不允许禁用平台租户（type=\"system\"）\n\n**参数说明**：\n- id: 租户ID（UUID格式）\n- status: 租户状态（true=启用，false=禁用）",
                 "consumes": [
                     "application/json"
                 ],
@@ -2853,31 +2321,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tenant User Management"
+                    "Tenant Management"
                 ],
-                "summary": "更新用户状态",
+                "summary": "更新租户状态（仅平台管理员）",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "租户ID",
-                        "name": "tenantId",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "用户ID",
-                        "name": "userId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新用户状态请求",
+                        "description": "更新租户状态请求",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateUserStatusRequest"
+                            "$ref": "#/definitions/handler.UpdateTenantStatusRequest"
                         }
                     }
                 ],
@@ -2885,7 +2346,7 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/model.TenantDataResponse"
                         }
                     },
                     "400": {
@@ -2901,13 +2362,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：需要平台管理员权限",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "用户不存在",
+                        "description": "租户不存在",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -2934,7 +2395,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取当前租户下的用户列表，支持分页（需要租户管理员权限）",
+                "description": "获取用户列表，支持分页和租户过滤\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户的用户或指定租户的用户\n- 租户管理员（tenant_admin）：只能查看自己租户下的用户\n\n**tenantId 查询参数使用规则**：\n- 租户管理员：\n- tenantId 参数会被忽略\n- 始终只返回当前用户所属租户下的用户列表\n- 平台管理员：\n- 如果提供 tenantId，返回指定租户下的用户列表\n- 如果不提供 tenantId，返回所有租户下的用户列表\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n- tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）\n\n**注意事项**：\n- 租户管理员调用此接口时，tenantId 参数会被忽略\n- 租户管理员始终只能看到自己租户下的用户",
                 "consumes": [
                     "application/json"
                 ],
@@ -2952,8 +2413,7 @@ const docTemplate = `{
                         "default": 1,
                         "description": "页码",
                         "name": "pageNo",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "maximum": 100,
@@ -2962,8 +2422,13 @@ const docTemplate = `{
                         "default": 20,
                         "description": "每页大小",
                         "name": "pageSize",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "租户ID（仅平台管理员可用）",
+                        "name": "tenantId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3011,7 +2476,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "在指定租户下创建新用户（需要租户管理员权限）",
+                "description": "创建新用户，支持可选的租户ID参数\n\n**权限要求**：\n- 平台管理员（system_admin）：可以在任意租户下创建用户\n- 租户管理员（tenant_admin）：只能在自己的租户下创建用户\n\n**tenantId 参数使用规则**：\n- 租户管理员：\n- 如果不提供 tenantId，系统自动使用当前用户的租户ID\n- 如果提供 tenantId，必须与当前用户的租户ID匹配，否则返回 403 错误\n- 平台管理员：\n- 必须提供 tenantId 参数\n- 可以指定任意有效的租户ID\n\n**参数说明**：\n- tenantId: 租户ID（可选，UUID格式）\n- email: 用户邮箱（必填，需符合邮箱格式）\n- password: 用户密码（必填，最少8个字符）\n- displayName: 显示名称（可选）\n- phone: 手机号码（可选）\n- isAdmin: 是否为管理员（可选，默认false）\n- roles: 用户角色列表（可选）\n- meta: 用户元数据（可选，JSON对象）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3053,7 +2518,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：租户管理员只能在当前租户下创建用户",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3080,7 +2545,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "根据用户ID获取用户详细信息（需要租户管理员权限）",
+                "description": "根据用户ID获取用户详细信息\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看任意租户下的用户\n- 租户管理员（tenant_admin）：只能查看自己租户下的用户\n\n**访问权限验证**：\n- 系统会自动查询目标用户所属的租户\n- 租户管理员尝试查看其他租户的用户时，将收到 403 权限不足错误\n- 平台管理员可以查看任意租户的用户，无需额外验证\n\n**参数说明**：\n- id: 用户ID（UUID格式）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3120,7 +2585,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：无法访问其他租户的用户",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3145,7 +2610,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "更新用户信息（需要租户管理员权限）",
+                "description": "更新用户信息\n\n**权限要求**：\n- 平台管理员（system_admin）：可以更新任意租户下的用户\n- 租户管理员（tenant_admin）：只能更新自己租户下的用户\n\n**访问权限验证**：\n- 系统会自动查询目标用户所属的租户\n- 租户管理员尝试更新其他租户的用户时，将收到 403 权限不足错误\n- 平台管理员可以更新任意租户的用户，无需额外验证\n\n**参数说明**：\n- id: 用户ID（UUID格式）\n- email: 用户邮箱（可选，需符合邮箱格式）\n- displayName: 显示名称（可选）\n- phone: 手机号码（可选）\n- isActive: 是否启用（可选）\n- isAdmin: 是否为管理员（可选）\n- roles: 用户角色列表（可选）\n- meta: 用户元数据（可选，JSON对象）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3194,7 +2659,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：无法更新其他租户的用户",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3225,7 +2690,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "软删除指定的用户（需要租户管理员权限）",
+                "description": "软删除指定的用户\n\n**权限要求**：\n- 平台管理员（system_admin）：可以删除任意租户下的用户\n- 租户管理员（tenant_admin）：只能删除自己租户下的用户\n\n**访问权限验证**：\n- 系统会自动查询目标用户所属的租户\n- 租户管理员尝试删除其他租户的用户时，将收到 403 权限不足错误\n- 平台管理员可以删除任意租户的用户，无需额外验证\n\n**功能说明**：\n- 执行软删除操作（设置 is_deleted=true）\n- 删除后的用户数据仍保留在数据库中，但不再可见\n\n**参数说明**：\n- id: 用户ID（UUID格式）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3265,13 +2730,95 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "权限不足",
+                        "description": "权限不足：无法删除其他租户的用户",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "启用或禁用用户\n\n**权限要求**：\n- 平台管理员（system_admin）：可以更新任意租户下的用户状态\n- 租户管理员（tenant_admin）：只能更新自己租户下的用户状态\n\n**访问权限验证**：\n- 系统会自动查询目标用户所属的租户\n- 租户管理员尝试更新其他租户的用户状态时，将收到 403 权限不足错误\n- 平台管理员可以更新任意租户的用户状态，无需额外验证\n\n**功能说明**：\n- 启用用户（isActive=true）：用户可以正常登录和访问系统\n- 禁用用户（isActive=false）：用户将无法登录系统\n\n**参数说明**：\n- id: 用户ID（UUID格式）\n- isActive: 用户状态（true=启用，false=禁用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "更新用户状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新用户状态请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateUserStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法更新其他租户的用户状态",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
                         "schema": {
                             "$ref": "#/definitions/model.ErrorResponse"
                         }
@@ -3311,10 +2858,6 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
-                "createdBy": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
                 "domain": {
                     "type": "string",
                     "maxLength": 255,
@@ -3331,104 +2874,13 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateTenantWithAdminDataResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "响应代码",
-                    "type": "integer",
-                    "example": 201
-                },
-                "data": {
-                    "description": "创建租户响应数据",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/handler.CreateTenantWithAdminResponse"
-                        }
-                    ]
-                },
-                "message": {
-                    "description": "响应信息",
-                    "type": "string",
-                    "example": "租户创建成功"
-                }
-            }
-        },
-        "handler.CreateTenantWithAdminRequest": {
-            "type": "object",
-            "required": [
-                "tenantDomain",
-                "tenantName"
-            ],
-            "properties": {
-                "adminDisplayName": {
-                    "description": "管理员显示名称（可选，最多255字符）",
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "管理员"
-                },
-                "adminEmail": {
-                    "description": "管理员邮箱（可选，默认为 admin@{tenantDomain}）",
-                    "type": "string",
-                    "example": "admin@example.com"
-                },
-                "tenantDomain": {
-                    "description": "租户域名（必填，最多255字符）",
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "example.com"
-                },
-                "tenantMetadata": {
-                    "description": "租户元数据（可选，JSON对象）",
-                    "type": "object"
-                },
-                "tenantName": {
-                    "description": "租户名称（必填，1-255字符）",
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 1,
-                    "example": "示例公司"
-                }
-            }
-        },
-        "handler.CreateTenantWithAdminResponse": {
-            "type": "object",
-            "properties": {
-                "adminPassword": {
-                    "description": "管理员初始密码（请妥善保管并建议首次登录后修改）",
-                    "type": "string",
-                    "example": "Xy9#mK2$pL5@qR8!"
-                },
-                "adminUser": {
-                    "description": "管理员用户信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.User"
-                        }
-                    ]
-                },
-                "tenant": {
-                    "description": "租户信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.Tenant"
-                        }
-                    ]
-                }
-            }
-        },
         "handler.CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
-                "password",
-                "tenantId"
+                "password"
             ],
             "properties": {
-                "createdBy": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
                 "displayName": {
                     "type": "string",
                     "example": "张三"
@@ -3615,9 +3067,11 @@ const docTemplate = `{
         },
         "handler.UpdateTenantStatusRequest": {
             "type": "object",
+            "required": [
+                "status"
+            ],
             "properties": {
                 "status": {
-                    "description": "租户状态（true: 启用, false: 禁用）",
                     "type": "boolean",
                     "example": true
                 }
@@ -5062,6 +4516,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "660e8400-e29b-41d4-a716-446655440000"
                 },
+                "createdByName": {
+                    "description": "创建者显示名称",
+                    "type": "string",
+                    "example": "张三"
+                },
                 "domain": {
                     "description": "租户域名，用于子域识别",
                     "type": "string",
@@ -5223,6 +4682,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
+                "createdByName": {
+                    "description": "创建者显示名称",
+                    "type": "string",
+                    "example": "张三"
+                },
                 "displayName": {
                     "description": "显示名称",
                     "type": "string",
@@ -5371,14 +4835,6 @@ const docTemplate = `{
         {
             "description": "用户管理接口（需要租户管理员权限）",
             "name": "User Management"
-        },
-        {
-            "description": "租户用户管理接口（需要租户管理员或平台管理员权限）",
-            "name": "Tenant User Management"
-        },
-        {
-            "description": "平台管理接口（需要平台管理员权限）",
-            "name": "Platform Management"
         },
         {
             "description": "审计日志接口",

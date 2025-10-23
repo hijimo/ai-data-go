@@ -8,6 +8,7 @@ import (
 
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
+	authservice "genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
 
@@ -15,8 +16,9 @@ import (
 )
 
 // GetJWTClaims 从上下文中获取 JWT Claims
+// 注意：必须使用 authservice.JWTClaimsContextKey 来获取，因为 jwt_auth.go 中使用该键存储
 func GetJWTClaims(ctx context.Context) (*model.JWTClaims, bool) {
-	claims, ok := ctx.Value(JWTClaimsKey).(*model.JWTClaims)
+	claims, ok := ctx.Value(authservice.JWTClaimsContextKey).(*model.JWTClaims)
 	return claims, ok
 }
 

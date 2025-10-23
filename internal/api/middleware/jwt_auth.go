@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"genkit-ai-service/internal/logger"
-	"genkit-ai-service/internal/service/auth"
+	authservice "genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
 )
@@ -26,12 +26,13 @@ const (
 	UserScopesKey AuthContextKey = "user_scopes"
 
 	// JWTClaimsKey JWT Claims 上下文键
+	// 注意：这个键必须与 internal/service/auth/context_helper.go 中的 JWTClaimsContextKey 保持一致
 	JWTClaimsKey AuthContextKey = "jwt_claims"
 )
 
 // JWTAuth JWT 认证中间件
 // 从 Authorization 头提取和验证 JWT token，并将用户信息注入上下文
-func JWTAuth(tokenService auth.TokenService, blacklistService auth.TokenBlacklistService) func(http.Handler) http.Handler {
+func JWTAuth(tokenService authservice.TokenService, blacklistService authservice.TokenBlacklistService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 从 Authorization 头提取 token
@@ -171,7 +172,8 @@ func JWTAuth(tokenService auth.TokenService, blacklistService auth.TokenBlacklis
 			ctx = context.WithValue(ctx, TenantIDKey, tenantID)
 			ctx = context.WithValue(ctx, UserRolesKey, claims.Roles)
 			ctx = context.WithValue(ctx, UserScopesKey, claims.Scopes)
-			ctx = context.WithValue(ctx, JWTClaimsKey, claims)
+			// 使用 authservice 包中定义的键来存储 JWT Claims，以便服务层可以访问
+			ctx = context.WithValue(ctx, authservice.JWTClaimsContextKey, claims)
 
 			r = r.WithContext(ctx)
 

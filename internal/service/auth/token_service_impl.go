@@ -59,9 +59,10 @@ func (s *tokenServiceImpl) GenerateAccessToken(user *model.User) (string, error)
 			IssuedAt:  jwt.NewNumericDate(now),
 			ID:        uuid.New().String(),
 		},
-		TenantID: user.TenantID.String(),
-		Roles:    roles,
-		Scopes:   generateScopes(roles), // 根据角色生成权限范围
+		TenantID:    user.TenantID.String(),
+		DisplayName: user.DisplayName, // 添加用户显示名称
+		Roles:       roles,
+		Scopes:      generateScopes(roles), // 根据角色生成权限范围
 	}
 
 	// 创建 token

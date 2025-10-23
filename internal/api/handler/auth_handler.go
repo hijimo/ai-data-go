@@ -518,7 +518,7 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 3. 通过 UserService 获取用户信息
-	user, err := h.userService.Get(ctx, tenantID, userID)
+	user, err := h.userService.Get(ctx, userID)
 	if err != nil {
 		h.logger.Error("获取用户信息失败", logger.Fields{
 			"error":    err,
