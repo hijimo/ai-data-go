@@ -193,11 +193,28 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) error {
 		return errors.New("tenant_id is required")
 	}
 
+	// 构建更新字段映射，以支持零值更新（如 is_active=false, email_verified=false 等）
+	updates := map[string]interface{}{
+		"email":                 user.Email,
+		"email_verified":        user.EmailVerified,
+		"phone":                 user.Phone,
+		"password_hash":         user.PasswordHash,
+		"display_name":          user.DisplayName,
+		"is_active":             user.IsActive,
+		"is_admin":              user.IsAdmin,
+		"roles":                 user.Roles,
+		"meta":                  user.Meta,
+		"last_login_at":         user.LastLoginAt,
+		"failed_login_attempts": user.FailedLoginAttempts,
+		"locked_until":          user.LockedUntil,
+		"updated_at":            gorm.Expr("CURRENT_TIMESTAMP"),
+	}
+
 	// 确保只更新指定租户下未删除的用户
 	result := r.db.WithContext(ctx).
 		Model(&model.User{}).
 		Where("id = ? AND tenant_id = ? AND is_deleted = ?", user.ID, user.TenantID, false).
-		Updates(user)
+		Updates(updates)
 
 	if result.Error != nil {
 		return result.Error

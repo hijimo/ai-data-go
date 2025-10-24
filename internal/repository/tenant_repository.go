@@ -145,11 +145,20 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *model.Tenant) err
 		return errors.New("tenant cannot be nil")
 	}
 
+	// 构建更新字段映射，以支持零值更新（如 status=false）
+	updates := map[string]interface{}{
+		"name":       tenant.Name,
+		"domain":     tenant.Domain,
+		"metadata":   tenant.Metadata,
+		"status":     tenant.Status, // 使用 map 可以更新零值
+		"updated_at": gorm.Expr("CURRENT_TIMESTAMP"),
+	}
+
 	// 确保只更新未删除的租户
 	result := r.db.WithContext(ctx).
 		Model(&model.Tenant{}).
 		Where("id = ? AND is_deleted = ?", tenant.ID, false).
-		Updates(tenant)
+		Updates(updates)
 
 	if result.Error != nil {
 		return result.Error

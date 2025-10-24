@@ -9,6 +9,8 @@ type ResponseData[T any] struct {
 	Message string `json:"message" example:"success"`
 	// 响应数据
 	Data *T `json:"data,omitempty"`
+	// 追踪ID（用于全链路追踪和问题排查）
+	TraceID string `json:"traceId,omitempty" example:"trace-1729756800-a1b2c3d4"`
 }
 
 // PaginationData 分页数据结构
@@ -34,6 +36,8 @@ type ResponsePaginationData[T any] struct {
 	Message string `json:"message" example:"success"`
 	// 分页数据
 	Data PaginationData[T] `json:"data"`
+	// 追踪ID（用于全链路追踪和问题排查）
+	TraceID string `json:"traceId,omitempty" example:"trace-1729756800-a1b2c3d4"`
 }
 
 // ErrorResponse 错误响应结构（用于 Swagger 文档）
@@ -43,6 +47,8 @@ type ErrorResponse struct {
 	Code int `json:"code" example:"400"`
 	// 响应信息
 	Message string `json:"message" example:"请求参数错误"`
+	// 追踪ID（用于全链路追踪和问题排查）
+	TraceID string `json:"traceId,omitempty" example:"trace-1729756800-a1b2c3d4"`
 }
 
 // EmptyData 空数据结构（用于无数据返回的成功响应）
@@ -56,6 +62,8 @@ type SuccessResponse struct {
 	Code int `json:"code" example:"200"`
 	// 响应信息
 	Message string `json:"message" example:"操作成功"`
+	// 追踪ID（用于全链路追踪和问题排查）
+	TraceID string `json:"traceId,omitempty" example:"trace-1729756800-a1b2c3d4"`
 }
 
 // MessagePreview 消息预览

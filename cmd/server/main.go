@@ -394,17 +394,16 @@ func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.
 		return fmt.Errorf("无法获取数据库实例")
 	}
 
-	// 执行初始迁移
-	// 初始迁移包含所有表的创建逻辑（认证表和会话管理表）
-	if err := database.RunInitialMigration(gormDB); err != nil {
-		log.Error("初始迁移失败", logger.Fields{
+	// 执行所有数据库迁移
+	// 包括初始迁移和所有后续的增量迁移（如添加 created_by_name 字段等）
+	if err := database.RunAllMigrations(gormDB); err != nil {
+		log.Error("数据库迁移失败", logger.Fields{
 			"error": err,
-			"迁移名称": "initial_migration",
 		})
 		
 		// 提供详细的错误信息和解决建议
 		return fmt.Errorf("数据库迁移失败: %w\n\n可能的原因和解决方案:\n"+
-			"1. 数据库权限不足 - 确保数据库用户具有 CREATE TABLE、CREATE INDEX 等权限\n"+
+			"1. 数据库权限不足 - 确保数据库用户具有 CREATE TABLE、CREATE INDEX、ALTER TABLE 等权限\n"+
 			"2. UUID 扩展未启用 - 确保 PostgreSQL 支持 gen_random_uuid() 函数\n"+
 			"3. 表已存在但结构不匹配 - 考虑使用 reset_db.go 脚本重置数据库\n"+
 			"4. 数据库连接中断 - 检查网络连接和数据库服务状态\n"+
@@ -413,7 +412,11 @@ func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.
 	}
 
 	log.Info("数据库迁移完成", logger.Fields{
-		"migration": "initial_migration",
+		"migrations": []string{
+			"initial_migration",
+			"fix_timestamps_migration",
+			"add_created_by_name_migration",
+		},
 		"tables": []string{
 			"tenants",
 			"users",

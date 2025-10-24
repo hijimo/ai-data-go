@@ -70,3 +70,9 @@ func RunAuthMigrations(db *gorm.DB) error {
 func RunInitialMigration(db *gorm.DB) error {
 	return migrations.RunInitialMigration(db)
 }
+
+// RunAllMigrations 执行所有数据库迁移
+// 包括初始迁移和所有后续的增量迁移
+func RunAllMigrations(db *gorm.DB) error {
+	return migrations.RunAllMigrations(db)
+}

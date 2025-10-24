@@ -13,7 +13,7 @@ definitions:
     - newPassword
     - oldPassword
     type: object
-  CreateTenantRequest:
+  CreateTenantRequestSwagger:
     properties:
       domain:
         example: example.com
@@ -148,7 +148,7 @@ definitions:
     - tenantId
     - userId
     type: object
-  UpdateTenantRequest:
+  UpdateTenantRequestSwagger:
     properties:
       domain:
         example: updated.com
@@ -2809,7 +2809,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateTenantRequest'
+          $ref: '#/definitions/CreateTenantRequestSwagger'
       produces:
       - application/json
       responses:
@@ -2989,7 +2989,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/UpdateTenantRequest'
+          $ref: '#/definitions/UpdateTenantRequestSwagger'
       produces:
       - application/json
       responses:

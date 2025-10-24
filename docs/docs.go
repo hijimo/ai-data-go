@@ -2050,7 +2050,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateTenantRequest"
+                            "$ref": "#/definitions/CreateTenantRequestSwagger"
                         }
                     }
                 ],
@@ -2191,7 +2191,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateTenantRequest"
+                            "$ref": "#/definitions/UpdateTenantRequestSwagger"
                         }
                     }
                 ],
@@ -2852,7 +2852,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CreateTenantRequest": {
+        "CreateTenantRequestSwagger": {
             "type": "object",
             "required": [
                 "name"
@@ -3042,7 +3042,7 @@ const docTemplate = `{
                 }
             }
         },
-        "UpdateTenantRequest": {
+        "UpdateTenantRequestSwagger": {
             "type": "object",
             "properties": {
                 "domain": {

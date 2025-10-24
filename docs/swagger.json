@@ -2048,7 +2048,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateTenantRequest"
+                            "$ref": "#/definitions/CreateTenantRequestSwagger"
                         }
                     }
                 ],
@@ -2189,7 +2189,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateTenantRequest"
+                            "$ref": "#/definitions/UpdateTenantRequestSwagger"
                         }
                     }
                 ],
@@ -2850,7 +2850,7 @@
                 }
             }
         },
-        "CreateTenantRequest": {
+        "CreateTenantRequestSwagger": {
             "type": "object",
             "required": [
                 "name"
@@ -3040,7 +3040,7 @@
                 }
             }
         },
-        "UpdateTenantRequest": {
+        "UpdateTenantRequestSwagger": {
             "type": "object",
             "properties": {
                 "domain": {

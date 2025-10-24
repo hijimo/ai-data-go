@@ -36,21 +36,21 @@ func NewTenantHandler(tenantService auth.TenantService, log logger.Logger) *Tena
 	}
 }
 
-// CreateTenantRequest 创建租户请求（用于 Swagger）
+// CreateTenantRequestSwagger 创建租户请求（用于 Swagger）
 // @name CreateTenantRequest
-type CreateTenantRequest struct {
+type CreateTenantRequestSwagger struct {
 	Name     string                 `json:"name" validate:"required,min=1,max=255" example:"示例租户"`
 	Domain   string                 `json:"domain" validate:"omitempty,max=255" example:"example.com"`
-	Metadata map[string]interface{} `json:"metadata" swaggertype:"object"`
+	Metadata map[string]interface{} `json:"metadata,omitempty" swaggertype:"object"`
 }
 
-// UpdateTenantRequest 更新租户请求（用于 Swagger）
+// UpdateTenantRequestSwagger 更新租户请求（用于 Swagger）
 // @name UpdateTenantRequest
-type UpdateTenantRequest struct {
-	Name     *string                `json:"name" validate:"omitempty,min=1,max=255" example:"更新后的租户名"`
-	Domain   *string                `json:"domain" validate:"omitempty,max=255" example:"updated.com"`
-	Metadata map[string]interface{} `json:"metadata" swaggertype:"object"`
-	Status   *bool                  `json:"status" example:"true"`
+type UpdateTenantRequestSwagger struct {
+	Name     *string                `json:"name,omitempty" validate:"omitempty,min=1,max=255" example:"更新后的租户名"`
+	Domain   *string                `json:"domain,omitempty" validate:"omitempty,max=255" example:"updated.com"`
+	Metadata map[string]interface{} `json:"metadata,omitempty" swaggertype:"object"`
+	Status   *bool                  `json:"status,omitempty" example:"true"`
 }
 
 // HandleCreate 处理创建租户
@@ -77,7 +77,7 @@ type UpdateTenantRequest struct {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body CreateTenantRequest true "创建租户请求"
+// @Param request body CreateTenantRequestSwagger true "创建租户请求"
 // @Success 201 {object} model.TenantDataResponse "创建成功，返回租户信息和管理员初始密码"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
@@ -231,7 +231,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "租户ID" example:"550e8400-e29b-41d4-a716-446655440000"
-// @Param request body UpdateTenantRequest true "更新租户请求"
+// @Param request body UpdateTenantRequestSwagger true "更新租户请求"
 // @Success 200 {object} model.TenantDataResponse "更新成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"

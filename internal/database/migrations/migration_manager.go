@@ -120,6 +120,7 @@ func RunInitialMigration(db *gorm.DB) error {
 
 // RunAllMigrations 运行所有迁移
 // 确保初始迁移首先执行，然后按顺序执行其他迁移
+// 会自动跳过已执行的迁移
 func RunAllMigrations(db *gorm.DB) error {
 	manager := NewMigrationManager(db)
 	
@@ -143,9 +144,38 @@ func RunAllMigrations(db *gorm.DB) error {
 		return fmt.Errorf("迁移顺序验证失败: %w", err)
 	}
 	
-	// 执行迁移
-	if err := manager.Up(); err != nil {
-		return fmt.Errorf("执行迁移失败: %w", err)
+	// 确保迁移记录表存在
+	if err := db.AutoMigrate(&MigrationRecord{}); err != nil {
+		return fmt.Errorf("创建迁移记录表失败: %w", err)
+	}
+	
+	// 执行迁移（跳过已执行的）
+	for _, migration := range manager.migrations {
+		migrationName := migration.GetName()
+		
+		// 检查迁移是否已执行
+		var count int64
+		if err := db.Model(&MigrationRecord{}).Where("name = ?", migrationName).Count(&count).Error; err != nil {
+			return fmt.Errorf("检查迁移状态失败: %w", err)
+		}
+		
+		if count > 0 {
+			fmt.Printf("迁移 %s 已执行，跳过\n", migrationName)
+			continue
+		}
+		
+		// 执行迁移
+		fmt.Printf("开始执行迁移: %s\n", migrationName)
+		if err := migration.Up(); err != nil {
+			return fmt.Errorf("执行迁移 %s 失败: %w", migrationName, err)
+		}
+		
+		// 记录迁移状态
+		if err := RecordMigrationStatus(db, migrationName); err != nil {
+			fmt.Printf("警告: 记录迁移状态失败: %v\n", err)
+		}
+		
+		fmt.Printf("迁移 %s 执行成功\n", migrationName)
 	}
 	
 	return nil
