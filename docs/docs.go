@@ -90,31 +90,31 @@ const docTemplate = `{
                     "200": {
                         "description": "查询成功",
                         "schema": {
-                            "$ref": "#/definitions/model.AuthAuditListResponse"
+                            "$ref": "#/definitions/AuthAuditListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未授权",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -145,7 +145,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ChangePasswordRequest"
+                            "$ref": "#/definitions/ChangePasswordRequest"
                         }
                     }
                 ],
@@ -153,31 +153,31 @@ const docTemplate = `{
                     "200": {
                         "description": "修改成功",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证或旧密码错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -203,7 +203,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
+                            "$ref": "#/definitions/LoginRequest"
                         }
                     }
                 ],
@@ -211,31 +211,31 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/model.LoginDataResponse"
+                            "$ref": "#/definitions/LoginDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "认证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -261,7 +261,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LogoutRequest"
+                            "$ref": "#/definitions/LogoutRequest"
                         }
                     }
                 ],
@@ -269,31 +269,31 @@ const docTemplate = `{
                     "200": {
                         "description": "注销成功",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Token 无效",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -321,25 +321,25 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -365,7 +365,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RefreshRequest"
+                            "$ref": "#/definitions/RefreshRequest"
                         }
                     }
                 ],
@@ -373,31 +373,31 @@ const docTemplate = `{
                     "200": {
                         "description": "刷新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.LoginDataResponse"
+                            "$ref": "#/definitions/LoginDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Token 无效或已过期",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -423,7 +423,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRequest"
+                            "$ref": "#/definitions/RegisterRequest"
                         }
                     }
                 ],
@@ -431,25 +431,25 @@ const docTemplate = `{
                     "201": {
                         "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -475,7 +475,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ResendVerificationRequest"
+                            "$ref": "#/definitions/ResendVerificationRequest"
                         }
                     }
                 ],
@@ -483,25 +483,25 @@ const docTemplate = `{
                     "200": {
                         "description": "发送成功",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -532,7 +532,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UnlockAccountRequest"
+                            "$ref": "#/definitions/UnlockAccountRequest"
                         }
                     }
                 ],
@@ -540,37 +540,37 @@ const docTemplate = `{
                     "200": {
                         "description": "解锁成功",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -596,7 +596,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VerifyEmailRequest"
+                            "$ref": "#/definitions/VerifyEmailRequest"
                         }
                     }
                 ],
@@ -604,25 +604,25 @@ const docTemplate = `{
                     "200": {
                         "description": "验证成功",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -648,7 +648,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.ChatRequest"
+                            "$ref": "#/definitions/ChatRequest"
                         }
                     }
                 ],
@@ -656,31 +656,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回 AI 回复",
                         "schema": {
-                            "$ref": "#/definitions/model.ChatResponseData"
+                            "$ref": "#/definitions/ChatResponseData"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "AI 服务不可用",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -706,7 +706,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.AbortRequest"
+                            "$ref": "#/definitions/AbortRequest"
                         }
                     }
                 ],
@@ -714,31 +714,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功中止对话",
                         "schema": {
-                            "$ref": "#/definitions/model.SuccessResponse"
+                            "$ref": "#/definitions/SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -770,31 +770,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息详情",
                         "schema": {
-                            "$ref": "#/definitions/model.MessageDetailDataResponse"
+                            "$ref": "#/definitions/MessageDetailDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -826,31 +826,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功中止消息生成",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "消息不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -912,25 +912,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话列表",
                         "schema": {
-                            "$ref": "#/definitions/model.SessionListResponse"
+                            "$ref": "#/definitions/SessionListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -954,7 +954,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.CreateSessionRequest"
+                            "$ref": "#/definitions/CreateSessionRequest"
                         }
                     }
                 ],
@@ -962,25 +962,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功创建会话",
                         "schema": {
-                            "$ref": "#/definitions/model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1031,25 +1031,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回搜索结果",
                         "schema": {
-                            "$ref": "#/definitions/model.SessionListResponse"
+                            "$ref": "#/definitions/SessionListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1081,31 +1081,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回会话详情",
                         "schema": {
-                            "$ref": "#/definitions/model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1135,31 +1135,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功删除会话",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1190,7 +1190,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.UpdateSessionRequest"
+                            "$ref": "#/definitions/UpdateSessionRequest"
                         }
                     }
                 ],
@@ -1198,37 +1198,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新会话",
                         "schema": {
-                            "$ref": "#/definitions/model.SessionDataResponse"
+                            "$ref": "#/definitions/SessionDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1267,31 +1267,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新归档状态",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1342,37 +1342,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回消息历史",
                         "schema": {
-                            "$ref": "#/definitions/model.MessageDetailListResponse"
+                            "$ref": "#/definitions/MessageDetailListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1403,7 +1403,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.SendMessageRequest"
+                            "$ref": "#/definitions/SendMessageRequest"
                         }
                     }
                 ],
@@ -1411,37 +1411,37 @@ const docTemplate = `{
                     "200": {
                         "description": "成功发送消息",
                         "schema": {
-                            "$ref": "#/definitions/model.MessageResponseData"
+                            "$ref": "#/definitions/MessageResponseData"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1480,31 +1480,31 @@ const docTemplate = `{
                     "200": {
                         "description": "成功更新置顶状态",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "无权访问",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "会话不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1530,7 +1530,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.ChatRequest"
+                            "$ref": "#/definitions/ChatRequest"
                         }
                     }
                 ],
@@ -1544,25 +1544,25 @@ const docTemplate = `{
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "AI 服务不可用",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1585,19 +1585,19 @@ const docTemplate = `{
                     "200": {
                         "description": "服务健康",
                         "schema": {
-                            "$ref": "#/definitions/handler.HealthStatusResponse"
+                            "$ref": "#/definitions/HealthStatusResponse"
                         }
                     },
                     "500": {
                         "description": "健康检查失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "服务不健康",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1617,7 +1617,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.AlertListDataResponse"
+                            "$ref": "#/definitions/AlertListDataResponse"
                         }
                     }
                 }
@@ -1635,7 +1635,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     }
                 }
@@ -1655,7 +1655,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.HealthDataResponse"
+                            "$ref": "#/definitions/HealthDataResponse"
                         }
                     }
                 }
@@ -1675,7 +1675,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.MetricsDataResponse"
+                            "$ref": "#/definitions/MetricsDataResponse"
                         }
                     }
                 }
@@ -1695,7 +1695,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     }
                 }
@@ -1718,13 +1718,13 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商列表",
                         "schema": {
-                            "$ref": "#/definitions/model.ProviderListDataResponse"
+                            "$ref": "#/definitions/ProviderListDataResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1757,25 +1757,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回提供商详情",
                         "schema": {
-                            "$ref": "#/definitions/model.ProviderDataResponse"
+                            "$ref": "#/definitions/ProviderDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1808,25 +1808,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型列表",
                         "schema": {
-                            "$ref": "#/definitions/model.ModelListDataResponse"
+                            "$ref": "#/definitions/ModelListDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1867,25 +1867,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回模型详情",
                         "schema": {
-                            "$ref": "#/definitions/model.ModelDataResponse"
+                            "$ref": "#/definitions/ModelDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商或模型不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1926,25 +1926,25 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回参数规则列表",
                         "schema": {
-                            "$ref": "#/definitions/model.ParameterRuleListDataResponse"
+                            "$ref": "#/definitions/ParameterRuleListDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "提供商或模型不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1991,37 +1991,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/model.TenantListResponse"
+                            "$ref": "#/definitions/TenantListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2050,7 +2050,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateTenantRequest"
+                            "$ref": "#/definitions/CreateTenantRequest"
                         }
                     }
                 ],
@@ -2058,37 +2058,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功，返回租户信息和管理员初始密码",
                         "schema": {
-                            "$ref": "#/definitions/model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：需要平台管理员权限",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2125,37 +2125,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：无法访问其他租户的数据",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2191,7 +2191,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateTenantRequest"
+                            "$ref": "#/definitions/UpdateTenantRequest"
                         }
                     }
                 ],
@@ -2199,43 +2199,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：租户管理员只能修改租户名称，或无法访问其他租户",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2270,37 +2270,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：需要平台管理员权限",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2338,7 +2338,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateTenantStatusRequest"
+                            "$ref": "#/definitions/UpdateTenantStatusRequest"
                         }
                     }
                 ],
@@ -2346,43 +2346,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.TenantDataResponse"
+                            "$ref": "#/definitions/TenantDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：需要平台管理员权限",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "租户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2435,37 +2435,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserListResponse"
+                            "$ref": "#/definitions/UserListResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2494,7 +2494,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateUserRequest"
+                            "$ref": "#/definitions/CreateUserRequest"
                         }
                     }
                 ],
@@ -2502,37 +2502,37 @@ const docTemplate = `{
                     "201": {
                         "description": "创建成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：租户管理员只能在当前租户下创建用户",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2569,37 +2569,37 @@ const docTemplate = `{
                     "200": {
                         "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：无法访问其他租户的用户",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2635,7 +2635,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateUserRequest"
+                            "$ref": "#/definitions/UpdateUserRequest"
                         }
                     }
                 ],
@@ -2643,43 +2643,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：无法更新其他租户的用户",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2714,37 +2714,37 @@ const docTemplate = `{
                     "200": {
                         "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/model.AnyDataResponse"
+                            "$ref": "#/definitions/AnyDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：无法删除其他租户的用户",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2782,7 +2782,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateUserStatusRequest"
+                            "$ref": "#/definitions/UpdateUserStatusRequest"
                         }
                     }
                 ],
@@ -2790,43 +2790,43 @@ const docTemplate = `{
                     "200": {
                         "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/model.UserDataResponse"
+                            "$ref": "#/definitions/UserDataResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "未认证",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "权限不足：无法更新其他租户的用户状态",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "参数验证失败",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2834,7 +2834,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.ChangePasswordRequest": {
+        "ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "newPassword",
@@ -2852,7 +2852,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateTenantRequest": {
+        "CreateTenantRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -2874,7 +2874,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CreateUserRequest": {
+        "CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -2920,7 +2920,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.HealthStatusResponse": {
+        "HealthStatusResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2936,7 +2936,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginRequest": {
+        "LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -2953,7 +2953,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LogoutRequest": {
+        "LogoutRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -2965,7 +2965,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RefreshRequest": {
+        "RefreshRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -2977,7 +2977,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RegisterRequest": {
+        "RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -3008,7 +3008,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ResendVerificationRequest": {
+        "ResendVerificationRequest": {
             "type": "object",
             "required": [
                 "tenantId",
@@ -3025,7 +3025,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UnlockAccountRequest": {
+        "UnlockAccountRequest": {
             "type": "object",
             "required": [
                 "tenantId",
@@ -3042,7 +3042,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateTenantRequest": {
+        "UpdateTenantRequest": {
             "type": "object",
             "properties": {
                 "domain": {
@@ -3065,7 +3065,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateTenantStatusRequest": {
+        "UpdateTenantStatusRequest": {
             "type": "object",
             "required": [
                 "status"
@@ -3077,7 +3077,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateUserRequest": {
+        "UpdateUserRequest": {
             "type": "object",
             "properties": {
                 "displayName": {
@@ -3115,7 +3115,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateUserStatusRequest": {
+        "UpdateUserStatusRequest": {
             "type": "object",
             "required": [
                 "isActive"
@@ -3127,7 +3127,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.VerifyEmailRequest": {
+        "VerifyEmailRequest": {
             "type": "object",
             "required": [
                 "token"
@@ -3170,7 +3170,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.AbortRequest": {
+        "AbortRequest": {
             "type": "object",
             "required": [
                 "messageId"
@@ -3183,13 +3183,13 @@ const docTemplate = `{
                 }
             }
         },
-        "model.AlertListDataResponse": {
+        "AlertListDataResponse": {
             "type": "object"
         },
-        "model.AnyDataResponse": {
+        "AnyDataResponse": {
             "type": "object"
         },
-        "model.AuthAuditItem": {
+        "AuthAuditItem": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -3232,7 +3232,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.AuthAuditListResponse": {
+        "AuthAuditListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3244,7 +3244,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.PaginationData-array_model_AuthAuditItem"
+                            "$ref": "#/definitions/PaginationData-array_model_AuthAuditItem"
                         }
                     ]
                 },
@@ -3255,7 +3255,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ChatOptions": {
+        "ChatOptions": {
             "type": "object",
             "properties": {
                 "maxTokens": {
@@ -3284,7 +3284,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ChatRequest": {
+        "ChatRequest": {
             "type": "object",
             "required": [
                 "message"
@@ -3304,13 +3304,13 @@ const docTemplate = `{
                     "description": "AI高级参数（可选）",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ChatOptions"
+                            "$ref": "#/definitions/ChatOptions"
                         }
                     ]
                 }
             }
         },
-        "model.ChatResponse": {
+        "ChatResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -3332,13 +3332,13 @@ const docTemplate = `{
                     "description": "Token使用情况",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Usage"
+                            "$ref": "#/definitions/Usage"
                         }
                     ]
                 }
             }
         },
-        "model.ChatResponseData": {
+        "ChatResponseData": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3350,7 +3350,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ChatResponse"
+                            "$ref": "#/definitions/ChatResponse"
                         }
                     ]
                 },
@@ -3361,7 +3361,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CreateSessionRequest": {
+        "CreateSessionRequest": {
             "type": "object",
             "required": [
                 "modelName",
@@ -3406,7 +3406,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CredentialFormSchema": {
+        "CredentialFormSchema": {
             "type": "object",
             "properties": {
                 "default": {
@@ -3424,7 +3424,7 @@ const docTemplate = `{
                     "description": "选项列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.FormOption"
+                        "$ref": "#/definitions/FormOption"
                     }
                 },
                 "placeholder": {
@@ -3448,19 +3448,19 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CredentialSchema": {
+        "CredentialSchema": {
             "type": "object",
             "properties": {
                 "credential_form_schemas": {
                     "description": "凭证表单配置列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.CredentialFormSchema"
+                        "$ref": "#/definitions/CredentialFormSchema"
                     }
                 }
             }
         },
-        "model.ErrorResponse": {
+        "ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3475,7 +3475,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.FormOption": {
+        "FormOption": {
             "type": "object",
             "properties": {
                 "label": {
@@ -3491,10 +3491,10 @@ const docTemplate = `{
                 }
             }
         },
-        "model.HealthDataResponse": {
+        "HealthDataResponse": {
             "type": "object"
         },
-        "model.LoginDataResponse": {
+        "LoginDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3506,7 +3506,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.LoginResponse"
+                            "$ref": "#/definitions/LoginResponse"
                         }
                     ]
                 },
@@ -3517,7 +3517,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.LoginResponse": {
+        "LoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -3544,13 +3544,13 @@ const docTemplate = `{
                     "description": "用户信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 }
             }
         },
-        "model.Message": {
+        "Message": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3580,7 +3580,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MessageDetailDataResponse": {
+        "MessageDetailDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3592,7 +3592,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.MessageDetailResponse"
+                            "$ref": "#/definitions/MessageDetailResponse"
                         }
                     ]
                 },
@@ -3603,7 +3603,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MessageDetailListResponse": {
+        "MessageDetailListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3615,7 +3615,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.PaginationData-array_model_MessageDetailResponse"
+                            "$ref": "#/definitions/PaginationData-array_model_MessageDetailResponse"
                         }
                     ]
                 },
@@ -3626,7 +3626,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MessageDetailResponse": {
+        "MessageDetailResponse": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3681,7 +3681,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MessagePreview": {
+        "MessagePreview": {
             "type": "object",
             "properties": {
                 "content": {
@@ -3706,14 +3706,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MessageResponse": {
+        "MessageResponse": {
             "type": "object",
             "properties": {
                 "aiMessage": {
                     "description": "AI消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Message"
+                            "$ref": "#/definitions/Message"
                         }
                     ]
                 },
@@ -3736,7 +3736,7 @@ const docTemplate = `{
                     "description": "使用统计",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Usage"
+                            "$ref": "#/definitions/Usage"
                         }
                     ]
                 },
@@ -3744,13 +3744,13 @@ const docTemplate = `{
                     "description": "用户消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Message"
+                            "$ref": "#/definitions/Message"
                         }
                     ]
                 }
             }
         },
-        "model.MessageResponseData": {
+        "MessageResponseData": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3762,7 +3762,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.MessageResponse"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     ]
                 },
@@ -3773,10 +3773,10 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MetricsDataResponse": {
+        "MetricsDataResponse": {
             "type": "object"
         },
-        "model.Model": {
+        "Model": {
             "type": "object",
             "properties": {
                 "deprecated": {
@@ -3816,7 +3816,7 @@ const docTemplate = `{
                     "description": "模型属性",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ModelProperties"
+                            "$ref": "#/definitions/ModelProperties"
                         }
                     ]
                 },
@@ -3829,20 +3829,20 @@ const docTemplate = `{
                     "description": "参数规则",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.ParameterRule"
+                        "$ref": "#/definitions/ParameterRule"
                     }
                 },
                 "pricing": {
                     "description": "定价信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Pricing"
+                            "$ref": "#/definitions/Pricing"
                         }
                     ]
                 }
             }
         },
-        "model.ModelDataResponse": {
+        "ModelDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3854,7 +3854,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Model"
+                            "$ref": "#/definitions/Model"
                         }
                     ]
                 },
@@ -3865,7 +3865,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ModelListDataResponse": {
+        "ModelListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -3877,7 +3877,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Model"
+                        "$ref": "#/definitions/Model"
                     }
                 },
                 "message": {
@@ -3887,7 +3887,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ModelProperties": {
+        "ModelProperties": {
             "type": "object",
             "properties": {
                 "context_size": {
@@ -3900,7 +3900,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ModelTypeInfo": {
+        "ModelTypeInfo": {
             "type": "object",
             "properties": {
                 "position": {
@@ -3916,14 +3916,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.PaginationData-array_model_AuthAuditItem": {
+        "PaginationData-array_model_AuthAuditItem": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.AuthAuditItem"
+                        "$ref": "#/definitions/AuthAuditItem"
                     }
                 },
                 "pageNo": {
@@ -3948,14 +3948,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.PaginationData-array_model_MessageDetailResponse": {
+        "PaginationData-array_model_MessageDetailResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.MessageDetailResponse"
+                        "$ref": "#/definitions/MessageDetailResponse"
                     }
                 },
                 "pageNo": {
@@ -3980,14 +3980,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.PaginationData-array_model_SessionResponse": {
+        "PaginationData-array_model_SessionResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.SessionResponse"
+                        "$ref": "#/definitions/SessionResponse"
                     }
                 },
                 "pageNo": {
@@ -4012,14 +4012,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.PaginationData-array_model_Tenant": {
+        "PaginationData-array_model_Tenant": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Tenant"
+                        "$ref": "#/definitions/Tenant"
                     }
                 },
                 "pageNo": {
@@ -4044,14 +4044,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.PaginationData-array_model_User": {
+        "PaginationData-array_model_User": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.User"
+                        "$ref": "#/definitions/User"
                     }
                 },
                 "pageNo": {
@@ -4076,7 +4076,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ParameterRule": {
+        "ParameterRule": {
             "type": "object",
             "properties": {
                 "default": {
@@ -4131,7 +4131,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ParameterRuleListDataResponse": {
+        "ParameterRuleListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4143,7 +4143,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.ParameterRule"
+                        "$ref": "#/definitions/ParameterRule"
                     }
                 },
                 "message": {
@@ -4153,7 +4153,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Pricing": {
+        "Pricing": {
             "type": "object",
             "properties": {
                 "currency": {
@@ -4174,7 +4174,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Provider": {
+        "Provider": {
             "type": "object",
             "properties": {
                 "background": {
@@ -4197,7 +4197,7 @@ const docTemplate = `{
                     "description": "帮助信息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ProviderHelp"
+                            "$ref": "#/definitions/ProviderHelp"
                         }
                     ]
                 },
@@ -4235,7 +4235,7 @@ const docTemplate = `{
                     "description": "模型凭证配置",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.CredentialSchema"
+                            "$ref": "#/definitions/CredentialSchema"
                         }
                     ]
                 },
@@ -4243,7 +4243,7 @@ const docTemplate = `{
                     "description": "模型类型配置",
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/model.ModelTypeInfo"
+                        "$ref": "#/definitions/ModelTypeInfo"
                     }
                 },
                 "provider": {
@@ -4255,7 +4255,7 @@ const docTemplate = `{
                     "description": "提供商凭证配置",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.CredentialSchema"
+                            "$ref": "#/definitions/CredentialSchema"
                         }
                     ]
                 },
@@ -4272,7 +4272,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ProviderDataResponse": {
+        "ProviderDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4284,7 +4284,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Provider"
+                            "$ref": "#/definitions/Provider"
                         }
                     ]
                 },
@@ -4295,7 +4295,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ProviderHelp": {
+        "ProviderHelp": {
             "type": "object",
             "properties": {
                 "title": {
@@ -4314,7 +4314,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ProviderListDataResponse": {
+        "ProviderListDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4326,7 +4326,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Provider"
+                        "$ref": "#/definitions/Provider"
                     }
                 },
                 "message": {
@@ -4336,7 +4336,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SendMessageRequest": {
+        "SendMessageRequest": {
             "type": "object",
             "required": [
                 "message",
@@ -4352,7 +4352,7 @@ const docTemplate = `{
                     "description": "AI高级参数（可选）",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ChatOptions"
+                            "$ref": "#/definitions/ChatOptions"
                         }
                     ]
                 },
@@ -4363,7 +4363,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SessionDataResponse": {
+        "SessionDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4375,7 +4375,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     ]
                 },
@@ -4386,7 +4386,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SessionListResponse": {
+        "SessionListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4398,7 +4398,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.PaginationData-array_model_SessionResponse"
+                            "$ref": "#/definitions/PaginationData-array_model_SessionResponse"
                         }
                     ]
                 },
@@ -4409,7 +4409,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SessionResponse": {
+        "SessionResponse": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -4436,7 +4436,7 @@ const docTemplate = `{
                     "description": "最后一条消息",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.MessagePreview"
+                            "$ref": "#/definitions/MessagePreview"
                         }
                     ]
                 },
@@ -4487,7 +4487,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.SuccessResponse": {
+        "SuccessResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4502,7 +4502,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Tenant": {
+        "Tenant": {
             "description": "租户信息，包含租户的基本信息和状态",
             "type": "object",
             "properties": {
@@ -4566,7 +4566,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.TenantDataResponse": {
+        "TenantDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4578,7 +4578,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     ]
                 },
@@ -4589,7 +4589,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.TenantListResponse": {
+        "TenantListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4601,7 +4601,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.PaginationData-array_model_Tenant"
+                            "$ref": "#/definitions/PaginationData-array_model_Tenant"
                         }
                     ]
                 },
@@ -4612,7 +4612,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.UpdateSessionRequest": {
+        "UpdateSessionRequest": {
             "type": "object",
             "properties": {
                 "modelName": {
@@ -4648,7 +4648,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Usage": {
+        "Usage": {
             "type": "object",
             "properties": {
                 "completionTokens": {
@@ -4668,7 +4668,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.User": {
+        "User": {
             "description": "用户信息，包含用户的基本信息、角色和状态",
             "type": "object",
             "properties": {
@@ -4768,7 +4768,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.UserDataResponse": {
+        "UserDataResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4780,7 +4780,7 @@ const docTemplate = `{
                     "description": "响应数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 },
@@ -4791,7 +4791,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.UserListResponse": {
+        "UserListResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4803,7 +4803,7 @@ const docTemplate = `{
                     "description": "分页数据",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.PaginationData-array_model_User"
+                            "$ref": "#/definitions/PaginationData-array_model_User"
                         }
                     ]
                 },
