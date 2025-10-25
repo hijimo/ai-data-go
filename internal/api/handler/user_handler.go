@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -146,7 +147,7 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应（HTTP 201 Created）
-	resp := response.SuccessWithMessage("创建用户成功", user)
+	resp := response.SuccessWithMessageContext(ctx, "创建用户成功", user)
 	h.writeJSONResponse(w, http.StatusCreated, resp)
 }
 
@@ -214,7 +215,7 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 5. 返回成功响应
-	resp := response.Success(user)
+	resp := response.SuccessWithContext(ctx, user)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -306,7 +307,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 7. 返回成功响应
-	resp := response.SuccessWithMessage("更新用户成功", user)
+	resp := response.SuccessWithMessageContext(ctx, "更新用户成功", user)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -379,7 +380,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
 	// 5. 返回成功响应
 	emptyData := struct{}{}
-	resp := response.SuccessWithMessage("删除用户成功", &emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "删除用户成功", &emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -482,7 +483,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 	})
 
 	// 8. 返回成功响应
-	resp := response.SuccessWithMessage("更新用户状态成功", user)
+	resp := response.SuccessWithMessageContext(ctx, "更新用户状态成功", user)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -582,7 +583,7 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回分页响应
-	h.writePaginationResponse(w, users, pageNo, pageSize, int(total))
+	h.writePaginationResponseWithContext(w, ctx, users, pageNo, pageSize, int(total))
 }
 
 // extractUserID 从URL路径中提取用户ID
@@ -672,6 +673,12 @@ func (h *UserHandler) writeValidationErrorResponse(w http.ResponseWriter, valida
 // writePaginationResponse 写入分页响应
 func (h *UserHandler) writePaginationResponse(w http.ResponseWriter, data []*model.User, pageNo, pageSize, total int) {
 	resp := response.Pagination(data, pageNo, pageSize, total)
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// writePaginationResponseWithContext 写入分页响应（带 Context）
+func (h *UserHandler) writePaginationResponseWithContext(w http.ResponseWriter, ctx context.Context, data []*model.User, pageNo, pageSize, total int) {
+	resp := response.PaginationWithContext(ctx, data, pageNo, pageSize, total)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 

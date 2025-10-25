@@ -251,3 +251,213 @@ func TestContextFunctions(t *testing.T) {
 		t.Errorf("InfoContext() should include context fields, got: %s", output)
 	}
 }
+
+func TestLoggerWithTraceID(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, JSONFormat, &buf)
+
+	// 导入 middleware 包以使用 SetTraceID
+	ctx := context.Background()
+	// 使用 middleware.SetTraceID 设置 TraceID
+	// 注意：这里需要导入 middleware 包
+	// 为了测试，我们直接使用 context.WithValue
+	ctx = context.WithValue(ctx, contextKey("traceId"), "trace-1704067200-a3f9k2")
+
+	log.InfoContext(ctx, "test message with trace")
+
+	output := buf.String()
+	if !strings.Contains(output, "trace-1704067200-a3f9k2") {
+		t.Errorf("log output should contain traceId, got: %s", output)
+	}
+	if !strings.Contains(output, "traceId") {
+		t.Errorf("log output should contain traceId field name, got: %s", output)
+	}
+}
+
+func TestLoggerWithoutTraceID(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, JSONFormat, &buf)
+
+	// Context 中没有 TraceID
+	ctx := context.Background()
+
+	log.InfoContext(ctx, "test message without trace")
+
+	output := buf.String()
+	// 应该正常记录日志，只是没有 traceId 字段
+	if !strings.Contains(output, "test message without trace") {
+		t.Errorf("log output should contain message, got: %s", output)
+	}
+	// 验证日志是有效的 JSON
+	var entry logEntry
+	if err := json.Unmarshal([]byte(output), &entry); err != nil {
+		t.Errorf("log output should be valid JSON even without traceId, got error: %v", err)
+	}
+}
+
+// TestExtractContextFields 测试从 Context 提取字段
+func TestExtractContextFields(t *testing.T) {
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		expected map[string]interface{}
+	}{
+		{
+			name: "提取 TraceID",
+			ctx:  context.WithValue(context.Background(), TraceIDKey, "trace-123"),
+			expected: map[string]interface{}{
+				"traceId": "trace-123",
+			},
+		},
+		{
+			name: "提取多个字段",
+			ctx: func() context.Context {
+				ctx := context.Background()
+				ctx = context.WithValue(ctx, TraceIDKey, "trace-456")
+				ctx = context.WithValue(ctx, SessionIDKey, "session-789")
+				ctx = context.WithValue(ctx, RequestIDKey, "request-abc")
+				ctx = context.WithValue(ctx, UserIDKey, "user-def")
+				return ctx
+			}(),
+			expected: map[string]interface{}{
+				"traceId":   "trace-456",
+				"sessionId": "session-789",
+				"requestId": "request-abc",
+				"userId":    "user-def",
+			},
+		},
+		{
+			name:     "空 Context",
+			ctx:      context.Background(),
+			expected: map[string]interface{}{},
+		},
+		{
+			name: "TraceID 为空字符串时不添加",
+			ctx:  context.WithValue(context.Background(), TraceIDKey, ""),
+			expected: map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fields := extractContextFields(tt.ctx)
+
+			if len(fields) != len(tt.expected) {
+				t.Errorf("期望字段数量 %d，实际 %d", len(tt.expected), len(fields))
+			}
+
+			for key, expectedValue := range tt.expected {
+				actualValue, ok := fields[key]
+				if !ok {
+					t.Errorf("缺少字段 %s", key)
+					continue
+				}
+				if actualValue != expectedValue {
+					t.Errorf("字段 %s: 期望 %v，实际 %v", key, expectedValue, actualValue)
+				}
+			}
+		})
+	}
+}
+
+// TestLoggerTraceIDInJSON 测试 TraceID 在 JSON 日志中的格式
+func TestLoggerTraceIDInJSON(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, JSONFormat, &buf)
+
+	ctx := context.WithValue(context.Background(), TraceIDKey, "trace-json-test")
+	log.InfoContext(ctx, "test message")
+
+	output := buf.String()
+	var entry logEntry
+	if err := json.Unmarshal([]byte(output), &entry); err != nil {
+		t.Fatalf("无法解析 JSON 日志: %v", err)
+	}
+
+	// 验证 TraceID 在 fields 中
+	traceID, ok := entry.Fields["traceId"]
+	if !ok {
+		t.Error("fields 中缺少 traceId")
+	}
+	if traceID != "trace-json-test" {
+		t.Errorf("期望 traceId 为 trace-json-test，实际为 %v", traceID)
+	}
+}
+
+// TestLoggerTraceIDInText 测试 TraceID 在文本日志中的格式
+func TestLoggerTraceIDInText(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, TextFormat, &buf)
+
+	ctx := context.WithValue(context.Background(), TraceIDKey, "trace-text-test")
+	log.InfoContext(ctx, "test message")
+
+	output := buf.String()
+	if !strings.Contains(output, "traceId=trace-text-test") {
+		t.Errorf("文本日志应包含 traceId=trace-text-test，实际输出: %s", output)
+	}
+}
+
+// TestLoggerMultipleContextFields 测试多个上下文字段同时存在
+func TestLoggerMultipleContextFields(t *testing.T) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, JSONFormat, &buf)
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, TraceIDKey, "trace-multi-001")
+	ctx = context.WithValue(ctx, SessionIDKey, "session-multi-001")
+	ctx = context.WithValue(ctx, RequestIDKey, "request-multi-001")
+
+	log.InfoContext(ctx, "test with multiple fields")
+
+	output := buf.String()
+	var entry logEntry
+	if err := json.Unmarshal([]byte(output), &entry); err != nil {
+		t.Fatalf("无法解析 JSON 日志: %v", err)
+	}
+
+	// 验证所有字段都存在
+	expectedFields := map[string]string{
+		"traceId":   "trace-multi-001",
+		"sessionId": "session-multi-001",
+		"requestId": "request-multi-001",
+	}
+
+	for key, expectedValue := range expectedFields {
+		actualValue, ok := entry.Fields[key]
+		if !ok {
+			t.Errorf("fields 中缺少 %s", key)
+			continue
+		}
+		if actualValue != expectedValue {
+			t.Errorf("字段 %s: 期望 %s，实际 %v", key, expectedValue, actualValue)
+		}
+	}
+}
+
+// BenchmarkExtractContextFields 性能测试：提取上下文字段
+func BenchmarkExtractContextFields(b *testing.B) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, TraceIDKey, "trace-bench-001")
+	ctx = context.WithValue(ctx, SessionIDKey, "session-bench-001")
+	ctx = context.WithValue(ctx, RequestIDKey, "request-bench-001")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		extractContextFields(ctx)
+	}
+}
+
+// BenchmarkLoggerWithTraceID 性能测试：带 TraceID 的日志记录
+func BenchmarkLoggerWithTraceID(b *testing.B) {
+	var buf bytes.Buffer
+	log := New(InfoLevel, JSONFormat, &buf)
+	ctx := context.WithValue(context.Background(), TraceIDKey, "trace-bench-002")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		log.InfoContext(ctx, "benchmark message")
+	}
+}

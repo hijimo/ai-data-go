@@ -43,14 +43,22 @@ func (rw *responseWriter) Flush() {
 // Logger 请求日志中间件
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 生成请求ID
+		// 1. 提取或生成 TraceID
+		traceID := r.Header.Get("X-Trace-ID")
+		if traceID == "" {
+			traceID = GenerateTraceID()
+		}
+		
+		// 2. 生成请求ID（保持向后兼容）
 		requestID := uuid.New().String()
 		
-		// 将请求ID注入到上下文中
-		ctx := context.WithValue(r.Context(), logger.RequestIDKey, requestID)
+		// 3. 将 TraceID 和请求ID注入到上下文中
+		ctx := SetTraceID(r.Context(), traceID)
+		ctx = context.WithValue(ctx, logger.RequestIDKey, requestID)
 		r = r.WithContext(ctx)
 		
-		// 设置响应头
+		// 4. 设置响应头
+		w.Header().Set("X-Trace-ID", traceID)
 		w.Header().Set("X-Request-ID", requestID)
 		
 		// 包装 ResponseWriter
@@ -63,7 +71,7 @@ func Logger(next http.Handler) http.Handler {
 		// 记录开始时间
 		start := time.Now()
 		
-		// 记录请求开始
+		// 5. 记录请求开始（使用包含 TraceID 的 Context）
 		logger.InfoContext(ctx, "HTTP request started", logger.Fields{
 			"method":     r.Method,
 			"path":       r.URL.Path,
@@ -78,7 +86,7 @@ func Logger(next http.Handler) http.Handler {
 		// 计算耗时
 		duration := time.Since(start)
 		
-		// 记录请求完成
+		// 6. 记录请求完成（使用包含 TraceID 的 Context）
 		logger.InfoContext(ctx, "HTTP request completed", logger.Fields{
 			"method":     r.Method,
 			"path":       r.URL.Path,

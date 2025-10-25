@@ -69,11 +69,87 @@ func TestLogger(t *testing.T) {
 				t.Error("期望设置 X-Request-ID 响应头")
 			}
 
+			// 验证 TraceID 头
+			traceID := rec.Header().Get("X-Trace-ID")
+			if traceID == "" {
+				t.Error("期望设置 X-Trace-ID 响应头")
+			}
+
 			// 注意：由于测试中使用的是原始请求对象，
 			// 而中间件创建了新的请求对象，所以这里无法直接验证上下文
-			// 实际使用中，处理器会收到带有请求ID的上下文
+			// 实际使用中，处理器会收到带有请求ID和TraceID的上下文
 		})
 	}
+}
+
+func TestLoggerWithClientTraceID(t *testing.T) {
+	t.Run("使用客户端提供的 TraceID", func(t *testing.T) {
+		clientTraceID := "trace-client-123456"
+		var capturedTraceID string
+
+		// 创建测试请求，带有客户端 TraceID
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
+		req.Header.Set("X-Trace-ID", clientTraceID)
+		rec := httptest.NewRecorder()
+
+		// 创建处理器，捕获上下文中的 TraceID
+		handler := Logger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedTraceID = GetTraceID(r.Context())
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		// 执行请求
+		handler.ServeHTTP(rec, req)
+
+		// 验证响应头中的 TraceID 与客户端提供的一致
+		responseTraceID := rec.Header().Get("X-Trace-ID")
+		if responseTraceID != clientTraceID {
+			t.Errorf("期望响应头 TraceID 为 %s, 得到 %s", clientTraceID, responseTraceID)
+		}
+
+		// 验证上下文中的 TraceID 与客户端提供的一致
+		if capturedTraceID != clientTraceID {
+			t.Errorf("期望上下文 TraceID 为 %s, 得到 %s", clientTraceID, capturedTraceID)
+		}
+	})
+
+	t.Run("客户端未提供 TraceID 时自动生成", func(t *testing.T) {
+		var capturedTraceID string
+
+		// 创建测试请求，不带 TraceID
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
+		rec := httptest.NewRecorder()
+
+		// 创建处理器，捕获上下文中的 TraceID
+		handler := Logger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedTraceID = GetTraceID(r.Context())
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		// 执行请求
+		handler.ServeHTTP(rec, req)
+
+		// 验证响应头中有 TraceID
+		responseTraceID := rec.Header().Get("X-Trace-ID")
+		if responseTraceID == "" {
+			t.Error("期望自动生成 TraceID")
+		}
+
+		// 验证上下文中有 TraceID
+		if capturedTraceID == "" {
+			t.Error("期望上下文中有 TraceID")
+		}
+
+		// 验证响应头和上下文中的 TraceID 一致
+		if responseTraceID != capturedTraceID {
+			t.Errorf("响应头和上下文中的 TraceID 不一致: %s != %s", responseTraceID, capturedTraceID)
+		}
+
+		// 验证 TraceID 格式（应该以 "trace-" 开头）
+		if len(capturedTraceID) < 6 || capturedTraceID[:6] != "trace-" {
+			t.Errorf("TraceID 格式不正确: %s", capturedTraceID)
+		}
+	})
 }
 
 func TestResponseWriter(t *testing.T) {

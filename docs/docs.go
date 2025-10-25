@@ -3252,6 +3252,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3358,6 +3363,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3472,6 +3482,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "请求参数错误"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3514,6 +3529,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3600,6 +3620,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3623,6 +3648,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3770,6 +3800,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3862,6 +3897,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -3884,6 +3924,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4150,6 +4195,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4292,6 +4342,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4333,6 +4388,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4383,6 +4443,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4406,6 +4471,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4499,6 +4569,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "操作成功"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4586,6 +4661,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4609,6 +4689,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4788,6 +4873,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4811,6 +4901,11 @@ const docTemplate = `{
                     "description": "响应信息",
                     "type": "string",
                     "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         }

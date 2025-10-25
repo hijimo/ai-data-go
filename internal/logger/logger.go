@@ -72,6 +72,8 @@ const (
 type contextKey string
 
 const (
+	// TraceIDKey TraceID键
+	TraceIDKey contextKey = "traceId"
 	// SessionIDKey 会话ID键
 	SessionIDKey contextKey = "sessionId"
 	// RequestIDKey 请求ID键
@@ -430,6 +432,12 @@ func (l *logger) formatText(entry *logEntry) string {
 // extractContextFields 从上下文提取字段
 func extractContextFields(ctx context.Context) Fields {
 	fields := make(Fields)
+	
+	// 提取 TraceID（优先级最高，放在最前面）
+	// 注意：TraceID 由 middleware 包设置，使用字符串键 "traceId"
+	if traceID, ok := ctx.Value("traceId").(string); ok && traceID != "" {
+		fields["traceId"] = traceID
+	}
 	
 	if sessionID := ctx.Value(SessionIDKey); sessionID != nil {
 		fields["sessionId"] = sessionID

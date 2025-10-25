@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +14,9 @@ import (
 	"genkit-ai-service/pkg/response"
 	"genkit-ai-service/pkg/validator"
 )
+
+// contextKey 上下文键类型
+type contextKey string
 
 // SessionHandler 会话处理器
 type SessionHandler struct {
@@ -92,7 +96,7 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 7. 返回成功响应
-	h.writeSuccessResponse(w, sessionResp)
+	h.writeSuccessResponseWithContext(ctx, w, sessionResp)
 }
 
 // ListSessions 获取会话列表
@@ -162,7 +166,7 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 7. 返回分页响应
-	h.writePaginationResponse(w, sessions, req.PageNo, req.PageSize, total)
+	h.writePaginationResponseWithContext(ctx, w, sessions, req.PageNo, req.PageSize, total)
 }
 
 // GetSession 获取会话详情
@@ -224,7 +228,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应
-	h.writeSuccessResponse(w, sessionResp)
+	h.writeSuccessResponseWithContext(ctx, w, sessionResp)
 }
 
 // UpdateSession 更新会话
@@ -303,7 +307,7 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 8. 返回成功响应
-	h.writeSuccessResponse(w, sessionResp)
+	h.writeSuccessResponseWithContext(ctx, w, sessionResp)
 }
 
 // DeleteSession 删除会话
@@ -366,7 +370,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 
 	// 6. 返回成功响应
 	emptyData := struct{}{}
-	h.writeSuccessResponse(w, &emptyData)
+	h.writeSuccessResponseWithContext(ctx, w, &emptyData)
 }
 
 // SearchSessions 搜索会话
@@ -434,7 +438,7 @@ func (h *SessionHandler) SearchSessions(w http.ResponseWriter, r *http.Request) 
 	})
 
 	// 7. 返回分页响应
-	h.writePaginationResponse(w, sessions, req.PageNo, req.PageSize, total)
+	h.writePaginationResponseWithContext(ctx, w, sessions, req.PageNo, req.PageSize, total)
 }
 
 // PinSession 置顶/取消置顶会话
@@ -504,7 +508,7 @@ func (h *SessionHandler) PinSession(w http.ResponseWriter, r *http.Request) {
 
 	// 7. 返回成功响应
 	emptyData := struct{}{}
-	h.writeSuccessResponse(w, &emptyData)
+	h.writeSuccessResponseWithContext(ctx, w, &emptyData)
 }
 
 // ArchiveSession 归档/取消归档会话
@@ -574,7 +578,7 @@ func (h *SessionHandler) ArchiveSession(w http.ResponseWriter, r *http.Request) 
 
 	// 7. 返回成功响应
 	emptyData := struct{}{}
-	h.writeSuccessResponse(w, &emptyData)
+	h.writeSuccessResponseWithContext(ctx, w, &emptyData)
 }
 
 // extractSessionID 从URL路径中提取会话ID
@@ -661,18 +665,63 @@ func (h *SessionHandler) parseIntParam(value string, target *int, defaultValue i
 	return nil
 }
 
-// writeSuccessResponse 写入成功响应
-func (h *SessionHandler) writeSuccessResponse(w http.ResponseWriter, data interface{}) {
+// writeSuccessResponseWithContext 写入成功响应（带 Context）
+func (h *SessionHandler) writeSuccessResponseWithContext(ctx context.Context, w http.ResponseWriter, data interface{}) {
 	// 直接构建响应，避免泛型类型推断问题
+	traceID := ""
+	if ctx != nil {
+		if id, ok := ctx.Value(contextKey("traceId")).(string); ok {
+			traceID = id
+		}
+	}
+	
 	resp := map[string]interface{}{
 		"code":    errors.CodeSuccess,
 		"message": errors.MsgSuccess,
 		"data":    data,
 	}
+	
+	if traceID != "" {
+		resp["traceId"] = traceID
+	}
+	
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
-// writePaginationResponse 写入分页响应
+// writePaginationResponseWithContext 写入分页响应（带 Context）
+func (h *SessionHandler) writePaginationResponseWithContext(ctx context.Context, w http.ResponseWriter, data []*model.SessionResponse, pageNo, pageSize, total int) {
+	totalPage := total / pageSize
+	if total%pageSize > 0 {
+		totalPage++
+	}
+
+	traceID := ""
+	if ctx != nil {
+		if id, ok := ctx.Value(contextKey("traceId")).(string); ok {
+			traceID = id
+		}
+	}
+
+	resp := map[string]interface{}{
+		"code":    errors.CodeSuccess,
+		"message": errors.MsgSuccess,
+		"data": map[string]interface{}{
+			"data":       data,
+			"pageNo":     pageNo,
+			"pageSize":   pageSize,
+			"totalCount": total,
+			"totalPage":  totalPage,
+		},
+	}
+	
+	if traceID != "" {
+		resp["traceId"] = traceID
+	}
+	
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// writePaginationResponse 写入分页响应（向后兼容）
 func (h *SessionHandler) writePaginationResponse(w http.ResponseWriter, data []*model.SessionResponse, pageNo, pageSize, total int) {
 	totalPage := total / pageSize
 	if total%pageSize > 0 {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -118,7 +119,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 8. 返回成功响应
-	h.writeSuccessResponse(w, messageResp)
+	h.writeSuccessResponseWithContext(ctx, w, messageResp)
 }
 
 // GetMessages 获取消息历史
@@ -210,7 +211,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 8. 返回分页响应
-	h.writeMessagePaginationResponse(w, messageList)
+	h.writeMessagePaginationResponseWithContext(ctx, w, messageList)
 }
 
 // GetMessageByID 获取单条消息详情
@@ -272,7 +273,7 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 	})
 
 	// 6. 返回成功响应
-	h.writeSuccessResponse(w, messageDetail)
+	h.writeSuccessResponseWithContext(ctx, w, messageDetail)
 }
 
 // AbortMessage 中止消息生成
@@ -335,7 +336,7 @@ func (h *MessageHandler) AbortMessage(w http.ResponseWriter, r *http.Request) {
 
 	// 6. 返回成功响应
 	emptyData := struct{}{}
-	h.writeSuccessResponse(w, &emptyData)
+	h.writeSuccessResponseWithContext(ctx, w, &emptyData)
 }
 
 // extractSessionID 从URL路径中提取会话ID
@@ -422,18 +423,58 @@ func (h *MessageHandler) parseIntParam(value string, target *int, defaultValue i
 	return nil
 }
 
-// writeSuccessResponse 写入成功响应
-func (h *MessageHandler) writeSuccessResponse(w http.ResponseWriter, data interface{}) {
+// writeSuccessResponseWithContext 写入成功响应（带 Context）
+func (h *MessageHandler) writeSuccessResponseWithContext(ctx context.Context, w http.ResponseWriter, data interface{}) {
 	// 直接构建响应，避免泛型类型推断问题
+	traceID := ""
+	if ctx != nil {
+		if id, ok := ctx.Value(contextKey("traceId")).(string); ok {
+			traceID = id
+		}
+	}
+	
 	resp := map[string]interface{}{
 		"code":    errors.CodeSuccess,
 		"message": errors.MsgSuccess,
 		"data":    data,
 	}
+	
+	if traceID != "" {
+		resp["traceId"] = traceID
+	}
+	
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
-// writeMessagePaginationResponse 写入消息分页响应
+// writeMessagePaginationResponseWithContext 写入消息分页响应（带 Context）
+func (h *MessageHandler) writeMessagePaginationResponseWithContext(ctx context.Context, w http.ResponseWriter, messageList *session.MessageListResponse) {
+	traceID := ""
+	if ctx != nil {
+		if id, ok := ctx.Value(contextKey("traceId")).(string); ok {
+			traceID = id
+		}
+	}
+	
+	resp := map[string]interface{}{
+		"code":    errors.CodeSuccess,
+		"message": errors.MsgSuccess,
+		"data": map[string]interface{}{
+			"data":       messageList.Messages,
+			"pageNo":     messageList.PageNo,
+			"pageSize":   messageList.PageSize,
+			"totalCount": messageList.TotalCount,
+			"totalPage":  messageList.TotalPage,
+		},
+	}
+	
+	if traceID != "" {
+		resp["traceId"] = traceID
+	}
+	
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// writeMessagePaginationResponse 写入消息分页响应（向后兼容）
 func (h *MessageHandler) writeMessagePaginationResponse(w http.ResponseWriter, messageList *session.MessageListResponse) {
 	resp := map[string]interface{}{
 		"code":    errors.CodeSuccess,

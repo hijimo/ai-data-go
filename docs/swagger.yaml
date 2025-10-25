@@ -299,6 +299,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   ChatOptions:
     properties:
@@ -372,6 +376,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   CreateSessionRequest:
@@ -458,6 +466,10 @@ definitions:
         description: 响应信息
         example: 请求参数错误
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   FormOption:
     properties:
@@ -485,6 +497,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   LoginResponse:
@@ -547,6 +563,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   MessageDetailListResponse:
     properties:
@@ -561,6 +581,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   MessageDetailResponse:
@@ -666,6 +690,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   MetricsDataResponse:
     type: object
@@ -728,6 +756,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   ModelListDataResponse:
     properties:
@@ -743,6 +775,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   ModelProperties:
@@ -940,6 +976,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   Pricing:
     properties:
@@ -1036,6 +1076,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   ProviderHelp:
     properties:
@@ -1064,6 +1108,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   SendMessageRequest:
@@ -1098,6 +1146,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   SessionListResponse:
     properties:
@@ -1112,6 +1164,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   SessionResponse:
@@ -1183,6 +1239,10 @@ definitions:
         description: 响应信息
         example: 操作成功
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   Tenant:
     description: 租户信息，包含租户的基本信息和状态
@@ -1252,6 +1312,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   TenantListResponse:
     properties:
@@ -1266,6 +1330,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
   UpdateSessionRequest:
@@ -1407,6 +1475,10 @@ definitions:
         description: 响应信息
         example: success
         type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
     type: object
   UserListResponse:
     properties:
@@ -1421,6 +1493,10 @@ definitions:
       message:
         description: 响应信息
         example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
         type: string
     type: object
 host: localhost:8080

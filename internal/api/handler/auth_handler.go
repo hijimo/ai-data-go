@@ -137,7 +137,7 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应（HTTP 201 Created）
-	resp := response.SuccessWithMessage("注册成功", user)
+	resp := response.SuccessWithMessageContext(ctx, "注册成功", user)
 	h.writeJSONResponse(w, http.StatusCreated, resp)
 }
 
@@ -198,7 +198,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应
-	resp := response.SuccessWithMessage("登录成功", loginResp)
+	resp := response.SuccessWithMessageContext(ctx, "登录成功", loginResp)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -256,7 +256,7 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应
-	resp := response.SuccessWithMessage("刷新成功", loginResp)
+	resp := response.SuccessWithMessageContext(ctx, "刷新成功", loginResp)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -325,7 +325,7 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// 7. 返回成功响应
 	emptyData := struct{}{}
-	resp := response.SuccessWithMessage("注销成功", &emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "注销成功", &emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -403,7 +403,7 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 
 	// 7. 返回成功响应
 	emptyData := struct{}{}
-	resp := response.SuccessWithMessage("密码修改成功，请重新登录", &emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "密码修改成功，请重新登录", &emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -477,7 +477,7 @@ func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request
 
 	// 6. 返回成功响应
 	emptyData := struct{}{}
-	resp := response.SuccessWithMessage("账户解锁成功", &emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "账户解锁成功", &emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -536,7 +536,7 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 5. 返回成功响应
-	resp := response.SuccessWithMessage("获取成功", user)
+	resp := response.SuccessWithMessageContext(ctx, "获取成功", user)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -673,7 +673,7 @@ func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) 
 
 	// 6. 返回成功响应
 	var emptyData *interface{}
-	resp := response.SuccessWithMessage("邮箱验证成功", emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "邮箱验证成功", emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -736,6 +736,6 @@ func (h *AuthHandler) HandleResendVerification(w http.ResponseWriter, r *http.Re
 
 	// 6. 返回成功响应
 	var emptyData *interface{}
-	resp := response.SuccessWithMessage("验证邮件已发送", emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "验证邮件已发送", emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }

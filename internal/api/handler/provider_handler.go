@@ -36,6 +36,8 @@ func NewProviderHandler(providerService service.ProviderService, logger logger.L
 // @Failure 500 {object} model.ErrorResponse "服务器内部错误"
 // @Router /providers [get]
 func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	
 	// 记录请求日志
 	h.logger.Info("收到获取提供商列表请求", map[string]interface{}{
 		"method": r.Method,
@@ -46,7 +48,7 @@ func (h *ProviderHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
 	providers := h.providerService.GetAllProviders()
 
 	// 构建成功响应
-	resp := response.Success(&providers)
+	resp := response.SuccessWithContext(ctx, &providers)
 
 	// 返回JSON响应
 	w.Header().Set("Content-Type", "application/json")
@@ -103,7 +105,8 @@ func (h *ProviderHandler) GetProviderByID(w http.ResponseWriter, r *http.Request
 	}
 
 	// 构建成功响应
-	resp := response.Success(provider)
+	ctx := r.Context()
+	resp := response.SuccessWithContext(ctx, provider)
 
 	// 返回JSON响应
 	w.Header().Set("Content-Type", "application/json")
@@ -160,7 +163,8 @@ func (h *ProviderHandler) GetProviderModels(w http.ResponseWriter, r *http.Reque
 	}
 
 	// 构建成功响应
-	resp := response.Success(&models)
+	ctx := r.Context()
+	resp := response.SuccessWithContext(ctx, &models)
 
 	// 返回JSON响应
 	w.Header().Set("Content-Type", "application/json")
@@ -228,7 +232,8 @@ func (h *ProviderHandler) GetProviderModel(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 构建成功响应
-	resp := response.Success(m)
+	ctx := r.Context()
+	resp := response.SuccessWithContext(ctx, m)
 
 	// 返回JSON响应
 	w.Header().Set("Content-Type", "application/json")
@@ -296,7 +301,8 @@ func (h *ProviderHandler) GetModelParameterRules(w http.ResponseWriter, r *http.
 	}
 
 	// 构建成功响应
-	resp := response.Success(&rules)
+	ctx := r.Context()
+	resp := response.SuccessWithContext(ctx, &rules)
 
 	// 返回JSON响应
 	w.Header().Set("Content-Type", "application/json")

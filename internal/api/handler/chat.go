@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -88,12 +89,12 @@ func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 构建并返回成功响应
-	h.writeSuccessResponse(w, chatResp)
+	h.writeSuccessResponseWithContext(ctx, w, chatResp)
 }
 
-// writeSuccessResponse 写入成功响应
-func (h *ChatHandler) writeSuccessResponse(w http.ResponseWriter, data *model.ChatResponse) {
-	resp := response.Success(data)
+// writeSuccessResponseWithContext 写入成功响应（带 Context）
+func (h *ChatHandler) writeSuccessResponseWithContext(ctx context.Context, w http.ResponseWriter, data *model.ChatResponse) {
+	resp := response.SuccessWithContext(ctx, data)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 

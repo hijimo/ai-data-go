@@ -156,7 +156,8 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 		"count":    len(audits),
 	})
 
-	resp := response.PaginationWithMessage(
+	resp := response.PaginationWithMessageContext(
+		ctx,
 		"查询审计日志成功",
 		audits,
 		page,

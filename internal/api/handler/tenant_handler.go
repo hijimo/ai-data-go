@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -131,7 +132,7 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 返回成功响应（HTTP 201 Created）
-	resp := response.SuccessWithMessage("创建租户成功", tenant)
+	resp := response.SuccessWithMessageContext(ctx, "创建租户成功", tenant)
 	h.writeJSONResponse(w, http.StatusCreated, resp)
 }
 
@@ -198,7 +199,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 5. 返回成功响应
-	resp := response.Success(tenant)
+	resp := response.SuccessWithContext(ctx, tenant)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -292,7 +293,7 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 7. 返回成功响应
-	resp := response.SuccessWithMessage("更新租户成功", tenant)
+	resp := response.SuccessWithMessageContext(ctx, "更新租户成功", tenant)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -361,7 +362,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
 	// 5. 返回成功响应
 	emptyData := struct{}{}
-	resp := response.SuccessWithMessage("删除租户成功", &emptyData)
+	resp := response.SuccessWithMessageContext(ctx, "删除租户成功", &emptyData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -460,7 +461,7 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 	})
 
 	// 8. 返回成功响应
-	resp := response.SuccessWithMessage("更新租户状态成功", tenant)
+	resp := response.SuccessWithMessageContext(ctx, "更新租户状态成功", tenant)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 
@@ -539,7 +540,7 @@ func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 5. 返回分页响应
-	h.writePaginationResponse(w, tenants, pageNo, pageSize, int(total))
+	h.writePaginationResponseWithContext(w, ctx, tenants, pageNo, pageSize, int(total))
 }
 
 // extractTenantID 从URL路径中提取租户ID
@@ -629,5 +630,11 @@ func (h *TenantHandler) writeValidationErrorResponse(w http.ResponseWriter, vali
 // writePaginationResponse 写入分页响应
 func (h *TenantHandler) writePaginationResponse(w http.ResponseWriter, data []*model.Tenant, pageNo, pageSize, total int) {
 	resp := response.Pagination(data, pageNo, pageSize, total)
+	h.writeJSONResponse(w, http.StatusOK, resp)
+}
+
+// writePaginationResponseWithContext 写入分页响应（带 Context）
+func (h *TenantHandler) writePaginationResponseWithContext(w http.ResponseWriter, ctx context.Context, data []*model.Tenant, pageNo, pageSize, total int) {
+	resp := response.PaginationWithContext(ctx, data, pageNo, pageSize, total)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }

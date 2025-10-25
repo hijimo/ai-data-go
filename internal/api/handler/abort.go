@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -87,13 +88,13 @@ func (h *AbortHandler) HandleAbort(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 6. 构建并返回成功响应
-	h.writeSuccessResponse(w)
+	h.writeSuccessResponseWithContext(ctx, w)
 }
 
-// writeSuccessResponse 写入成功响应
-func (h *AbortHandler) writeSuccessResponse(w http.ResponseWriter) {
-	resp := response.Success[any](nil)
-	resp.Message = "对话已成功中止"
+// writeSuccessResponseWithContext 写入成功响应（带 Context）
+func (h *AbortHandler) writeSuccessResponseWithContext(ctx context.Context, w http.ResponseWriter) {
+	var nilData *interface{}
+	resp := response.SuccessWithMessageContext(ctx, "对话已成功中止", nilData)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 

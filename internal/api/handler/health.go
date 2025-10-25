@@ -78,7 +78,7 @@ func (h *HealthHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 构建成功响应
-	resp := response.Success(healthStatus)
+	resp := response.SuccessWithContext(ctx, healthStatus)
 
 	// 返回响应
 	w.Header().Set("Content-Type", "application/json")

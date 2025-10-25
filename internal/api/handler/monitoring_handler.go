@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/monitoring"
+	"genkit-ai-service/pkg/response"
 )
 
 // MonitoringHandler 监控处理器
@@ -28,13 +28,10 @@ func NewMonitoringHandler(alertManager *monitoring.AlertManager) *MonitoringHand
 // @Success 200 {object} model.MetricsDataResponse
 // @Router /monitoring/metrics [get]
 func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	snapshot := monitoring.GetMetrics().GetSnapshot()
 	
-	resp := model.ResponseData[monitoring.MetricsSnapshot]{
-		Code:    http.StatusOK,
-		Message: "获取指标成功",
-		Data:    &snapshot,
-	}
+	resp := response.SuccessWithMessageContext(ctx, "获取指标成功", &snapshot)
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -49,13 +46,10 @@ func (h *MonitoringHandler) HandleMetrics(w http.ResponseWriter, r *http.Request
 // @Success 200 {object} model.AlertListDataResponse
 // @Router /monitoring/alerts [get]
 func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	alerts := h.alertManager.GetActiveAlerts()
 	
-	resp := model.ResponseData[[]monitoring.Alert]{
-		Code:    http.StatusOK,
-		Message: "获取告警成功",
-		Data:    &alerts,
-	}
+	resp := response.SuccessWithMessageContext(ctx, "获取告警成功", &alerts)
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -70,13 +64,11 @@ func (h *MonitoringHandler) HandleAlerts(w http.ResponseWriter, r *http.Request)
 // @Success 200 {object} model.AnyDataResponse
 // @Router /monitoring/alerts [delete]
 func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	h.alertManager.ClearAlerts()
 	
-	resp := model.ResponseData[any]{
-		Code:    http.StatusOK,
-		Message: "清空告警成功",
-		Data:    nil,
-	}
+	var nilData *interface{}
+	resp := response.SuccessWithMessageContext(ctx, "清空告警成功", nilData)
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -91,13 +83,11 @@ func (h *MonitoringHandler) HandleClearAlerts(w http.ResponseWriter, r *http.Req
 // @Success 200 {object} model.AnyDataResponse
 // @Router /monitoring/metrics/reset [post]
 func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	monitoring.GetMetrics().Reset()
 	
-	resp := model.ResponseData[any]{
-		Code:    http.StatusOK,
-		Message: "重置指标成功",
-		Data:    nil,
-	}
+	var nilData *interface{}
+	resp := response.SuccessWithMessageContext(ctx, "重置指标成功", nilData)
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -112,6 +102,7 @@ func (h *MonitoringHandler) HandleResetMetrics(w http.ResponseWriter, r *http.Re
 // @Success 200 {object} model.HealthDataResponse
 // @Router /monitoring/health [get]
 func (h *MonitoringHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	snapshot := monitoring.GetMetrics().GetSnapshot()
 	alerts := h.alertManager.GetActiveAlerts()
 	
@@ -145,11 +136,7 @@ func (h *MonitoringHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Req
 		},
 	}
 	
-	resp := model.ResponseData[map[string]interface{}]{
-		Code:    http.StatusOK,
-		Message: "健康检查成功",
-		Data:    &healthData,
-	}
+	resp := response.SuccessWithMessageContext(ctx, "健康检查成功", &healthData)
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
