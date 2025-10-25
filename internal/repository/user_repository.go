@@ -34,11 +34,11 @@ type UserRepository interface {
 	// Delete 软删除用户
 	Delete(ctx context.Context, tenantID, userID string) error
 
-	// List 列出租户下的用户（支持分页）
-	List(ctx context.Context, tenantID string, page, pageSize int) ([]*model.User, int64, error)
+	// List 列出租户下的用户（支持分页和搜索）
+	List(ctx context.Context, tenantID string, page, pageSize int, search string) ([]*model.User, int64, error)
 
-	// ListAll 列出所有租户的用户（支持分页，用于平台管理员）
-	ListAll(ctx context.Context, page, pageSize int) ([]*model.User, int64, error)
+	// ListAll 列出所有租户的用户（支持分页和搜索，用于平台管理员）
+	ListAll(ctx context.Context, page, pageSize int, search string) ([]*model.User, int64, error)
 
 	// UpdateLastLogin 更新最后登录时间
 	UpdateLastLogin(ctx context.Context, tenantID, userID string) error
@@ -249,8 +249,8 @@ func (r *userRepository) Delete(ctx context.Context, tenantID, userID string) er
 	return nil
 }
 
-// List 列出租户下的用户（支持分页）
-func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSize int) ([]*model.User, int64, error) {
+// List 列出租户下的用户（支持分页和搜索）
+func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSize int, search string) ([]*model.User, int64, error) {
 	if tenantID == "" {
 		return nil, 0, errors.New("tenant_id is required")
 	}
@@ -272,17 +272,26 @@ func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSi
 	// 计算偏移量
 	offset := (page - 1) * pageSize
 
-	// 查询总数（确保包含租户隔离）
-	if err := r.db.WithContext(ctx).
-		Model(&model.User{}).
-		Where("tenant_id = ? AND is_deleted = ?", tenantID, false).
-		Count(&total).Error; err != nil {
+	// 构建基础查询
+	query := r.db.WithContext(ctx).Model(&model.User{}).
+		Where("tenant_id = ? AND is_deleted = ?", tenantID, false)
+
+	// 添加搜索条件（模糊匹配 displayName、phone、email）
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where(
+			"display_name ILIKE ? OR phone ILIKE ? OR email ILIKE ?",
+			searchPattern, searchPattern, searchPattern,
+		)
+	}
+
+	// 查询总数
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// 查询数据（确保包含租户隔离）
-	if err := r.db.WithContext(ctx).
-		Where("tenant_id = ? AND is_deleted = ?", tenantID, false).
+	// 查询数据
+	if err := query.
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
@@ -293,8 +302,8 @@ func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSi
 	return users, total, nil
 }
 
-// ListAll 列出所有租户的用户（支持分页，用于平台管理员）
-func (r *userRepository) ListAll(ctx context.Context, page, pageSize int) ([]*model.User, int64, error) {
+// ListAll 列出所有租户的用户（支持分页和搜索，用于平台管理员）
+func (r *userRepository) ListAll(ctx context.Context, page, pageSize int, search string) ([]*model.User, int64, error) {
 	// 参数验证
 	if page < 1 {
 		page = 1
@@ -312,17 +321,26 @@ func (r *userRepository) ListAll(ctx context.Context, page, pageSize int) ([]*mo
 	// 计算偏移量
 	offset := (page - 1) * pageSize
 
-	// 查询总数（不包含租户隔离）
-	if err := r.db.WithContext(ctx).
-		Model(&model.User{}).
-		Where("is_deleted = ?", false).
-		Count(&total).Error; err != nil {
+	// 构建基础查询
+	query := r.db.WithContext(ctx).Model(&model.User{}).
+		Where("is_deleted = ?", false)
+
+	// 添加搜索条件（模糊匹配 displayName、phone、email）
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where(
+			"display_name ILIKE ? OR phone ILIKE ? OR email ILIKE ?",
+			searchPattern, searchPattern, searchPattern,
+		)
+	}
+
+	// 查询总数
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// 查询数据（不包含租户隔离）
-	if err := r.db.WithContext(ctx).
-		Where("is_deleted = ?", false).
+	// 查询数据
+	if err := query.
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

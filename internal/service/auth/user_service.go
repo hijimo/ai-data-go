@@ -2,12 +2,12 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/pkg/crypto"
+	"genkit-ai-service/pkg/errors"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
@@ -27,8 +27,8 @@ type UserService interface {
 	// Delete 删除用户
 	Delete(ctx context.Context, userID string) error
 
-	// List 列出用户（tenantID可选，仅平台管理员可用）
-	List(ctx context.Context, page, pageSize int, tenantID ...string) ([]*model.User, int64, error)
+	// List 列出用户（tenantID和search可选，仅平台管理员可用）
+	List(ctx context.Context, page, pageSize int, search string, tenantID ...string) ([]*model.User, int64, error)
 }
 
 // CreateUserRequest 创建用户请求
@@ -97,7 +97,7 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 	// 获取JWT Claims
 	claims, ok := GetJWTClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("未找到身份认证信息")
+		return nil, errors.NewUnauthorizedError("未找到身份认证信息")
 	}
 
 	// 检查是否为平台管理员
@@ -111,50 +111,50 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 			targetTenantID = claims.TenantID
 		} else if targetTenantID != claims.TenantID {
 			// 如果提供了tenantId但与当前租户不匹配，返回权限错误
-			return nil, errors.New("权限不足：只能在当前租户下创建用户")
+			return nil, errors.NewForbiddenError("权限不足：只能在当前租户下创建用户")
 		}
 	} else {
 		// 平台管理员：必须提供tenantId
 		if targetTenantID == "" {
-			return nil, errors.New("平台管理员必须指定租户ID")
+			return nil, errors.NewBadRequestError("平台管理员必须指定租户ID")
 		}
 	}
 
 	// 验证租户ID格式
 	tenantUUID, err := uuid.Parse(targetTenantID)
 	if err != nil {
-		return nil, errors.New("无效的租户ID格式")
+		return nil, errors.NewBadRequestError("无效的租户ID格式")
 	}
 
 	// 验证租户是否存在且启用
 	tenant, err := s.tenantRepo.GetByID(ctx, targetTenantID)
 	if err != nil {
-		return nil, fmt.Errorf("租户不存在: %w", err)
+		return nil, errors.NewNotFoundError("租户不存在")
 	}
 	if !tenant.Status {
-		return nil, errors.New("租户已被禁用")
+		return nil, errors.NewBadRequestError("租户已被禁用")
 	}
 
 	// 验证邮箱格式
 	if req.Email == "" {
-		return nil, errors.New("邮箱不能为空")
+		return nil, errors.NewBadRequestError("邮箱不能为空")
 	}
 
 	// 检查邮箱在该租户下是否已存在
 	existingUser, err := s.userRepo.GetByEmail(ctx, targetTenantID, req.Email)
 	if err == nil && existingUser != nil {
-		return nil, fmt.Errorf("邮箱 %s 在该租户下已被使用", req.Email)
+		return nil, errors.NewBadRequestError(fmt.Sprintf("邮箱 %s 在该租户下已被使用", req.Email))
 	}
 
 	// 验证密码强度
 	if err := crypto.ValidatePassword(req.Password); err != nil {
-		return nil, fmt.Errorf("密码验证失败: %w", err)
+		return nil, errors.NewBadRequestError(fmt.Sprintf("密码验证失败: %v", err))
 	}
 
 	// 哈希密码
 	passwordHash, err := crypto.HashPassword(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("密码加密失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("密码加密失败: %w", err))
 	}
 
 	// 从 Context 获取创建者信息（从 JWT 令牌中提取）
@@ -179,7 +179,7 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 	if req.Roles != nil && len(req.Roles) > 0 {
 		roles, err := datatypes.NewJSONType(req.Roles).MarshalJSON()
 		if err != nil {
-			return nil, fmt.Errorf("角色格式错误: %w", err)
+			return nil, errors.NewBadRequestError(fmt.Sprintf("角色格式错误: %v", err))
 		}
 		user.Roles = roles
 	} else {
@@ -192,14 +192,14 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*model
 	if req.Meta != nil {
 		meta, err := datatypes.NewJSONType(req.Meta).MarshalJSON()
 		if err != nil {
-			return nil, fmt.Errorf("元数据格式错误: %w", err)
+			return nil, errors.NewBadRequestError(fmt.Sprintf("元数据格式错误: %v", err))
 		}
 		user.Meta = meta
 	}
 
 	// 保存到数据库
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return nil, fmt.Errorf("创建用户失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("创建用户失败: %w", err))
 	}
 
 	// 记录审计日志
@@ -219,13 +219,13 @@ func (s *userService) Get(ctx context.Context, userID string) (*model.User, erro
 	// 验证用户ID格式
 	_, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, errors.New("无效的用户ID格式")
+		return nil, errors.NewBadRequestError("无效的用户ID格式")
 	}
 
 	// 获取JWT Claims
 	claims, ok := GetJWTClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("未找到身份认证信息")
+		return nil, errors.NewUnauthorizedError("未找到身份认证信息")
 	}
 
 	// 检查是否为平台管理员
@@ -236,19 +236,19 @@ func (s *userService) Get(ctx context.Context, userID string) (*model.User, erro
 		// 平台管理员：可以查询任意租户的用户
 		user, err = s.userRepo.GetByIDOnly(ctx, userID)
 		if err != nil {
-			return nil, fmt.Errorf("获取用户失败: %w", err)
+			return nil, errors.NewNotFoundError("用户不存在")
 		}
 	} else {
 		// 租户管理员：只能查询自己租户的用户
 		user, err = s.userRepo.GetByID(ctx, claims.TenantID, userID)
 		if err != nil {
-			return nil, fmt.Errorf("获取用户失败: %w", err)
+			return nil, errors.NewNotFoundError("用户不存在")
 		}
 	}
 
 	// 验证用户访问权限
 	if !s.canAccessUser(ctx, user.TenantID.String()) {
-		return nil, errors.New("权限不足：无法访问其他租户的用户")
+		return nil, errors.NewForbiddenError("权限不足：无法访问其他租户的用户")
 	}
 
 	return user, nil
@@ -258,13 +258,13 @@ func (s *userService) Get(ctx context.Context, userID string) (*model.User, erro
 func (s *userService) Update(ctx context.Context, userID string, req UpdateUserRequest) (*model.User, error) {
 	// 验证用户ID格式
 	if _, err := uuid.Parse(userID); err != nil {
-		return nil, errors.New("无效的用户ID格式")
+		return nil, errors.NewBadRequestError("无效的用户ID格式")
 	}
 
 	// 获取JWT Claims
 	claims, ok := GetJWTClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("未找到身份认证信息")
+		return nil, errors.NewUnauthorizedError("未找到身份认证信息")
 	}
 
 	// 检查是否为平台管理员
@@ -281,12 +281,12 @@ func (s *userService) Update(ctx context.Context, userID string, req UpdateUserR
 		user, err = s.userRepo.GetByID(ctx, claims.TenantID, userID)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("用户不存在: %w", err)
+		return nil, errors.NewNotFoundError("用户不存在")
 	}
 
 	// 验证用户访问权限
 	if !s.canAccessUser(ctx, user.TenantID.String()) {
-		return nil, errors.New("权限不足：无法访问其他租户的用户")
+		return nil, errors.NewForbiddenError("权限不足：无法访问其他租户的用户")
 	}
 
 	// 记录原始的激活状态，用于检测状态变化
@@ -295,13 +295,13 @@ func (s *userService) Update(ctx context.Context, userID string, req UpdateUserR
 	// 更新字段
 	if req.Email != nil {
 		if *req.Email == "" {
-			return nil, errors.New("邮箱不能为空")
+			return nil, errors.NewBadRequestError("邮箱不能为空")
 		}
 		// 如果邮箱发生变化，检查新邮箱是否已被使用
 		if *req.Email != user.Email {
 			existingUser, err := s.userRepo.GetByEmail(ctx, user.TenantID.String(), *req.Email)
 			if err == nil && existingUser != nil && existingUser.ID != user.ID {
-				return nil, fmt.Errorf("邮箱 %s 已被使用", *req.Email)
+				return nil, errors.NewBadRequestError(fmt.Sprintf("邮箱 %s 已被使用", *req.Email))
 			}
 		}
 		user.Email = *req.Email
@@ -326,7 +326,7 @@ func (s *userService) Update(ctx context.Context, userID string, req UpdateUserR
 	if req.Roles != nil {
 		roles, err := datatypes.NewJSONType(req.Roles).MarshalJSON()
 		if err != nil {
-			return nil, fmt.Errorf("角色格式错误: %w", err)
+			return nil, errors.NewBadRequestError(fmt.Sprintf("角色格式错误: %v", err))
 		}
 		user.Roles = roles
 	}
@@ -334,14 +334,14 @@ func (s *userService) Update(ctx context.Context, userID string, req UpdateUserR
 	if req.Meta != nil {
 		meta, err := datatypes.NewJSONType(req.Meta).MarshalJSON()
 		if err != nil {
-			return nil, fmt.Errorf("元数据格式错误: %w", err)
+			return nil, errors.NewBadRequestError(fmt.Sprintf("元数据格式错误: %v", err))
 		}
 		user.Meta = meta
 	}
 
 	// 保存更新
 	if err := s.userRepo.Update(ctx, user); err != nil {
-		return nil, fmt.Errorf("更新用户失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("更新用户失败: %w", err))
 	}
 
 	// 检测用户激活状态变化：如果用户被禁用，撤销所有 Refresh Token
@@ -379,13 +379,13 @@ func (s *userService) Update(ctx context.Context, userID string, req UpdateUserR
 func (s *userService) Delete(ctx context.Context, userID string) error {
 	// 验证用户ID格式
 	if _, err := uuid.Parse(userID); err != nil {
-		return errors.New("无效的用户ID格式")
+		return errors.NewBadRequestError("无效的用户ID格式")
 	}
 
 	// 获取JWT Claims
 	claims, ok := GetJWTClaimsFromContext(ctx)
 	if !ok {
-		return errors.New("未找到身份认证信息")
+		return errors.NewUnauthorizedError("未找到身份认证信息")
 	}
 
 	// 检查是否为平台管理员
@@ -402,17 +402,17 @@ func (s *userService) Delete(ctx context.Context, userID string) error {
 		user, err = s.userRepo.GetByID(ctx, claims.TenantID, userID)
 	}
 	if err != nil {
-		return fmt.Errorf("用户不存在: %w", err)
+		return errors.NewNotFoundError("用户不存在")
 	}
 
 	// 验证用户访问权限
 	if !s.canAccessUser(ctx, user.TenantID.String()) {
-		return errors.New("权限不足：无法访问其他租户的用户")
+		return errors.NewForbiddenError("权限不足：无法访问其他租户的用户")
 	}
 
 	// 执行软删除
 	if err := s.userRepo.Delete(ctx, user.TenantID.String(), userID); err != nil {
-		return fmt.Errorf("删除用户失败: %w", err)
+		return errors.NewInternalError(fmt.Errorf("删除用户失败: %w", err))
 	}
 
 	// 记录审计日志
@@ -427,8 +427,8 @@ func (s *userService) Delete(ctx context.Context, userID string) error {
 	return nil
 }
 
-// List 列出用户（tenantID可选，仅平台管理员可用）
-func (s *userService) List(ctx context.Context, page, pageSize int, tenantID ...string) ([]*model.User, int64, error) {
+// List 列出用户（tenantID和search可选，仅平台管理员可用）
+func (s *userService) List(ctx context.Context, page, pageSize int, search string, tenantID ...string) ([]*model.User, int64, error) {
 	// 参数验证
 	if page < 1 {
 		page = 1
@@ -443,7 +443,7 @@ func (s *userService) List(ctx context.Context, page, pageSize int, tenantID ...
 	// 获取JWT Claims
 	claims, ok := GetJWTClaimsFromContext(ctx)
 	if !ok {
-		return nil, 0, errors.New("未找到身份认证信息")
+		return nil, 0, errors.NewUnauthorizedError("未找到身份认证信息")
 	}
 
 	// 检查是否为平台管理员
@@ -451,9 +451,9 @@ func (s *userService) List(ctx context.Context, page, pageSize int, tenantID ...
 
 	// 如果是租户管理员，只返回当前租户的用户
 	if !isSystemAdmin {
-		users, total, err := s.userRepo.List(ctx, claims.TenantID, page, pageSize)
+		users, total, err := s.userRepo.List(ctx, claims.TenantID, page, pageSize, search)
 		if err != nil {
-			return nil, 0, fmt.Errorf("获取用户列表失败: %w", err)
+			return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 		}
 		return users, total, nil
 	}
@@ -464,19 +464,19 @@ func (s *userService) List(ctx context.Context, page, pageSize int, tenantID ...
 		targetTenantID := tenantID[0]
 		// 验证租户ID格式
 		if _, err := uuid.Parse(targetTenantID); err != nil {
-			return nil, 0, errors.New("无效的租户ID格式")
+			return nil, 0, errors.NewBadRequestError("无效的租户ID格式")
 		}
-		users, total, err := s.userRepo.List(ctx, targetTenantID, page, pageSize)
+		users, total, err := s.userRepo.List(ctx, targetTenantID, page, pageSize, search)
 		if err != nil {
-			return nil, 0, fmt.Errorf("获取用户列表失败: %w", err)
+			return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 		}
 		return users, total, nil
 	}
 
 	// 未提供tenantID，返回所有租户的用户列表
-	users, total, err := s.userRepo.ListAll(ctx, page, pageSize)
+	users, total, err := s.userRepo.ListAll(ctx, page, pageSize, search)
 	if err != nil {
-		return nil, 0, fmt.Errorf("获取用户列表失败: %w", err)
+		return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 	}
 
 	return users, total, nil

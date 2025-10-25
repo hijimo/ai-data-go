@@ -127,7 +127,7 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userService.Create(ctx, req)
 	if err != nil {
 		h.logger.Error("创建用户失败", logger.Fields{
-			"error":    err,
+			"error":    err.Error(),
 			"tenantId": req.TenantID,
 			"email":    req.Email,
 		})
@@ -489,7 +489,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 
 // HandleList 处理获取用户列表
 // @Summary 获取用户列表
-// @Description 获取用户列表，支持分页和租户过滤
+// @Description 获取用户列表，支持分页、租户过滤和搜索
 // @Description
 // @Description **权限要求**：
 // @Description - 平台管理员（system_admin）：可以查看所有租户的用户或指定租户的用户
@@ -503,10 +503,16 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 // @Description   - 如果提供 tenantId，返回指定租户下的用户列表
 // @Description   - 如果不提供 tenantId，返回所有租户下的用户列表
 // @Description
+// @Description **search 查询参数说明**：
+// @Description - 支持对 displayName、phone、email 字段进行模糊搜索
+// @Description - 搜索不区分大小写
+// @Description - 多个字段使用 OR 逻辑连接
+// @Description
 // @Description **参数说明**：
 // @Description - pageNo: 页码（从1开始，默认1）
 // @Description - pageSize: 每页大小（1-100，默认20）
 // @Description - tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）
+// @Description - search: 搜索关键词（可选，支持模糊匹配 displayName、phone、email）
 // @Description
 // @Description **注意事项**：
 // @Description - 租户管理员调用此接口时，tenantId 参数会被忽略
@@ -518,6 +524,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 // @Param pageNo query int false "页码" minimum(1) default(1) example:1
 // @Param pageSize query int false "每页大小" minimum(1) maximum(100) default(20) example:20
 // @Param tenantId query string false "租户ID（仅平台管理员可用）" example:"550e8400-e29b-41d4-a716-446655440000"
+// @Param search query string false "搜索关键词（支持模糊匹配 displayName、phone、email）" example:"张三"
 // @Success 200 {object} model.UserListResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
@@ -543,12 +550,14 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 获取可选的租户ID参数
+	// 2. 获取可选的租户ID和搜索参数
 	tenantID := r.URL.Query().Get("tenantId")
+	search := r.URL.Query().Get("search")
 
 	// 3. 记录请求日志
 	h.logger.Info("收到获取用户列表请求", logger.Fields{
 		"tenantId": tenantID,
+		"search":   search,
 		"pageNo":   pageNo,
 		"pageSize": pageSize,
 	})
@@ -558,14 +567,15 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	var total int64
 	var listErr error
 	if tenantID != "" {
-		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, tenantID)
+		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search, tenantID)
 	} else {
-		users, total, listErr = h.userService.List(ctx, pageNo, pageSize)
+		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search)
 	}
 	if listErr != nil {
 		h.logger.Error("获取用户列表失败", logger.Fields{
 			"error":    listErr,
 			"tenantId": tenantID,
+			"search":   search,
 		})
 		if appErr, ok := listErr.(*errors.AppError); ok {
 			h.writeErrorResponse(w, r, appErr)
@@ -578,6 +588,7 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	// 5. 记录响应日志
 	h.logger.Info("获取用户列表成功", logger.Fields{
 		"tenantId": tenantID,
+		"search":   search,
 		"count":    len(users),
 		"total":    total,
 	})

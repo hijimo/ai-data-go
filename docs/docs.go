@@ -2407,7 +2407,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取用户列表，支持分页和租户过滤\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户的用户或指定租户的用户\n- 租户管理员（tenant_admin）：只能查看自己租户下的用户\n\n**tenantId 查询参数使用规则**：\n- 租户管理员：\n- tenantId 参数会被忽略\n- 始终只返回当前用户所属租户下的用户列表\n- 平台管理员：\n- 如果提供 tenantId，返回指定租户下的用户列表\n- 如果不提供 tenantId，返回所有租户下的用户列表\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n- tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）\n\n**注意事项**：\n- 租户管理员调用此接口时，tenantId 参数会被忽略\n- 租户管理员始终只能看到自己租户下的用户",
+                "description": "获取用户列表，支持分页、租户过滤和搜索\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户的用户或指定租户的用户\n- 租户管理员（tenant_admin）：只能查看自己租户下的用户\n\n**tenantId 查询参数使用规则**：\n- 租户管理员：\n- tenantId 参数会被忽略\n- 始终只返回当前用户所属租户下的用户列表\n- 平台管理员：\n- 如果提供 tenantId，返回指定租户下的用户列表\n- 如果不提供 tenantId，返回所有租户下的用户列表\n\n**search 查询参数说明**：\n- 支持对 displayName、phone、email 字段进行模糊搜索\n- 搜索不区分大小写\n- 多个字段使用 OR 逻辑连接\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n- tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）\n- search: 搜索关键词（可选，支持模糊匹配 displayName、phone、email）\n\n**注意事项**：\n- 租户管理员调用此接口时，tenantId 参数会被忽略\n- 租户管理员始终只能看到自己租户下的用户",
                 "consumes": [
                     "application/json"
                 ],
@@ -2440,6 +2440,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "租户ID（仅平台管理员可用）",
                         "name": "tenantId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索关键词（支持模糊匹配 displayName、phone、email）",
+                        "name": "search",
                         "in": "query"
                     }
                 ],
