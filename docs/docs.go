@@ -1957,7 +1957,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取租户列表，支持分页，不同角色返回不同的数据\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户列表\n- 租户管理员（tenant_admin）：只能查看自己所属的租户信息\n\n**返回数据差异**：\n- 平台管理员：返回所有租户的分页列表，可能包含多条记录\n- 租户管理员：只返回当前用户所属租户的信息（单条记录），忽略分页参数\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n\n**注意事项**：\n- 租户管理员调用此接口时，分页参数会被忽略\n- 租户管理员始终只能看到自己的租户信息",
+                "description": "获取租户列表，支持分页和过滤，不同角色返回不同的数据\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户列表\n- 租户管理员（tenant_admin）：只能查看自己所属的租户信息\n\n**返回数据差异**：\n- 平台管理员：返回所有租户的分页列表，可能包含多条记录\n- 租户管理员：只返回当前用户所属租户的信息（单条记录），忽略分页和过滤参数\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n- name: 租户名称模糊搜索（可选）\n- status: 租户状态过滤（可选，true=启用，false=禁用）\n\n**注意事项**：\n- 租户管理员调用此接口时，所有过滤参数会被忽略\n- 租户管理员始终只能看到自己的租户信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -1984,6 +1984,18 @@ const docTemplate = `{
                         "default": 20,
                         "description": "每页大小",
                         "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "租户名称模糊搜索",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "租户状态过滤",
+                        "name": "status",
                         "in": "query"
                     }
                 ],

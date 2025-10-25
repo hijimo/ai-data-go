@@ -34,6 +34,9 @@ type TenantRepository interface {
 
 	// ListByType 根据类型列出租户（支持分页）
 	ListByType(ctx context.Context, tenantType string, page, pageSize int) ([]*model.Tenant, int64, error)
+
+	// ListWithFilter 列出租户（支持过滤条件和分页）
+	ListWithFilter(ctx context.Context, page, pageSize int, name string, status *bool) ([]*model.Tenant, int64, error)
 }
 
 // tenantRepository 租户数据访问实现
@@ -264,6 +267,55 @@ func (r *tenantRepository) ListByType(ctx context.Context, tenantType string, pa
 	// 查询数据
 	if err := r.db.WithContext(ctx).
 		Where("type = ? AND is_deleted = ?", tenantType, false).
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&tenants).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tenants, total, nil
+}
+
+// ListWithFilter 列出租户（支持过滤条件和分页）
+func (r *tenantRepository) ListWithFilter(ctx context.Context, page, pageSize int, name string, status *bool) ([]*model.Tenant, int64, error) {
+	// 参数验证
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	var tenants []*model.Tenant
+	var total int64
+
+	// 计算偏移量
+	offset := (page - 1) * pageSize
+
+	// 构建查询条件
+	query := r.db.WithContext(ctx).Model(&model.Tenant{}).Where("is_deleted = ?", false)
+
+	// 租户名称模糊搜索
+	if name != "" {
+		query = query.Where("name ILIKE ?", "%"+name+"%")
+	}
+
+	// 租户状态过滤
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	// 查询总数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 查询数据
+	if err := query.
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

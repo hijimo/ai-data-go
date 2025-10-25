@@ -30,6 +30,9 @@ type TenantService interface {
 	// List 列出租户（支持按类型过滤）
 	List(ctx context.Context, page, pageSize int, tenantType ...string) ([]*model.Tenant, int64, error)
 
+	// ListWithFilter 列出租户（支持过滤条件）
+	ListWithFilter(ctx context.Context, page, pageSize int, filter TenantListFilter) ([]*model.Tenant, int64, error)
+
 	// GetByDomain 根据域名获取租户
 	GetByDomain(ctx context.Context, domain string) (*model.Tenant, error)
 
@@ -92,6 +95,14 @@ type UpdateTenantRequest struct {
 	Metadata map[string]interface{} `json:"metadata"`
 	// 租户状态
 	Status *bool `json:"status"`
+}
+
+// TenantListFilter 租户列表过滤条件
+type TenantListFilter struct {
+	// 租户名称（模糊搜索）
+	Name string
+	// 租户状态（true=启用，false=禁用）
+	Status *bool
 }
 
 // tenantService 租户服务实现
@@ -347,6 +358,48 @@ func (s *tenantService) List(ctx context.Context, page, pageSize int, tenantType
 
 	// 从数据库获取所有租户列表
 	tenants, total, err := s.tenantRepo.List(ctx, page, pageSize)
+	if err != nil {
+		return nil, 0, fmt.Errorf("获取租户列表失败: %w", err)
+	}
+
+	return tenants, total, nil
+}
+
+// ListWithFilter 列出租户（支持过滤条件）
+func (s *tenantService) ListWithFilter(ctx context.Context, page, pageSize int, filter TenantListFilter) ([]*model.Tenant, int64, error) {
+	// 参数验证
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	// 获取JWT Claims
+	claims, ok := GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return nil, 0, errors.New("未找到身份认证信息")
+	}
+
+	// 检查用户角色
+	isSystemAdmin := hasSystemAdminRole(claims)
+
+	// 如果是租户管理员，只返回当前用户所属的租户（忽略过滤条件）
+	if !isSystemAdmin {
+		// 获取当前用户的租户
+		tenant, err := s.tenantRepo.GetByID(ctx, claims.TenantID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("获取租户失败: %w", err)
+		}
+		// 返回单个租户作为列表
+		return []*model.Tenant{tenant}, 1, nil
+	}
+
+	// 平台管理员：使用过滤条件查询租户列表
+	tenants, total, err := s.tenantRepo.ListWithFilter(ctx, page, pageSize, filter.Name, filter.Status)
 	if err != nil {
 		return nil, 0, fmt.Errorf("获取租户列表失败: %w", err)
 	}

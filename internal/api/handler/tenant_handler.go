@@ -467,7 +467,7 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 
 // HandleList 处理获取租户列表
 // @Summary 获取租户列表
-// @Description 获取租户列表，支持分页，不同角色返回不同的数据
+// @Description 获取租户列表，支持分页和过滤，不同角色返回不同的数据
 // @Description
 // @Description **权限要求**：
 // @Description - 平台管理员（system_admin）：可以查看所有租户列表
@@ -475,14 +475,16 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 // @Description
 // @Description **返回数据差异**：
 // @Description - 平台管理员：返回所有租户的分页列表，可能包含多条记录
-// @Description - 租户管理员：只返回当前用户所属租户的信息（单条记录），忽略分页参数
+// @Description - 租户管理员：只返回当前用户所属租户的信息（单条记录），忽略分页和过滤参数
 // @Description
 // @Description **参数说明**：
 // @Description - pageNo: 页码（从1开始，默认1）
 // @Description - pageSize: 每页大小（1-100，默认20）
+// @Description - name: 租户名称模糊搜索（可选）
+// @Description - status: 租户状态过滤（可选，true=启用，false=禁用）
 // @Description
 // @Description **注意事项**：
-// @Description - 租户管理员调用此接口时，分页参数会被忽略
+// @Description - 租户管理员调用此接口时，所有过滤参数会被忽略
 // @Description - 租户管理员始终只能看到自己的租户信息
 // @Tags Tenant Management
 // @Accept json
@@ -490,6 +492,8 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 // @Security BearerAuth
 // @Param pageNo query int false "页码" minimum(1) default(1) example:1
 // @Param pageSize query int false "每页大小" minimum(1) maximum(100) default(20) example:20
+// @Param name query string false "租户名称模糊搜索" example:"示例"
+// @Param status query boolean false "租户状态过滤" example:true
 // @Success 200 {object} model.TenantListResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
@@ -515,14 +519,41 @@ func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 解析过滤参数
+	name := r.URL.Query().Get("name")
+	statusStr := r.URL.Query().Get("status")
+	
+	var status *bool
+	if statusStr != "" {
+		if statusStr == "true" {
+			trueVal := true
+			status = &trueVal
+		} else if statusStr == "false" {
+			falseVal := false
+			status = &falseVal
+		} else {
+			h.logger.Error("解析状态参数失败", logger.Fields{"status": statusStr})
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的状态参数，必须是 true 或 false"))
+			return
+		}
+	}
+
 	// 2. 记录请求日志
 	h.logger.Info("收到获取租户列表请求", logger.Fields{
 		"pageNo":   pageNo,
 		"pageSize": pageSize,
+		"name":     name,
+		"status":   status,
 	})
 
-	// 3. 调用服务层获取租户列表（权限验证和角色过滤在服务层完成）
-	tenants, total, err := h.tenantService.List(ctx, pageNo, pageSize)
+	// 3. 构建过滤条件
+	filter := auth.TenantListFilter{
+		Name:   name,
+		Status: status,
+	}
+
+	// 4. 调用服务层获取租户列表（权限验证和角色过滤在服务层完成）
+	tenants, total, err := h.tenantService.ListWithFilter(ctx, pageNo, pageSize, filter)
 	if err != nil {
 		h.logger.Error("获取租户列表失败", logger.Fields{"error": err})
 		if appErr, ok := err.(*errors.AppError); ok {
@@ -533,13 +564,13 @@ func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. 记录响应日志
+	// 5. 记录响应日志
 	h.logger.Info("获取租户列表成功", logger.Fields{
 		"count": len(tenants),
 		"total": total,
 	})
 
-	// 5. 返回分页响应
+	// 6. 返回分页响应
 	h.writePaginationResponseWithContext(w, ctx, tenants, pageNo, pageSize, int(total))
 }
 
