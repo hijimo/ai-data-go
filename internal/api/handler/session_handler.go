@@ -53,14 +53,14 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析创建会话请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("创建会话请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -82,9 +82,9 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error("创建会话失败", logger.Fields{"error": err, "userId": userID})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -122,14 +122,14 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	req := &model.ListSessionsRequest{}
 	if err := h.parseQueryParams(r, req); err != nil {
 		h.logger.Error("解析会话列表查询参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的查询参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的查询参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(req); validationErrors != nil {
 		h.logger.Warn("会话列表请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -151,9 +151,9 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error("获取会话列表失败", logger.Fields{"error": err, "userId": userID})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -189,7 +189,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionID(r.URL.Path)
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -214,9 +214,9 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -253,7 +253,7 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionID(r.URL.Path)
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -261,14 +261,14 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 	var req model.UpdateSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析更新会话请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("更新会话请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -293,9 +293,9 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -330,7 +330,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionID(r.URL.Path)
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -355,9 +355,9 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -394,14 +394,14 @@ func (h *SessionHandler) SearchSessions(w http.ResponseWriter, r *http.Request) 
 	req := &model.SearchSessionsRequest{}
 	if err := h.parseQueryParams(r, req); err != nil {
 		h.logger.Error("解析搜索会话查询参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的查询参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的查询参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(req); validationErrors != nil {
 		h.logger.Warn("搜索会话请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -423,9 +423,9 @@ func (h *SessionHandler) SearchSessions(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		h.logger.Error("搜索会话失败", logger.Fields{"error": err, "userId": userID})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -462,7 +462,7 @@ func (h *SessionHandler) PinSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionIDFromAction(r.URL.Path, "/pin")
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -492,9 +492,9 @@ func (h *SessionHandler) PinSession(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -532,7 +532,7 @@ func (h *SessionHandler) ArchiveSession(w http.ResponseWriter, r *http.Request) 
 	sessionID := h.extractSessionIDFromAction(r.URL.Path, "/archive")
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -562,9 +562,9 @@ func (h *SessionHandler) ArchiveSession(w http.ResponseWriter, r *http.Request) 
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -743,8 +743,10 @@ func (h *SessionHandler) writePaginationResponse(w http.ResponseWriter, data []*
 }
 
 // writeErrorResponse 写入错误响应
-func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.AppError) {
-	resp := response.Error[any](appErr.Code, appErr.Message)
+func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, appErr *errors.AppError) {
+	ctx := r.Context()
+
+	resp := response.ErrorWithContext[any](ctx, appErr.Code, appErr.Message)
 
 	// 根据错误码确定 HTTP 状态码
 	statusCode := http.StatusInternalServerError
@@ -767,13 +769,19 @@ func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, appErr *error
 }
 
 // writeValidationErrorResponse 写入验证错误响应
-func (h *SessionHandler) writeValidationErrorResponse(w http.ResponseWriter, validationErrors []validator.ValidationError) {
+func (h *SessionHandler) writeValidationErrorResponse(w http.ResponseWriter, r *http.Request, validationErrors []validator.ValidationError) {
 	// 构建验证错误详情
 	errorData := map[string]interface{}{
 		"errors": validationErrors,
 	}
 
-	resp := response.ErrorWithData(
+	ctx := r.Context()
+
+
+	resp := response.ErrorWithDataContext(
+
+
+		ctx,
 		errors.CodeValidationError,
 		errors.MsgValidationError,
 		&errorData,

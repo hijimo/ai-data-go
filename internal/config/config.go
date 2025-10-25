@@ -53,8 +53,11 @@ type DatabaseConfig struct {
 
 // LogConfig 日志配置
 type LogConfig struct {
-	Level  string // 日志级别 (debug, info, warn, error)
-	Format string // 日志格式 (json, text)
+	Level         string // 日志级别 (debug, info, warn, error)
+	Format        string // 日志格式 (json, text)
+	EnableFile    bool   // 是否启用文件日志
+	LogDir        string // 日志文件目录
+	EnableConsole bool   // 是否同时输出到控制台
 }
 
 // SessionConfig 会话配置
@@ -152,8 +155,11 @@ func Load() (*Config, error) {
 
 	// 加载日志配置
 	config.Log = LogConfig{
-		Level:  getEnv("LOG_LEVEL", "info"),
-		Format: getEnv("LOG_FORMAT", "json"),
+		Level:         getEnv("LOG_LEVEL", "info"),
+		Format:        getEnv("LOG_FORMAT", "json"),
+		EnableFile:    getEnvBool("LOG_ENABLE_FILE", true),
+		LogDir:        getEnv("LOG_DIR", "logs"),
+		EnableConsole: getEnvBool("LOG_ENABLE_CONSOLE", true),
 	}
 
 	// 加载会话配置

@@ -231,7 +231,7 @@ if [ -n "$NEW_TENANT_ID" ]; then
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
     -H "Content-Type: application/json" \
     -d "{
-      \"status\": \"inactive\"
+      \"status\": false
     }")
 
   echo "响应:"

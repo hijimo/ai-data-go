@@ -96,14 +96,14 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var req auth.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析注册请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("注册请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -122,9 +122,9 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 			"email":    req.Email,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -161,14 +161,14 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var req auth.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析登录请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("登录请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -186,7 +186,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 			"email": req.Email,
 		})
 		// 登录失败返回 401 Unauthorized
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("邮箱或密码错误"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("邮箱或密码错误"))
 		return
 	}
 
@@ -222,14 +222,14 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	var req RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析刷新请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("刷新请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -245,7 +245,7 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 			"error": err,
 		})
 		// Token 无效返回 401 Unauthorized
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("刷新令牌无效或已过期"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("刷新令牌无效或已过期"))
 		return
 	}
 
@@ -280,14 +280,14 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	var req LogoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析注销请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("注销请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -313,9 +313,9 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 			"error": err,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -350,14 +350,14 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 	userID, ok := ctx.Value(middleware.UserIDContextKey).(string)
 	if !ok || userID == "" {
 		h.logger.Warn("未找到用户ID")
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
 	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok || tenantID == "" {
 		h.logger.Warn("未找到租户ID")
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
@@ -365,14 +365,14 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 	var req ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析修改密码请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("修改密码请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -391,7 +391,7 @@ func (h *AuthHandler) HandleChangePassword(w http.ResponseWriter, r *http.Reques
 			"tenantId": tenantID,
 		})
 		// 旧密码错误返回 401
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("旧密码错误"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("旧密码错误"))
 		return
 	}
 
@@ -436,14 +436,14 @@ func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request
 	var req UnlockAccountRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析解锁账户请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("解锁账户请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -462,9 +462,9 @@ func (h *AuthHandler) HandleUnlockAccount(w http.ResponseWriter, r *http.Request
 			"userId":   req.UserID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -500,14 +500,14 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := ctx.Value(middleware.UserIDContextKey).(string)
 	if !ok || userID == "" {
 		h.logger.Warn("未找到用户ID")
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
 	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok || tenantID == "" {
 		h.logger.Warn("未找到租户ID")
-		h.writeErrorResponse(w, errors.NewUnauthorizedError("未认证"))
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("未认证"))
 		return
 	}
 
@@ -525,7 +525,7 @@ func (h *AuthHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 			"userId":   userID,
 			"tenantId": tenantID,
 		})
-		h.writeErrorResponse(w, errors.NewNotFoundError("用户不存在"))
+		h.writeErrorResponse(w, r, errors.NewNotFoundError("用户不存在"))
 		return
 	}
 
@@ -565,8 +565,9 @@ func (h *AuthHandler) writeJSONResponse(w http.ResponseWriter, statusCode int, d
 }
 
 // writeErrorResponse 写入错误响应
-func (h *AuthHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.AppError) {
-	resp := response.Error[any](appErr.Code, appErr.Message)
+func (h *AuthHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, appErr *errors.AppError) {
+	ctx := r.Context()
+	resp := response.ErrorWithContext[any](ctx, appErr.Code, appErr.Message)
 
 	// 根据错误码确定 HTTP 状态码
 	statusCode := http.StatusInternalServerError
@@ -589,13 +590,15 @@ func (h *AuthHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.A
 }
 
 // writeValidationErrorResponse 写入验证错误响应
-func (h *AuthHandler) writeValidationErrorResponse(w http.ResponseWriter, validationErrors []validator.ValidationError) {
+func (h *AuthHandler) writeValidationErrorResponse(w http.ResponseWriter, r *http.Request, validationErrors []validator.ValidationError) {
+	ctx := r.Context()
 	// 构建验证错误详情
 	errorData := map[string]interface{}{
 		"errors": validationErrors,
 	}
 
-	resp := response.ErrorWithData(
+	resp := response.ErrorWithDataContext(
+		ctx,
 		errors.CodeValidationError,
 		errors.MsgValidationError,
 		&errorData,
@@ -636,14 +639,14 @@ func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) 
 	var req VerifyEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析邮箱验证请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("邮箱验证请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -659,9 +662,9 @@ func (h *AuthHandler) HandleVerifyEmail(w http.ResponseWriter, r *http.Request) 
 			"token": req.Token[:8] + "...",
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewBadRequestError("验证令牌无效或已过期"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("验证令牌无效或已过期"))
 		}
 		return
 	}
@@ -696,14 +699,14 @@ func (h *AuthHandler) HandleResendVerification(w http.ResponseWriter, r *http.Re
 	var req ResendVerificationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析重发验证邮件请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("重发验证邮件请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -721,9 +724,9 @@ func (h *AuthHandler) HandleResendVerification(w http.ResponseWriter, r *http.Re
 			"userId":   req.UserID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewBadRequestError("重发验证邮件失败"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("重发验证邮件失败"))
 		}
 		return
 	}

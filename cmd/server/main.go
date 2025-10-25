@@ -103,7 +103,36 @@ func main() {
 	if cfg.Log.Format == "text" {
 		logFormat = logger.TextFormat
 	}
-	log := logger.New(logLevel, logFormat, os.Stdout)
+	
+	// 初始化带文件持久化的日志记录器
+	// 日志文件按天存储在 logs 目录下，格式为 app-YYYY-MM-DD.log
+	// enableConsole 设置为 true 表示同时输出到控制台和文件
+	var log logger.Logger
+	if cfg.Log.EnableFile {
+		logDir := cfg.Log.LogDir
+		if logDir == "" {
+			logDir = "logs" // 默认日志目录
+		}
+		
+		var err error
+		log, err = logger.NewWithFile(logLevel, logFormat, logDir, cfg.Log.EnableConsole)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "初始化文件日志失败: %v，将使用控制台日志\n", err)
+			log = logger.New(logLevel, logFormat, os.Stdout)
+		} else {
+			// 确保程序退出时关闭日志文件
+			defer func() {
+				if closer, ok := log.(interface{ Close() error }); ok {
+					if err := closer.Close(); err != nil {
+						fmt.Fprintf(os.Stderr, "关闭日志文件失败: %v\n", err)
+					}
+				}
+			}()
+		}
+	} else {
+		log = logger.New(logLevel, logFormat, os.Stdout)
+	}
+	
 	log.Info("服务启动中...", logger.Fields{
 		"version": Version,
 		"port":    cfg.Server.Port,

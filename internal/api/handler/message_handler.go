@@ -53,7 +53,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionID(r.URL.Path)
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	var req model.SendMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析发送消息请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("发送消息请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -104,9 +104,9 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -145,7 +145,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	sessionID := h.extractSessionID(r.URL.Path)
 	if sessionID == "" {
 		h.logger.Warn("会话ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("会话ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
 		return
 	}
 
@@ -155,14 +155,14 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.parseQueryParams(r, req); err != nil {
 		h.logger.Error("解析获取消息查询参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的查询参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的查询参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(req); validationErrors != nil {
 		h.logger.Warn("获取消息请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -196,9 +196,9 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -234,7 +234,7 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 	messageID := h.extractMessageID(r.URL.Path)
 	if messageID == "" {
 		h.logger.Warn("消息ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("消息ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("消息ID不能为空"))
 		return
 	}
 
@@ -259,9 +259,9 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -296,7 +296,7 @@ func (h *MessageHandler) AbortMessage(w http.ResponseWriter, r *http.Request) {
 	messageID := h.extractMessageIDFromAction(r.URL.Path, "/abort")
 	if messageID == "" {
 		h.logger.Warn("消息ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("消息ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("消息ID不能为空"))
 		return
 	}
 
@@ -321,9 +321,9 @@ func (h *MessageHandler) AbortMessage(w http.ResponseWriter, r *http.Request) {
 			"userId":    userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -491,8 +491,10 @@ func (h *MessageHandler) writeMessagePaginationResponse(w http.ResponseWriter, m
 }
 
 // writeErrorResponse 写入错误响应
-func (h *MessageHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.AppError) {
-	resp := response.Error[any](appErr.Code, appErr.Message)
+func (h *MessageHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, appErr *errors.AppError) {
+	ctx := r.Context()
+
+	resp := response.ErrorWithContext[any](ctx, appErr.Code, appErr.Message)
 
 	// 根据错误码确定 HTTP 状态码
 	statusCode := http.StatusInternalServerError
@@ -517,13 +519,19 @@ func (h *MessageHandler) writeErrorResponse(w http.ResponseWriter, appErr *error
 }
 
 // writeValidationErrorResponse 写入验证错误响应
-func (h *MessageHandler) writeValidationErrorResponse(w http.ResponseWriter, validationErrors []validator.ValidationError) {
+func (h *MessageHandler) writeValidationErrorResponse(w http.ResponseWriter, r *http.Request, validationErrors []validator.ValidationError) {
 	// 构建验证错误详情
 	errorData := map[string]interface{}{
 		"errors": validationErrors,
 	}
 
-	resp := response.ErrorWithData(
+	ctx := r.Context()
+
+
+	resp := response.ErrorWithDataContext(
+
+
+		ctx,
 		errors.CodeValidationError,
 		errors.MsgValidationError,
 		&errorData,

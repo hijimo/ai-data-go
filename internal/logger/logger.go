@@ -126,6 +126,12 @@ type logger struct {
 	fields     Fields
 	mu         sync.RWMutex
 	callerSkip int
+	// 日志文件配置
+	logDir        string      // 日志目录
+	logFile       *os.File    // 当前日志文件
+	currentDate   string      // 当前日期
+	enableFile    bool        // 是否启用文件日志
+	fileWriter    io.Writer   // 文件写入器（可能是多写入器）
 }
 
 // logEntry 日志条目
@@ -152,7 +158,42 @@ func New(level Level, format Format, output io.Writer) Logger {
 		output:     output,
 		fields:     make(Fields),
 		callerSkip: 2,
+		enableFile: false,
 	}
+}
+
+// NewWithFile 创建带文件持久化的日志记录器
+func NewWithFile(level Level, format Format, logDir string, enableConsole bool) (Logger, error) {
+	// 确保日志目录存在
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return nil, fmt.Errorf("创建日志目录失败: %w", err)
+	}
+	
+	l := &logger{
+		level:      level,
+		format:     format,
+		fields:     make(Fields),
+		callerSkip: 2,
+		logDir:     logDir,
+		enableFile: true,
+	}
+	
+	// 初始化日志文件
+	if err := l.rotateLogFile(); err != nil {
+		return nil, err
+	}
+	
+	// 设置输出目标
+	if enableConsole {
+		// 同时输出到控制台和文件
+		l.output = io.MultiWriter(os.Stdout, l.logFile)
+	} else {
+		// 仅输出到文件
+		l.output = l.logFile
+	}
+	l.fileWriter = l.output
+	
+	return l, nil
 }
 
 // Init 初始化默认日志记录器
@@ -165,6 +206,20 @@ func Init(level string, format string) {
 		}
 		defaultLogger = New(l, f, os.Stdout)
 	})
+}
+
+// InitWithFile 初始化带文件持久化的默认日志记录器
+func InitWithFile(level string, format string, logDir string, enableConsole bool) error {
+	var err error
+	once.Do(func() {
+		l := ParseLevel(level)
+		f := JSONFormat
+		if strings.ToLower(format) == "text" {
+			f = TextFormat
+		}
+		defaultLogger, err = NewWithFile(l, f, logDir, enableConsole)
+	})
+	return err
 }
 
 // Default 获取默认日志记录器
@@ -380,10 +435,22 @@ func (l *logger) buildEntry(level Level, msg string, fields ...Fields) *logEntry
 
 // write 写入日志
 func (l *logger) write(entry *logEntry) {
-	l.mu.RLock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	
+	// 如果启用了文件日志，检查是否需要轮转
+	if l.enableFile {
+		currentDate := time.Now().Format("2006-01-02")
+		if currentDate != l.currentDate {
+			if err := l.rotateLogFile(); err != nil {
+				// 轮转失败，记录到标准错误
+				fmt.Fprintf(os.Stderr, "日志文件轮转失败: %v\n", err)
+			}
+		}
+	}
+	
 	format := l.format
 	output := l.output
-	l.mu.RUnlock()
 	
 	var line string
 	if format == JSONFormat {
@@ -393,6 +460,60 @@ func (l *logger) write(entry *logEntry) {
 	}
 	
 	fmt.Fprintln(output, line)
+}
+
+// rotateLogFile 轮转日志文件（按天）
+func (l *logger) rotateLogFile() error {
+	currentDate := time.Now().Format("2006-01-02")
+	
+	// 如果日期没变，不需要轮转
+	if currentDate == l.currentDate && l.logFile != nil {
+		return nil
+	}
+	
+	// 关闭旧文件
+	if l.logFile != nil {
+		if err := l.logFile.Close(); err != nil {
+			return fmt.Errorf("关闭旧日志文件失败: %w", err)
+		}
+	}
+	
+	// 创建新文件
+	logFileName := fmt.Sprintf("%s/app-%s.log", l.logDir, currentDate)
+	file, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("创建日志文件失败: %w", err)
+	}
+	
+	l.logFile = file
+	l.currentDate = currentDate
+	
+	// 更新输出目标
+	if l.fileWriter != nil {
+		// 如果之前是多写入器，需要重新创建
+		if _, ok := l.fileWriter.(io.Writer); ok {
+			// 检查是否同时输出到控制台
+			if l.output != l.logFile {
+				l.output = io.MultiWriter(os.Stdout, l.logFile)
+			} else {
+				l.output = l.logFile
+			}
+			l.fileWriter = l.output
+		}
+	}
+	
+	return nil
+}
+
+// Close 关闭日志记录器（关闭文件句柄）
+func (l *logger) Close() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	
+	if l.logFile != nil {
+		return l.logFile.Close()
+	}
+	return nil
 }
 
 // formatJSON 格式化为JSON

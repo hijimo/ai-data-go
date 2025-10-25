@@ -106,14 +106,14 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	var req auth.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析创建用户请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("创建用户请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -132,9 +132,9 @@ func (h *UserHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 			"email":    req.Email,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -185,7 +185,7 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	userID := h.extractUserID(r.URL.Path)
 	if userID == "" {
 		h.logger.Warn("用户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID不能为空"))
 		return
 	}
 
@@ -202,9 +202,9 @@ func (h *UserHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 			"userId": userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewNotFoundError("用户不存在"))
+			h.writeErrorResponse(w, r, errors.NewNotFoundError("用户不存在"))
 		}
 		return
 	}
@@ -262,7 +262,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	userID := h.extractUserID(r.URL.Path)
 	if userID == "" {
 		h.logger.Warn("用户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID不能为空"))
 		return
 	}
 
@@ -270,14 +270,14 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	var req auth.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析更新用户请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("更新用户请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -294,9 +294,9 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 			"userId": userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -349,7 +349,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	userID := h.extractUserID(r.URL.Path)
 	if userID == "" {
 		h.logger.Warn("用户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID不能为空"))
 		return
 	}
 
@@ -366,9 +366,9 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 			"userId": userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -387,7 +387,7 @@ func (h *UserHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // UpdateUserStatusRequest 更新用户状态请求
 // @name UpdateUserStatusRequest
 type UpdateUserStatusRequest struct {
-	IsActive bool `json:"isActive" validate:"required" example:"true"`
+	IsActive *bool `json:"isActive" validate:"required" example:"true"`
 }
 
 // HandleUpdateStatus 处理更新用户状态
@@ -431,7 +431,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 	userID := h.extractUserID(r.URL.Path)
 	if userID == "" {
 		h.logger.Warn("用户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("用户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID不能为空"))
 		return
 	}
 
@@ -439,26 +439,26 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 	var req UpdateUserStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析更新用户状态请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("更新用户状态请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
 	// 4. 记录请求日志
 	h.logger.Info("收到更新用户状态请求", logger.Fields{
 		"userId":   userID,
-		"isActive": req.IsActive,
+		"isActive": *req.IsActive,
 	})
 
 	// 5. 构建更新请求
 	updateReq := auth.UpdateUserRequest{
-		IsActive: &req.IsActive,
+		IsActive: req.IsActive,
 	}
 
 	// 6. 调用服务层更新用户（权限验证在服务层完成）
@@ -469,9 +469,9 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 			"userId": userID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -532,14 +532,14 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	pageNo, err := h.parseIntQuery(r, "pageNo", 1)
 	if err != nil {
 		h.logger.Error("解析页码参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的页码参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的页码参数"))
 		return
 	}
 
 	pageSize, err := h.parseIntQuery(r, "pageSize", 20)
 	if err != nil {
 		h.logger.Error("解析每页大小参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的每页大小参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的每页大小参数"))
 		return
 	}
 
@@ -568,9 +568,9 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 			"tenantId": tenantID,
 		})
 		if appErr, ok := listErr.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(listErr))
+			h.writeErrorResponse(w, r, errors.NewInternalError(listErr))
 		}
 		return
 	}
@@ -631,8 +631,10 @@ func (h *UserHandler) writeJSONResponse(w http.ResponseWriter, statusCode int, d
 }
 
 // writeErrorResponse 写入错误响应
-func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.AppError) {
-	resp := response.Error[any](appErr.Code, appErr.Message)
+func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, appErr *errors.AppError) {
+	ctx := r.Context()
+
+	resp := response.ErrorWithContext[any](ctx, appErr.Code, appErr.Message)
 
 	// 根据错误码确定 HTTP 状态码
 	statusCode := http.StatusInternalServerError
@@ -655,13 +657,19 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.A
 }
 
 // writeValidationErrorResponse 写入验证错误响应
-func (h *UserHandler) writeValidationErrorResponse(w http.ResponseWriter, validationErrors []validator.ValidationError) {
+func (h *UserHandler) writeValidationErrorResponse(w http.ResponseWriter, r *http.Request, validationErrors []validator.ValidationError) {
 	// 构建验证错误详情
 	errorData := map[string]interface{}{
 		"errors": validationErrors,
 	}
 
-	resp := response.ErrorWithData(
+	ctx := r.Context()
+
+
+	resp := response.ErrorWithDataContext(
+
+
+		ctx,
 		errors.CodeValidationError,
 		errors.MsgValidationError,
 		&errorData,

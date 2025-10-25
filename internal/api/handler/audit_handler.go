@@ -97,7 +97,7 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 			filter.TenantID = &tenantID
 		} else {
 			h.logger.Warn("无效的租户ID", logger.Fields{"tenantId": tenantIDStr})
-			h.writeErrorResponse(w, errors.NewBadRequestError("无效的租户ID"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的租户ID"))
 			return
 		}
 	}
@@ -108,7 +108,7 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 			filter.UserID = &userID
 		} else {
 			h.logger.Warn("无效的用户ID", logger.Fields{"userId": userIDStr})
-			h.writeErrorResponse(w, errors.NewBadRequestError("无效的用户ID"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的用户ID"))
 			return
 		}
 	}
@@ -124,7 +124,7 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 			filter.StartTime = &startTime
 		} else {
 			h.logger.Warn("无效的开始时间", logger.Fields{"startTime": startTimeStr})
-			h.writeErrorResponse(w, errors.NewBadRequestError("无效的开始时间格式，请使用RFC3339格式"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的开始时间格式，请使用RFC3339格式"))
 			return
 		}
 	}
@@ -135,7 +135,7 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 			filter.EndTime = &endTime
 		} else {
 			h.logger.Warn("无效的结束时间", logger.Fields{"endTime": endTimeStr})
-			h.writeErrorResponse(w, errors.NewBadRequestError("无效的结束时间格式，请使用RFC3339格式"))
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的结束时间格式，请使用RFC3339格式"))
 			return
 		}
 	}
@@ -144,7 +144,7 @@ func (h *AuditHandler) HandleListAuditLogs(w http.ResponseWriter, r *http.Reques
 	audits, total, err := h.auditRepo.List(ctx, filter, page, pageSize)
 	if err != nil {
 		h.logger.Error("查询审计日志失败", logger.Fields{"error": err, "filter": filter})
-		h.writeErrorResponse(w, errors.NewInternalError(err))
+		h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		return
 	}
 
@@ -178,8 +178,9 @@ func (h *AuditHandler) writeJSONResponse(w http.ResponseWriter, statusCode int, 
 }
 
 // writeErrorResponse 写入错误响应
-func (h *AuditHandler) writeErrorResponse(w http.ResponseWriter, err *errors.AppError) {
-	resp := response.Error[any](err.Code, err.Message)
+func (h *AuditHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, err *errors.AppError) {
+	ctx := r.Context()
+	resp := response.ErrorWithContext[any](ctx, err.Code, err.Message)
 	// 根据错误码确定 HTTP 状态码
 	httpStatus := http.StatusInternalServerError
 	if err.Code >= 400 && err.Code < 500 {

@@ -93,14 +93,14 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	var req auth.CreateTenantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析创建租户请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 2. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("创建租户请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -118,9 +118,9 @@ func (h *TenantHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 			"name":  req.Name,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -169,7 +169,7 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	tenantID := h.extractTenantID(r.URL.Path)
 	if tenantID == "" {
 		h.logger.Warn("租户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("租户ID不能为空"))
 		return
 	}
 
@@ -186,9 +186,9 @@ func (h *TenantHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 			"tenantId": tenantID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewNotFoundError("租户不存在"))
+			h.writeErrorResponse(w, r, errors.NewNotFoundError("租户不存在"))
 		}
 		return
 	}
@@ -248,7 +248,7 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	tenantID := h.extractTenantID(r.URL.Path)
 	if tenantID == "" {
 		h.logger.Warn("租户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("租户ID不能为空"))
 		return
 	}
 
@@ -256,14 +256,14 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	var req auth.UpdateTenantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析更新租户请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("更新租户请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
@@ -280,9 +280,9 @@ func (h *TenantHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 			"tenantId": tenantID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -331,7 +331,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	tenantID := h.extractTenantID(r.URL.Path)
 	if tenantID == "" {
 		h.logger.Warn("租户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("租户ID不能为空"))
 		return
 	}
 
@@ -348,9 +348,9 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 			"tenantId": tenantID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -369,7 +369,7 @@ func (h *TenantHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 // UpdateTenantStatusRequest 更新租户状态请求
 // @name UpdateTenantStatusRequest
 type UpdateTenantStatusRequest struct {
-	Status bool `json:"status" validate:"required" example:"true"`
+	Status *bool `json:"status" validate:"required" example:"true"`
 }
 
 // HandleUpdateStatus 处理更新租户状态
@@ -409,7 +409,7 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 	tenantID := h.extractTenantID(r.URL.Path)
 	if tenantID == "" {
 		h.logger.Warn("租户ID为空")
-		h.writeErrorResponse(w, errors.NewBadRequestError("租户ID不能为空"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("租户ID不能为空"))
 		return
 	}
 
@@ -417,26 +417,26 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 	var req UpdateTenantStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("解析更新租户状态请求参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的请求参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
 		return
 	}
 
 	// 3. 验证请求参数
 	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
 		h.logger.Warn("更新租户状态请求参数验证失败", logger.Fields{"errors": validationErrors})
-		h.writeValidationErrorResponse(w, validationErrors)
+		h.writeValidationErrorResponse(w, r, validationErrors)
 		return
 	}
 
 	// 4. 记录请求日志
 	h.logger.Info("收到更新租户状态请求", logger.Fields{
 		"tenantId": tenantID,
-		"status":   req.Status,
+		"status":   *req.Status,
 	})
 
 	// 5. 构建更新请求
 	updateReq := auth.UpdateTenantRequest{
-		Status: &req.Status,
+		Status: req.Status,
 	}
 
 	// 6. 调用服务层更新租户（权限验证在中间件层完成）
@@ -447,9 +447,9 @@ func (h *TenantHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reques
 			"tenantId": tenantID,
 		})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -504,14 +504,14 @@ func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	pageNo, err := h.parseIntQuery(r, "pageNo", 1)
 	if err != nil {
 		h.logger.Error("解析页码参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的页码参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的页码参数"))
 		return
 	}
 
 	pageSize, err := h.parseIntQuery(r, "pageSize", 20)
 	if err != nil {
 		h.logger.Error("解析每页大小参数失败", logger.Fields{"error": err})
-		h.writeErrorResponse(w, errors.NewBadRequestError("无效的每页大小参数"))
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的每页大小参数"))
 		return
 	}
 
@@ -526,9 +526,9 @@ func (h *TenantHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error("获取租户列表失败", logger.Fields{"error": err})
 		if appErr, ok := err.(*errors.AppError); ok {
-			h.writeErrorResponse(w, appErr)
+			h.writeErrorResponse(w, r, appErr)
 		} else {
-			h.writeErrorResponse(w, errors.NewInternalError(err))
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
 		}
 		return
 	}
@@ -588,8 +588,10 @@ func (h *TenantHandler) writeJSONResponse(w http.ResponseWriter, statusCode int,
 }
 
 // writeErrorResponse 写入错误响应
-func (h *TenantHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors.AppError) {
-	resp := response.Error[any](appErr.Code, appErr.Message)
+func (h *TenantHandler) writeErrorResponse(w http.ResponseWriter, r *http.Request, appErr *errors.AppError) {
+	ctx := r.Context()
+
+	resp := response.ErrorWithContext[any](ctx, appErr.Code, appErr.Message)
 
 	// 根据错误码确定 HTTP 状态码
 	statusCode := http.StatusInternalServerError
@@ -612,13 +614,19 @@ func (h *TenantHandler) writeErrorResponse(w http.ResponseWriter, appErr *errors
 }
 
 // writeValidationErrorResponse 写入验证错误响应
-func (h *TenantHandler) writeValidationErrorResponse(w http.ResponseWriter, validationErrors []validator.ValidationError) {
+func (h *TenantHandler) writeValidationErrorResponse(w http.ResponseWriter, r *http.Request, validationErrors []validator.ValidationError) {
 	// 构建验证错误详情
 	errorData := map[string]interface{}{
 		"errors": validationErrors,
 	}
 
-	resp := response.ErrorWithData(
+	ctx := r.Context()
+
+
+	resp := response.ErrorWithDataContext(
+
+
+		ctx,
 		errors.CodeValidationError,
 		errors.MsgValidationError,
 		&errorData,
