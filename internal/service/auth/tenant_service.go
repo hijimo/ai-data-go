@@ -199,10 +199,8 @@ func (s *tenantService) Get(ctx context.Context, id string) (*model.Tenant, erro
 		return nil, errors.New("权限不足：无法访问其他租户的数据")
 	}
 
-	// 验证租户状态
-	if !tenant.Status {
-		return nil, errors.New("租户已被禁用")
-	}
+	// 移除租户状态验证，允许查询禁用的租户
+	// 这样管理员可以查看禁用租户的详细信息
 
 	return tenant, nil
 }
@@ -419,10 +417,8 @@ func (s *tenantService) GetByDomain(ctx context.Context, domain string) (*model.
 		return nil, fmt.Errorf("获取租户失败: %w", err)
 	}
 
-	// 验证租户状态
-	if !tenant.Status {
-		return nil, errors.New("租户已被禁用")
-	}
+	// 移除租户状态验证，允许查询禁用的租户
+	// 这样管理员可以通过域名查看禁用租户的详细信息
 
 	return tenant, nil
 }

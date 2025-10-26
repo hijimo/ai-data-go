@@ -34,11 +34,11 @@ type UserRepository interface {
 	// Delete 软删除用户
 	Delete(ctx context.Context, tenantID, userID string) error
 
-	// List 列出租户下的用户（支持分页和搜索）
-	List(ctx context.Context, tenantID string, page, pageSize int, search string) ([]*model.User, int64, error)
+	// List 列出租户下的用户（支持分页、搜索和状态过滤）
+	List(ctx context.Context, tenantID string, page, pageSize int, search string, isActive *bool) ([]*model.User, int64, error)
 
-	// ListAll 列出所有租户的用户（支持分页和搜索，用于平台管理员）
-	ListAll(ctx context.Context, page, pageSize int, search string) ([]*model.User, int64, error)
+	// ListAll 列出所有租户的用户（支持分页、搜索和状态过滤，用于平台管理员）
+	ListAll(ctx context.Context, page, pageSize int, search string, isActive *bool) ([]*model.User, int64, error)
 
 	// UpdateLastLogin 更新最后登录时间
 	UpdateLastLogin(ctx context.Context, tenantID, userID string) error
@@ -249,8 +249,8 @@ func (r *userRepository) Delete(ctx context.Context, tenantID, userID string) er
 	return nil
 }
 
-// List 列出租户下的用户（支持分页和搜索）
-func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSize int, search string) ([]*model.User, int64, error) {
+// List 列出租户下的用户（支持分页、搜索和状态过滤）
+func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSize int, search string, isActive *bool) ([]*model.User, int64, error) {
 	if tenantID == "" {
 		return nil, 0, errors.New("tenant_id is required")
 	}
@@ -285,6 +285,11 @@ func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSi
 		)
 	}
 
+	// 添加状态过滤条件
+	if isActive != nil {
+		query = query.Where("is_active = ?", *isActive)
+	}
+
 	// 查询总数
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -302,8 +307,8 @@ func (r *userRepository) List(ctx context.Context, tenantID string, page, pageSi
 	return users, total, nil
 }
 
-// ListAll 列出所有租户的用户（支持分页和搜索，用于平台管理员）
-func (r *userRepository) ListAll(ctx context.Context, page, pageSize int, search string) ([]*model.User, int64, error) {
+// ListAll 列出所有租户的用户（支持分页、搜索和状态过滤，用于平台管理员）
+func (r *userRepository) ListAll(ctx context.Context, page, pageSize int, search string, isActive *bool) ([]*model.User, int64, error) {
 	// 参数验证
 	if page < 1 {
 		page = 1
@@ -332,6 +337,11 @@ func (r *userRepository) ListAll(ctx context.Context, page, pageSize int, search
 			"display_name ILIKE ? OR phone ILIKE ? OR email ILIKE ?",
 			searchPattern, searchPattern, searchPattern,
 		)
+	}
+
+	// 添加状态过滤条件
+	if isActive != nil {
+		query = query.Where("is_active = ?", *isActive)
 	}
 
 	// 查询总数

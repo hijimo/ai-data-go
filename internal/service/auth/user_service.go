@@ -27,8 +27,8 @@ type UserService interface {
 	// Delete 删除用户
 	Delete(ctx context.Context, userID string) error
 
-	// List 列出用户（tenantID和search可选，仅平台管理员可用）
-	List(ctx context.Context, page, pageSize int, search string, tenantID ...string) ([]*model.User, int64, error)
+	// List 列出用户（tenantID、search和isActive可选，仅平台管理员可用）
+	List(ctx context.Context, page, pageSize int, search string, isActive *bool, tenantID ...string) ([]*model.User, int64, error)
 }
 
 // CreateUserRequest 创建用户请求
@@ -427,8 +427,8 @@ func (s *userService) Delete(ctx context.Context, userID string) error {
 	return nil
 }
 
-// List 列出用户（tenantID和search可选，仅平台管理员可用）
-func (s *userService) List(ctx context.Context, page, pageSize int, search string, tenantID ...string) ([]*model.User, int64, error) {
+// List 列出用户（tenantID、search和isActive可选，仅平台管理员可用）
+func (s *userService) List(ctx context.Context, page, pageSize int, search string, isActive *bool, tenantID ...string) ([]*model.User, int64, error) {
 	// 参数验证
 	if page < 1 {
 		page = 1
@@ -451,7 +451,7 @@ func (s *userService) List(ctx context.Context, page, pageSize int, search strin
 
 	// 如果是租户管理员，只返回当前租户的用户
 	if !isSystemAdmin {
-		users, total, err := s.userRepo.List(ctx, claims.TenantID, page, pageSize, search)
+		users, total, err := s.userRepo.List(ctx, claims.TenantID, page, pageSize, search, isActive)
 		if err != nil {
 			return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 		}
@@ -466,7 +466,7 @@ func (s *userService) List(ctx context.Context, page, pageSize int, search strin
 		if _, err := uuid.Parse(targetTenantID); err != nil {
 			return nil, 0, errors.NewBadRequestError("无效的租户ID格式")
 		}
-		users, total, err := s.userRepo.List(ctx, targetTenantID, page, pageSize, search)
+		users, total, err := s.userRepo.List(ctx, targetTenantID, page, pageSize, search, isActive)
 		if err != nil {
 			return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 		}
@@ -474,7 +474,7 @@ func (s *userService) List(ctx context.Context, page, pageSize int, search strin
 	}
 
 	// 未提供tenantID，返回所有租户的用户列表
-	users, total, err := s.userRepo.ListAll(ctx, page, pageSize, search)
+	users, total, err := s.userRepo.ListAll(ctx, page, pageSize, search, isActive)
 	if err != nil {
 		return nil, 0, errors.NewInternalError(fmt.Errorf("获取用户列表失败: %w", err))
 	}

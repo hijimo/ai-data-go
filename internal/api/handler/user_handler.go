@@ -489,7 +489,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 
 // HandleList 处理获取用户列表
 // @Summary 获取用户列表
-// @Description 获取用户列表，支持分页、租户过滤和搜索
+// @Description 获取用户列表，支持分页、租户过滤、搜索和状态过滤
 // @Description
 // @Description **权限要求**：
 // @Description - 平台管理员（system_admin）：可以查看所有租户的用户或指定租户的用户
@@ -508,11 +508,18 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 // @Description - 搜索不区分大小写
 // @Description - 多个字段使用 OR 逻辑连接
 // @Description
+// @Description **isActive 查询参数说明**：
+// @Description - 用于过滤用户的启用/禁用状态
+// @Description - true: 只返回启用的用户
+// @Description - false: 只返回禁用的用户
+// @Description - 不提供: 返回所有状态的用户
+// @Description
 // @Description **参数说明**：
 // @Description - pageNo: 页码（从1开始，默认1）
 // @Description - pageSize: 每页大小（1-100，默认20）
 // @Description - tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）
 // @Description - search: 搜索关键词（可选，支持模糊匹配 displayName、phone、email）
+// @Description - isActive: 用户状态（可选，true=启用，false=禁用）
 // @Description
 // @Description **注意事项**：
 // @Description - 租户管理员调用此接口时，tenantId 参数会被忽略
@@ -525,6 +532,7 @@ func (h *UserHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request)
 // @Param pageSize query int false "每页大小" minimum(1) maximum(100) default(20) example:20
 // @Param tenantId query string false "租户ID（仅平台管理员可用）" example:"550e8400-e29b-41d4-a716-446655440000"
 // @Param search query string false "搜索关键词（支持模糊匹配 displayName、phone、email）" example:"张三"
+// @Param isActive query boolean false "用户状态（true=启用，false=禁用）" example:true
 // @Success 200 {object} model.UserListResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 401 {object} model.ErrorResponse "未认证"
@@ -550,32 +558,51 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 获取可选的租户ID和搜索参数
+	// 2. 获取可选的租户ID、搜索参数和状态参数
 	tenantID := r.URL.Query().Get("tenantId")
 	search := r.URL.Query().Get("search")
+	isActiveStr := r.URL.Query().Get("isActive")
 
-	// 3. 记录请求日志
+	// 3. 解析状态参数
+	var isActive *bool
+	if isActiveStr != "" {
+		if isActiveStr == "true" {
+			trueVal := true
+			isActive = &trueVal
+		} else if isActiveStr == "false" {
+			falseVal := false
+			isActive = &falseVal
+		} else {
+			h.logger.Error("无效的状态参数", logger.Fields{"isActive": isActiveStr})
+			h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的状态参数，必须是 true 或 false"))
+			return
+		}
+	}
+
+	// 4. 记录请求日志
 	h.logger.Info("收到获取用户列表请求", logger.Fields{
 		"tenantId": tenantID,
 		"search":   search,
+		"isActive": isActive,
 		"pageNo":   pageNo,
 		"pageSize": pageSize,
 	})
 
-	// 4. 调用服务层获取用户列表（权限验证和租户过滤在服务层完成）
+	// 5. 调用服务层获取用户列表（权限验证和租户过滤在服务层完成）
 	var users []*model.User
 	var total int64
 	var listErr error
 	if tenantID != "" {
-		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search, tenantID)
+		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search, isActive, tenantID)
 	} else {
-		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search)
+		users, total, listErr = h.userService.List(ctx, pageNo, pageSize, search, isActive)
 	}
 	if listErr != nil {
 		h.logger.Error("获取用户列表失败", logger.Fields{
 			"error":    listErr,
 			"tenantId": tenantID,
 			"search":   search,
+			"isActive": isActive,
 		})
 		if appErr, ok := listErr.(*errors.AppError); ok {
 			h.writeErrorResponse(w, r, appErr)
@@ -585,15 +612,16 @@ func (h *UserHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. 记录响应日志
+	// 6. 记录响应日志
 	h.logger.Info("获取用户列表成功", logger.Fields{
 		"tenantId": tenantID,
 		"search":   search,
+		"isActive": isActive,
 		"count":    len(users),
 		"total":    total,
 	})
 
-	// 6. 返回分页响应
+	// 7. 返回分页响应
 	h.writePaginationResponseWithContext(w, ctx, users, pageNo, pageSize, int(total))
 }
 
