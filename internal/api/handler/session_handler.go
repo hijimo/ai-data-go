@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"strings"
 
+	"genkit-ai-service/internal/api/middleware"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/service/session"
 	"genkit-ai-service/pkg/errors"
 	"genkit-ai-service/pkg/response"
 	"genkit-ai-service/pkg/validator"
+	
+	"github.com/google/uuid"
 )
 
 // contextKey 上下文键类型
@@ -64,10 +67,19 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. 从上下文获取用户ID（TODO: 实际应从认证中间件获取）
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 3. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 4. 记录请求日志
@@ -109,7 +121,6 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 // @Param pageSize query int true "每页大小" minimum(1) maximum(100) default(20)
 // @Param isPinned query bool false "是否置顶"
 // @Param isArchived query bool false "是否归档"
-// @Param modelName query string false "模型名称"
 // @Success 200 {object} model.SessionListResponse "成功返回会话列表"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
 // @Failure 422 {object} model.ErrorResponse "参数验证失败"
@@ -133,10 +144,12 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 3. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
 	}
 
 	// 4. 记录请求日志
@@ -193,10 +206,19 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 2. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 3. 记录请求日志
@@ -272,10 +294,19 @@ func (h *SessionHandler) UpdateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 4. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 5. 记录请求日志
@@ -334,10 +365,19 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 2. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 3. 记录请求日志
@@ -405,10 +445,19 @@ func (h *SessionHandler) SearchSessions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// 3. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 3. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 4. 记录请求日志
@@ -470,10 +519,19 @@ func (h *SessionHandler) PinSession(w http.ResponseWriter, r *http.Request) {
 	pinnedStr := r.URL.Query().Get("pinned")
 	pinned := pinnedStr == "true"
 
-	// 3. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 3. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 4. 记录请求日志
@@ -540,10 +598,19 @@ func (h *SessionHandler) ArchiveSession(w http.ResponseWriter, r *http.Request) 
 	archivedStr := r.URL.Query().Get("archived")
 	archived := archivedStr == "true"
 
-	// 3. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 3. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+	
+	// 验证 userID 是否为有效的 UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		h.logger.Warn("用户ID格式无效", logger.Fields{"userId": userID})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("用户ID格式无效"))
+		return
 	}
 
 	// 4. 记录请求日志
@@ -634,7 +701,6 @@ func (h *SessionHandler) parseQueryParams(r *http.Request, target interface{}) e
 			archived := archivedStr == "true"
 			v.IsArchived = &archived
 		}
-		v.ModelName = query.Get("modelName")
 
 	case *model.SearchSessionsRequest:
 		v.Keyword = query.Get("keyword")

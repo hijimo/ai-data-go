@@ -54,8 +54,6 @@ type ListSessionsRequest struct {
 	IsPinned *bool `json:"isPinned,omitempty" example:"true"`
 	// 是否归档（可选）
 	IsArchived *bool `json:"isArchived,omitempty" example:"false"`
-	// 模型名称（可选）
-	ModelName string `json:"modelName,omitempty" example:"gpt-4"`
 }
 
 // UpdateSessionRequest 更新会话请求

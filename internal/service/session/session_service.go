@@ -137,7 +137,6 @@ func (s *sessionService) ListSessions(ctx context.Context, userID string, req *m
 	filters := &repository.SessionFilters{
 		IsPinned:   req.IsPinned,
 		IsArchived: req.IsArchived,
-		ModelName:  req.ModelName,
 	}
 
 	// 查询会话列表

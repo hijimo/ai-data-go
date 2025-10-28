@@ -205,8 +205,11 @@ func main() {
 
 	// 8.1 注册认证路由（如果数据库可用）
 	var cleanupSvc cleanup.CleanupService
+	var jwtAuthMW func(http.Handler) http.Handler
 	if db != nil {
-		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW := initAuthHandlers(db, cfg, log)
+		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMiddleware, rbacMW := initAuthHandlers(db, cfg, log)
+		jwtAuthMW = jwtAuthMiddleware // 保存 JWT 认证中间件供其他路由使用
+		
 		routes.RegisterAuthRoutes(serveMux, authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW)
 		log.Info("认证和管理路由已注册", logger.Fields{
 			"routes": []string{
@@ -236,9 +239,10 @@ func main() {
 	}
 
 	// 8.2 注册会话管理路由（如果数据库可用）
-	if db != nil && aiService != nil {
+	// 会话管理路由需要 JWT 认证中间件
+	if db != nil && aiService != nil && jwtAuthMW != nil {
 		sessionHandler, messageHandler := initSessionHandlers(db, aiService, cfg, log)
-		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler)
+		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler, jwtAuthMW)
 		log.Info("会话管理路由已注册", logger.Fields{
 			"routes": []string{
 				"/api/v1/chat/sessions",

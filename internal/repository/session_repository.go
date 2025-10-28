@@ -47,7 +47,6 @@ type SessionRepository interface {
 type SessionFilters struct {
 	IsPinned   *bool
 	IsArchived *bool
-	ModelName  string
 }
 
 // sessionRepository 会话数据访问实现
@@ -103,9 +102,6 @@ func (r *sessionRepository) GetByUserID(ctx context.Context, userID string, page
 		}
 		if filters.IsArchived != nil {
 			query = query.Where("is_archived = ?", *filters.IsArchived)
-		}
-		if filters.ModelName != "" {
-			query = query.Where("model_name = ?", filters.ModelName)
 		}
 	}
 

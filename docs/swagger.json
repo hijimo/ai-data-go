@@ -898,12 +898,6 @@
                         "description": "是否归档",
                         "name": "isArchived",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "模型名称",
-                        "name": "modelName",
-                        "in": "query"
                     }
                 ],
                 "responses": {

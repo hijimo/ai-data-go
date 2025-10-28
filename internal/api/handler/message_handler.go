@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"genkit-ai-service/internal/api/middleware"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/service/session"
@@ -75,10 +76,12 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 4. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
 	}
 
 	// 5. 记录请求日志
@@ -166,10 +169,12 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 4. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
 	}
 
 	// 5. 记录请求日志
@@ -238,10 +243,12 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// 2. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 2. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
 	}
 
 	// 3. 记录请求日志
@@ -300,10 +307,12 @@ func (h *MessageHandler) AbortMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 从上下文获取用户ID
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "default-user-id" // 临时默认值
+	// 2. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
 	}
 
 	// 3. 记录请求日志

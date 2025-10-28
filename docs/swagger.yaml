@@ -2085,10 +2085,6 @@ paths:
         in: query
         name: isArchived
         type: boolean
-      - description: 模型名称
-        in: query
-        name: modelName
-        type: string
       produces:
       - application/json
       responses:
