@@ -20,6 +20,648 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/chat/generate": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "基于上下文生成AI响应",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "生成AI对话响应",
+                "parameters": [
+                    {
+                        "description": "对话生成输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.ChatGenerateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/ChatGenerateOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/chat/stream": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "以流式方式生成AI响应",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "流式生成AI对话响应",
+                "parameters": [
+                    {
+                        "description": "流式对话输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.ChatStreamInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "流式返回 AI 回复（Server-Sent Events 格式）",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/context/build": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据会话ID和用户查询构建智能对话上下文",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "summary": "构建对话上下文",
+                "parameters": [
+                    {
+                        "description": "上下文构建输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.ContextBuildInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/ContextBuildOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/memory/cleanup": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "根据策略清理过期或低质量的记忆",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memory"
+                ],
+                "summary": "清理记忆",
+                "parameters": [
+                    {
+                        "description": "记忆清理输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.MemoryCleanupInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/MemoryCleanupOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/memory/search": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "基于向量相似度检索相关的历史对话记忆",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memory"
+                ],
+                "summary": "检索记忆",
+                "parameters": [
+                    {
+                        "description": "记忆检索输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.MemorySearchInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/MemorySearchOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/memory/store": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "将对话消息转换为长期记忆并存储",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memory"
+                ],
+                "summary": "存储记忆",
+                "parameters": [
+                    {
+                        "description": "记忆存储输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.MemoryStoreInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/MemoryStoreOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/summary/generate": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "自动生成对话摘要以压缩历史对话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Summary"
+                ],
+                "summary": "生成摘要",
+                "parameters": [
+                    {
+                        "description": "摘要生成输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.SummaryGenerateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/SummaryGenerateOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/summary/trigger": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "智能判断是否需要生成摘要",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Summary"
+                ],
+                "summary": "检查摘要触发条件",
+                "parameters": [
+                    {
+                        "description": "摘要触发检查输入",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.SummaryTriggerInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/SummaryTriggerOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "内部服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tokens/analysis": {
+            "post": {
+                "description": "分析指定时间范围内的Token使用情况，提供趋势和优化建议",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Token管理"
+                ],
+                "summary": "分析Token使用情况",
+                "parameters": [
+                    {
+                        "description": "分析请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.TokenAnalysisInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenAnalysisOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tokens/budget": {
+            "post": {
+                "description": "查询会话、每日或每月的Token预算使用情况",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Token管理"
+                ],
+                "summary": "查询Token预算状态",
+                "parameters": [
+                    {
+                        "description": "预算查询请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.TokenBudgetInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenBudgetOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tokens/optimize": {
+            "post": {
+                "description": "使用指定策略优化内容，减少Token消耗",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Token管理"
+                ],
+                "summary": "优化内容以减少Token",
+                "parameters": [
+                    {
+                        "description": "优化请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/flows.TokenOptimizeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenOptimizeOutputResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/audit/auth": {
             "get": {
                 "security": [
@@ -2850,6 +3492,542 @@
         }
     },
     "definitions": {
+        "flows.ChatGenerateInput": {
+            "type": "object",
+            "required": [
+                "sessionId",
+                "userMessage"
+            ],
+            "properties": {
+                "context": {
+                    "$ref": "#/definitions/flows.ContextBuildOutput"
+                },
+                "modelConfig": {
+                    "$ref": "#/definitions/flows.ModelConfig"
+                },
+                "saveMessage": {
+                    "type": "boolean"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "systemPrompt": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "userMessage": {
+                    "type": "string",
+                    "maxLength": 4000
+                }
+            }
+        },
+        "flows.ChatStreamInput": {
+            "type": "object",
+            "required": [
+                "sessionId",
+                "userMessage"
+            ],
+            "properties": {
+                "bufferSize": {
+                    "description": "缓冲区大小（字符数）",
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "context": {
+                    "description": "上下文（可选）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/flows.ContextBuildOutput"
+                        }
+                    ]
+                },
+                "includeIntermediateStates": {
+                    "description": "是否包含中间状态",
+                    "type": "boolean"
+                },
+                "includeTokenStats": {
+                    "description": "是否包含Token统计",
+                    "type": "boolean"
+                },
+                "modelConfig": {
+                    "description": "模型配置",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/flows.ModelConfig"
+                        }
+                    ]
+                },
+                "saveMessage": {
+                    "description": "是否保存消息",
+                    "type": "boolean"
+                },
+                "sendInterval": {
+                    "description": "发送间隔（毫秒）",
+                    "type": "integer",
+                    "maximum": 1000,
+                    "minimum": 10
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string"
+                },
+                "systemPrompt": {
+                    "description": "系统提示词",
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "userMessage": {
+                    "description": "用户消息",
+                    "type": "string",
+                    "maxLength": 4000
+                }
+            }
+        },
+        "flows.ContextBuildInput": {
+            "type": "object",
+            "required": [
+                "sessionId",
+                "userQuery"
+            ],
+            "properties": {
+                "includeLongTerm": {
+                    "type": "boolean"
+                },
+                "includeSummary": {
+                    "type": "boolean"
+                },
+                "maxTokens": {
+                    "type": "integer",
+                    "maximum": 32000,
+                    "minimum": 100
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "shortTermWindow": {
+                    "type": "integer",
+                    "maximum": 50,
+                    "minimum": 1
+                },
+                "strategy": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "short",
+                        "full"
+                    ]
+                },
+                "userQuery": {
+                    "type": "string",
+                    "maxLength": 2000
+                }
+            }
+        },
+        "flows.ContextBuildOutput": {
+            "type": "object",
+            "properties": {
+                "buildTime": {
+                    "type": "integer"
+                },
+                "longTermMemories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/flows.MemoryContext"
+                    }
+                },
+                "qualityScore": {
+                    "type": "number"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "shortTermMessages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/flows.MessageContext"
+                    }
+                },
+                "strategy": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/flows.SummaryContext"
+                },
+                "totalTokens": {
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.MemoryCleanupInput": {
+            "type": "object",
+            "required": [
+                "mode",
+                "strategy"
+            ],
+            "properties": {
+                "batchSize": {
+                    "description": "批量处理大小",
+                    "type": "integer",
+                    "maximum": 1000,
+                    "minimum": 1
+                },
+                "execute": {
+                    "description": "是否执行删除（false为预览模式）",
+                    "type": "boolean"
+                },
+                "mode": {
+                    "description": "清理模式：soft（软删除）、hard（硬删除）",
+                    "type": "string",
+                    "enum": [
+                        "soft",
+                        "hard"
+                    ]
+                },
+                "sessionId": {
+                    "description": "会话ID（可选，为空则清理租户下所有会话）",
+                    "type": "string"
+                },
+                "strategy": {
+                    "description": "清理策略",
+                    "type": "string",
+                    "enum": [
+                        "expired",
+                        "low_quality",
+                        "unused",
+                        "all"
+                    ]
+                }
+            }
+        },
+        "flows.MemoryContext": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "importance": {
+                    "type": "number"
+                },
+                "similarity": {
+                    "type": "number"
+                },
+                "tokenCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.MemorySearchInput": {
+            "type": "object",
+            "properties": {
+                "includeCrossSessions": {
+                    "description": "是否包含跨会话检索",
+                    "type": "boolean"
+                },
+                "memoryTypes": {
+                    "description": "记忆类型过滤",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "minSimilarity": {
+                    "description": "最小相似度阈值",
+                    "type": "number"
+                },
+                "query": {
+                    "description": "查询文本",
+                    "type": "string"
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string"
+                },
+                "timeRangeDays": {
+                    "description": "时间范围（天）",
+                    "type": "integer"
+                },
+                "topK": {
+                    "description": "返回结果数量",
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.MemoryStoreInput": {
+            "type": "object",
+            "required": [
+                "memoryType",
+                "sessionId"
+            ],
+            "properties": {
+                "content": {
+                    "description": "内容（可选，如果提供则不从消息提取）",
+                    "type": "string",
+                    "maxLength": 10000
+                },
+                "expirationDays": {
+                    "description": "过期天数（0表示不过期）",
+                    "type": "integer",
+                    "maximum": 365,
+                    "minimum": 0
+                },
+                "importance": {
+                    "description": "重要性（可选，自动评估）",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                },
+                "memoryType": {
+                    "description": "记忆类型",
+                    "type": "string",
+                    "enum": [
+                        "short_term",
+                        "long_term",
+                        "summary"
+                    ]
+                },
+                "messageIds": {
+                    "description": "消息ID列表",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "metadata": {
+                    "description": "元数据",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string"
+                }
+            }
+        },
+        "flows.MessageContext": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "tokenCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.ModelConfig": {
+            "type": "object",
+            "required": [
+                "modelName"
+            ],
+            "properties": {
+                "frequencyPenalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "maxTokens": {
+                    "type": "integer",
+                    "maximum": 4096,
+                    "minimum": 1
+                },
+                "modelName": {
+                    "type": "string"
+                },
+                "presencePenalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "stopSequences": {
+                    "type": "array",
+                    "maxItems": 4,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "temperature": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": 0
+                },
+                "topP": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                }
+            }
+        },
+        "flows.SummaryContext": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "coverage": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "tokenCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.SummaryGenerateInput": {
+            "type": "object",
+            "properties": {
+                "endMessageID": {
+                    "description": "结束消息ID（可选）",
+                    "type": "string"
+                },
+                "messageIds": {
+                    "description": "消息ID列表（可选）",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "previousSummary": {
+                    "description": "之前的摘要（增量摘要时使用）",
+                    "type": "string"
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string"
+                },
+                "startMessageID": {
+                    "description": "起始消息ID（可选）",
+                    "type": "string"
+                },
+                "summaryType": {
+                    "description": "摘要类型：incremental（增量）、full（完整）",
+                    "type": "string"
+                },
+                "targetLength": {
+                    "description": "目标长度（Token数）",
+                    "type": "integer"
+                }
+            }
+        },
+        "flows.SummaryTriggerInput": {
+            "type": "object",
+            "required": [
+                "sessionId"
+            ],
+            "properties": {
+                "checkMode": {
+                    "description": "检查模式：auto（自动）、force（强制）",
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "force"
+                    ]
+                },
+                "sessionId": {
+                    "description": "会话ID",
+                    "type": "string"
+                }
+            }
+        },
+        "flows.TokenAnalysisInput": {
+            "type": "object",
+            "required": [
+                "tenantId",
+                "timeRangeDays"
+            ],
+            "properties": {
+                "dimensions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "tenantId": {
+                    "type": "string"
+                },
+                "timeRangeDays": {
+                    "type": "integer",
+                    "maximum": 365,
+                    "minimum": 1
+                }
+            }
+        },
+        "flows.TokenBudgetInput": {
+            "type": "object",
+            "required": [
+                "budgetType",
+                "tenantId"
+            ],
+            "properties": {
+                "budgetType": {
+                    "type": "string",
+                    "enum": [
+                        "session",
+                        "daily",
+                        "monthly"
+                    ]
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "tenantId": {
+                    "type": "string"
+                }
+            }
+        },
+        "flows.TokenOptimizeInput": {
+            "type": "object",
+            "required": [
+                "content",
+                "strategy",
+                "targetTokens"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 10000
+                },
+                "qualityThreshold": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                },
+                "strategy": {
+                    "type": "string",
+                    "enum": [
+                        "compress",
+                        "summarize",
+                        "truncate",
+                        "smart"
+                    ]
+                },
+                "targetTokens": {
+                    "type": "integer",
+                    "maximum": 8000,
+                    "minimum": 10
+                }
+            }
+        },
         "ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -3155,24 +4333,58 @@
                 }
             }
         },
+        "health.CheckResult": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "详细信息",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "message": {
+                    "description": "状态消息",
+                    "type": "string",
+                    "example": "连接正常"
+                },
+                "responseTime": {
+                    "description": "响应时间（毫秒）",
+                    "type": "integer",
+                    "example": 15
+                },
+                "status": {
+                    "description": "状态：healthy, degraded, unhealthy",
+                    "type": "string",
+                    "example": "healthy"
+                }
+            }
+        },
         "health.HealthStatus": {
             "type": "object",
             "properties": {
-                "dependencies": {
-                    "description": "依赖服务状态",
+                "checks": {
+                    "description": "各项检查结果",
                     "type": "object",
                     "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "database": "connected",
-                        "genkit": "connected"
+                        "$ref": "#/definitions/health.CheckResult"
                     }
                 },
                 "status": {
-                    "description": "整体状态：healthy, unhealthy",
+                    "description": "整体状态：healthy, degraded, unhealthy",
                     "type": "string",
                     "example": "healthy"
+                },
+                "systemInfo": {
+                    "description": "系统资源信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/health.SystemInfo"
+                        }
+                    ]
+                },
+                "timestamp": {
+                    "description": "检查时间戳",
+                    "type": "string",
+                    "example": "2025-11-02T10:30:00Z"
                 },
                 "uptime": {
                     "description": "运行时间",
@@ -3183,6 +4395,36 @@
                     "description": "服务版本",
                     "type": "string",
                     "example": "1.0.0"
+                }
+            }
+        },
+        "health.SystemInfo": {
+            "type": "object",
+            "properties": {
+                "cpuCores": {
+                    "description": "CPU 核心数",
+                    "type": "integer",
+                    "example": 8
+                },
+                "goroutines": {
+                    "description": "Goroutine 数量",
+                    "type": "integer",
+                    "example": 42
+                },
+                "memoryAlloc": {
+                    "description": "已分配内存（字节）",
+                    "type": "integer",
+                    "example": 52428800
+                },
+                "memoryTotal": {
+                    "description": "总内存（字节）",
+                    "type": "integer",
+                    "example": 104857600
+                },
+                "memoryUsage": {
+                    "description": "内存使用率（百分比）",
+                    "type": "number",
+                    "example": 50.5
                 }
             }
         },
@@ -3275,6 +4517,9 @@
                     "example": "trace-1729756800-a1b2c3d4"
                 }
             }
+        },
+        "ChatGenerateOutputResponse": {
+            "type": "object"
         },
         "ChatOptions": {
             "type": "object",
@@ -3386,6 +4631,9 @@
                     "example": "trace-1729756800-a1b2c3d4"
                 }
             }
+        },
+        "ContextBuildOutputResponse": {
+            "type": "object"
         },
         "CreateSessionRequest": {
             "type": "object",
@@ -3585,6 +4833,15 @@
                     ]
                 }
             }
+        },
+        "MemoryCleanupOutputResponse": {
+            "type": "object"
+        },
+        "MemorySearchOutputResponse": {
+            "type": "object"
+        },
+        "MemoryStoreOutputResponse": {
+            "type": "object"
         },
         "Message": {
             "type": "object",
@@ -4593,6 +5850,12 @@
                 }
             }
         },
+        "SummaryGenerateOutputResponse": {
+            "type": "object"
+        },
+        "SummaryTriggerOutputResponse": {
+            "type": "object"
+        },
         "Tenant": {
             "description": "租户信息，包含租户的基本信息和状态",
             "type": "object",
@@ -4712,6 +5975,15 @@
                     "example": "trace-1729756800-a1b2c3d4"
                 }
             }
+        },
+        "TokenAnalysisOutputResponse": {
+            "type": "object"
+        },
+        "TokenBudgetOutputResponse": {
+            "type": "object"
+        },
+        "TokenOptimizeOutputResponse": {
+            "type": "object"
         },
         "UpdateSessionRequest": {
             "type": "object",

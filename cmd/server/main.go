@@ -27,6 +27,7 @@ import (
 	"genkit-ai-service/internal/storage"
 
 	_ "genkit-ai-service/docs" // Swagger 文档
+	"github.com/redis/go-redis/v9"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -175,7 +176,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 6. 初始化服务
+	// 6. 初始化 Redis 客户端（如果启用）
+	var redisClient *database.RedisClient
+	if cfg.Redis.Enabled {
+		var err error
+		redisClient, err = database.NewRedisClient(cfg.Redis, log)
+		if err != nil {
+			log.Warn("Redis 连接失败，相关功能将被禁用", logger.Fields{"error": err})
+			redisClient = nil
+		} else {
+			log.Info("Redis 连接成功", logger.Fields{
+				"host": cfg.Redis.Host,
+				"port": cfg.Redis.Port,
+			})
+		}
+	} else {
+		log.Info("Redis 已禁用", nil)
+	}
+
+	// 7. 初始化服务
 	var aiService ai.AIService
 	var healthService health.Service
 	
@@ -188,26 +207,31 @@ func main() {
 	}
 	
 	// 健康检查服务需要 Genkit 客户端和数据库
+	// Redis 是可选的
 	if genkitClient != nil && db != nil {
-		healthService = health.NewService(genkitClient, db, Version)
+		var redisClientForHealth *redis.Client
+		if redisClient != nil {
+			redisClientForHealth = redisClient.GetClient()
+		}
+		healthService = health.NewService(genkitClient, db, redisClientForHealth, Version)
 		log.Info("健康检查服务已启用", nil)
 	} else {
 		log.Warn("健康检查服务未启用（缺少数据库连接）", nil)
 	}
 
-	// 7. 创建基础 ServeMux 并注册所有路由
+	// 8. 创建基础 ServeMux 并注册所有路由
 	serveMux := http.NewServeMux()
 	
-	// 8. 注册模型提供商API路由
+	// 9. 注册模型提供商API路由
 	providerHandler := handler.NewProviderHandler(providerService, log)
 	routes.RegisterProviderRoutes(serveMux, providerHandler)
 	log.Info("模型提供商API路由已注册", nil)
 
-	// 8.1 注册认证路由（如果数据库可用）
+	// 9.1 注册认证路由（如果数据库可用）
 	var cleanupSvc cleanup.CleanupService
 	var jwtAuthMW func(http.Handler) http.Handler
 	if db != nil {
-		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMiddleware, rbacMW := initAuthHandlers(db, cfg, log)
+		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMiddleware, rbacMW := initAuthHandlers(db, cfg, log, redisClient)
 		jwtAuthMW = jwtAuthMiddleware // 保存 JWT 认证中间件供其他路由使用
 		
 		routes.RegisterAuthRoutes(serveMux, authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW)
@@ -238,7 +262,7 @@ func main() {
 		log.Warn("认证路由未注册（数据库不可用）", nil)
 	}
 
-	// 8.2 注册会话管理路由（如果数据库可用）
+	// 9.2 注册会话管理路由（如果数据库可用）
 	// 会话管理路由需要 JWT 认证中间件
 	if db != nil && aiService != nil && jwtAuthMW != nil {
 		sessionHandler, messageHandler := initSessionHandlers(db, aiService, cfg, log)
@@ -255,7 +279,7 @@ func main() {
 		log.Warn("会话管理路由未注册（数据库或AI服务不可用）", nil)
 	}
 
-	// 9. 注册 AI 服务路由（如果可用）
+	// 10. 注册 AI 服务路由（如果可用）
 	if aiService != nil {
 		chatHandler := handler.NewChatHandler(aiService, log)
 		chatStreamHandler := handler.NewChatStreamHandler(aiService, log)
@@ -273,7 +297,7 @@ func main() {
 		log.Warn("AI对话路由未注册（AI服务不可用）", nil)
 	}
 	
-	// 10. 注册健康检查路由（如果可用）
+	// 11. 注册健康检查路由（如果可用）
 	if healthService != nil {
 		healthHandler := handler.NewHealthHandler(healthService, log)
 		serveMux.HandleFunc("GET /api/v1/health", healthHandler.Handle)
@@ -284,7 +308,7 @@ func main() {
 		log.Warn("健康检查路由未注册（健康检查服务不可用）", nil)
 	}
 
-	// 11. 注册 Swagger UI 路由
+	// 12. 注册 Swagger UI 路由
 	serveMux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	
 	// 11.1 提供 swagger.yaml 静态文件访问
@@ -596,7 +620,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 }
 
 // initAuthHandlers 初始化认证相关的处理器和中间件
-func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logger) (
+func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logger, redisClient *database.RedisClient) (
 	*handler.AuthHandler,
 	*handler.TenantHandler,
 	*handler.UserHandler,
@@ -618,20 +642,7 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	emailVerificationRepo := repository.NewEmailVerificationRepository(gormDB)
 
 	// 3. 创建 Service 层实例
-	// 3.1 初始化 Redis 客户端（如果启用）
-	var redisClient *database.RedisClient
-	if cfg.Redis.Enabled {
-		var err error
-		redisClient, err = database.NewRedisClient(cfg.Redis, log)
-		if err != nil {
-			log.Warn("Redis 连接失败，Token 黑名单功能将被禁用", logger.Fields{"error": err})
-			redisClient = nil
-		}
-	} else {
-		log.Info("Redis 已禁用，Token 黑名单功能将不可用", nil)
-	}
-
-	// 3.2 创建 TokenBlacklistService
+	// 3.1 创建 TokenBlacklistService
 	var blacklistService auth.TokenBlacklistService
 	if redisClient != nil && cfg.Auth.EnableTokenBlacklist {
 		blacklistService = auth.NewTokenBlacklistService(redisClient, log)
@@ -640,16 +651,16 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 		log.Info("Token 黑名单服务已禁用", nil)
 	}
 
-	// 3.3 创建 TokenService
+	// 3.2 创建 TokenService
 	tokenService := auth.NewTokenService(&cfg.Auth, refreshTokenRepo)
 
-	// 3.4 创建 TenantService
+	// 3.3 创建 TenantService
 	tenantService := auth.NewTenantService(tenantRepo, userRepo, auditRepo)
 
-	// 3.5 创建 UserService
+	// 3.4 创建 UserService
 	userService := auth.NewUserService(userRepo, tenantRepo, refreshTokenRepo, auditRepo)
 
-	// 3.6 创建 EmailService
+	// 3.5 创建 EmailService
 	// 使用控制台邮件发送器（开发环境）
 	// 生产环境应该使用 SMTP 邮件发送器
 	emailSender := auth.NewConsoleEmailSender()
@@ -660,7 +671,7 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 		24*time.Hour, // 验证令牌有效期24小时
 	)
 
-	// 3.7 创建 AuthService
+	// 3.6 创建 AuthService
 	authService := auth.NewAuthService(
 		userRepo,
 		tenantRepo,
