@@ -1,5 +1,387 @@
 basePath: /api/v1
 definitions:
+  flows.ChatGenerateInput:
+    properties:
+      context:
+        $ref: '#/definitions/flows.ContextBuildOutput'
+      modelConfig:
+        $ref: '#/definitions/flows.ModelConfig'
+      saveMessage:
+        type: boolean
+      sessionId:
+        type: string
+      systemPrompt:
+        maxLength: 1000
+        type: string
+      userMessage:
+        maxLength: 4000
+        type: string
+    required:
+    - sessionId
+    - userMessage
+    type: object
+  flows.ChatStreamInput:
+    properties:
+      bufferSize:
+        description: 缓冲区大小（字符数）
+        maximum: 100
+        minimum: 1
+        type: integer
+      context:
+        allOf:
+        - $ref: '#/definitions/flows.ContextBuildOutput'
+        description: 上下文（可选）
+      includeIntermediateStates:
+        description: 是否包含中间状态
+        type: boolean
+      includeTokenStats:
+        description: 是否包含Token统计
+        type: boolean
+      modelConfig:
+        allOf:
+        - $ref: '#/definitions/flows.ModelConfig'
+        description: 模型配置
+      saveMessage:
+        description: 是否保存消息
+        type: boolean
+      sendInterval:
+        description: 发送间隔（毫秒）
+        maximum: 1000
+        minimum: 10
+        type: integer
+      sessionId:
+        description: 会话ID
+        type: string
+      systemPrompt:
+        description: 系统提示词
+        maxLength: 1000
+        type: string
+      userMessage:
+        description: 用户消息
+        maxLength: 4000
+        type: string
+    required:
+    - sessionId
+    - userMessage
+    type: object
+  flows.ContextBuildInput:
+    properties:
+      includeLongTerm:
+        type: boolean
+      includeSummary:
+        type: boolean
+      maxTokens:
+        maximum: 32000
+        minimum: 100
+        type: integer
+      sessionId:
+        type: string
+      shortTermWindow:
+        maximum: 50
+        minimum: 1
+        type: integer
+      strategy:
+        enum:
+        - auto
+        - short
+        - full
+        type: string
+      userQuery:
+        maxLength: 2000
+        type: string
+    required:
+    - sessionId
+    - userQuery
+    type: object
+  flows.ContextBuildOutput:
+    properties:
+      buildTime:
+        type: integer
+      longTermMemories:
+        items:
+          $ref: '#/definitions/flows.MemoryContext'
+        type: array
+      qualityScore:
+        type: number
+      sessionId:
+        type: string
+      shortTermMessages:
+        items:
+          $ref: '#/definitions/flows.MessageContext'
+        type: array
+      strategy:
+        type: string
+      summary:
+        $ref: '#/definitions/flows.SummaryContext'
+      totalTokens:
+        type: integer
+    type: object
+  flows.MemoryCleanupInput:
+    properties:
+      batchSize:
+        description: 批量处理大小
+        maximum: 1000
+        minimum: 1
+        type: integer
+      execute:
+        description: 是否执行删除（false为预览模式）
+        type: boolean
+      mode:
+        description: 清理模式：soft（软删除）、hard（硬删除）
+        enum:
+        - soft
+        - hard
+        type: string
+      sessionId:
+        description: 会话ID（可选，为空则清理租户下所有会话）
+        type: string
+      strategy:
+        description: 清理策略
+        enum:
+        - expired
+        - low_quality
+        - unused
+        - all
+        type: string
+    required:
+    - mode
+    - strategy
+    type: object
+  flows.MemoryContext:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      importance:
+        type: number
+      similarity:
+        type: number
+      tokenCount:
+        type: integer
+    type: object
+  flows.MemorySearchInput:
+    properties:
+      includeCrossSessions:
+        description: 是否包含跨会话检索
+        type: boolean
+      memoryTypes:
+        description: 记忆类型过滤
+        items:
+          type: string
+        type: array
+      minSimilarity:
+        description: 最小相似度阈值
+        type: number
+      query:
+        description: 查询文本
+        type: string
+      sessionId:
+        description: 会话ID
+        type: string
+      timeRangeDays:
+        description: 时间范围（天）
+        type: integer
+      topK:
+        description: 返回结果数量
+        type: integer
+    type: object
+  flows.MemoryStoreInput:
+    properties:
+      content:
+        description: 内容（可选，如果提供则不从消息提取）
+        maxLength: 10000
+        type: string
+      expirationDays:
+        description: 过期天数（0表示不过期）
+        maximum: 365
+        minimum: 0
+        type: integer
+      importance:
+        description: 重要性（可选，自动评估）
+        maximum: 1
+        minimum: 0
+        type: number
+      memoryType:
+        description: 记忆类型
+        enum:
+        - short_term
+        - long_term
+        - summary
+        type: string
+      messageIds:
+        description: 消息ID列表
+        items:
+          type: string
+        type: array
+      metadata:
+        additionalProperties: true
+        description: 元数据
+        type: object
+      sessionId:
+        description: 会话ID
+        type: string
+    required:
+    - memoryType
+    - sessionId
+    type: object
+  flows.MessageContext:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      tokenCount:
+        type: integer
+    type: object
+  flows.ModelConfig:
+    properties:
+      frequencyPenalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      maxTokens:
+        maximum: 4096
+        minimum: 1
+        type: integer
+      modelName:
+        type: string
+      presencePenalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      stopSequences:
+        items:
+          type: string
+        maxItems: 4
+        type: array
+      temperature:
+        maximum: 2
+        minimum: 0
+        type: number
+      topP:
+        maximum: 1
+        minimum: 0
+        type: number
+    required:
+    - modelName
+    type: object
+  flows.SummaryContext:
+    properties:
+      content:
+        type: string
+      coverage:
+        type: string
+      createdAt:
+        type: string
+      tokenCount:
+        type: integer
+    type: object
+  flows.SummaryGenerateInput:
+    properties:
+      endMessageID:
+        description: 结束消息ID（可选）
+        type: string
+      messageIds:
+        description: 消息ID列表（可选）
+        items:
+          type: string
+        type: array
+      previousSummary:
+        description: 之前的摘要（增量摘要时使用）
+        type: string
+      sessionId:
+        description: 会话ID
+        type: string
+      startMessageID:
+        description: 起始消息ID（可选）
+        type: string
+      summaryType:
+        description: 摘要类型：incremental（增量）、full（完整）
+        type: string
+      targetLength:
+        description: 目标长度（Token数）
+        type: integer
+    type: object
+  flows.SummaryTriggerInput:
+    properties:
+      checkMode:
+        description: 检查模式：auto（自动）、force（强制）
+        enum:
+        - auto
+        - force
+        type: string
+      sessionId:
+        description: 会话ID
+        type: string
+    required:
+    - sessionId
+    type: object
+  flows.TokenAnalysisInput:
+    properties:
+      dimensions:
+        items:
+          type: string
+        type: array
+      sessionId:
+        type: string
+      tenantId:
+        type: string
+      timeRangeDays:
+        maximum: 365
+        minimum: 1
+        type: integer
+    required:
+    - tenantId
+    - timeRangeDays
+    type: object
+  flows.TokenBudgetInput:
+    properties:
+      budgetType:
+        enum:
+        - session
+        - daily
+        - monthly
+        type: string
+      sessionId:
+        type: string
+      tenantId:
+        type: string
+    required:
+    - budgetType
+    - tenantId
+    type: object
+  flows.TokenOptimizeInput:
+    properties:
+      content:
+        maxLength: 10000
+        type: string
+      qualityThreshold:
+        maximum: 1
+        minimum: 0
+        type: number
+      strategy:
+        enum:
+        - compress
+        - summarize
+        - truncate
+        - smart
+        type: string
+      targetTokens:
+        maximum: 8000
+        minimum: 10
+        type: integer
+    required:
+    - content
+    - strategy
+    - targetTokens
+    type: object
   ChangePasswordRequest:
     properties:
       newPassword:
@@ -216,19 +598,43 @@ definitions:
     required:
     - token
     type: object
+  health.CheckResult:
+    properties:
+      details:
+        additionalProperties: true
+        description: 详细信息
+        type: object
+      message:
+        description: 状态消息
+        example: 连接正常
+        type: string
+      responseTime:
+        description: 响应时间（毫秒）
+        example: 15
+        type: integer
+      status:
+        description: 状态：healthy, degraded, unhealthy
+        example: healthy
+        type: string
+    type: object
   health.HealthStatus:
     properties:
-      dependencies:
+      checks:
         additionalProperties:
-          type: string
-        description: 依赖服务状态
-        example:
-          database: connected
-          genkit: connected
+          $ref: '#/definitions/health.CheckResult'
+        description: 各项检查结果
         type: object
       status:
-        description: 整体状态：healthy, unhealthy
+        description: 整体状态：healthy, degraded, unhealthy
         example: healthy
+        type: string
+      systemInfo:
+        allOf:
+        - $ref: '#/definitions/health.SystemInfo'
+        description: 系统资源信息
+      timestamp:
+        description: 检查时间戳
+        example: "2025-11-02T10:30:00Z"
         type: string
       uptime:
         description: 运行时间
@@ -238,6 +644,29 @@ definitions:
         description: 服务版本
         example: 1.0.0
         type: string
+    type: object
+  health.SystemInfo:
+    properties:
+      cpuCores:
+        description: CPU 核心数
+        example: 8
+        type: integer
+      goroutines:
+        description: Goroutine 数量
+        example: 42
+        type: integer
+      memoryAlloc:
+        description: 已分配内存（字节）
+        example: 52428800
+        type: integer
+      memoryTotal:
+        description: 总内存（字节）
+        example: 104857600
+        type: integer
+      memoryUsage:
+        description: 内存使用率（百分比）
+        example: 50.5
+        type: number
     type: object
   AbortRequest:
     properties:
@@ -303,6 +732,8 @@ definitions:
         description: 追踪ID（用于全链路追踪和问题排查）
         example: trace-1729756800-a1b2c3d4
         type: string
+    type: object
+  ChatGenerateOutputResponse:
     type: object
   ChatOptions:
     properties:
@@ -381,6 +812,8 @@ definitions:
         description: 追踪ID（用于全链路追踪和问题排查）
         example: trace-1729756800-a1b2c3d4
         type: string
+    type: object
+  ContextBuildOutputResponse:
     type: object
   CreateSessionRequest:
     properties:
@@ -525,6 +958,12 @@ definitions:
         allOf:
         - $ref: '#/definitions/User'
         description: 用户信息
+    type: object
+  MemoryCleanupOutputResponse:
+    type: object
+  MemorySearchOutputResponse:
+    type: object
+  MemoryStoreOutputResponse:
     type: object
   Message:
     properties:
@@ -1244,6 +1683,10 @@ definitions:
         example: trace-1729756800-a1b2c3d4
         type: string
     type: object
+  SummaryGenerateOutputResponse:
+    type: object
+  SummaryTriggerOutputResponse:
+    type: object
   Tenant:
     description: 租户信息，包含租户的基本信息和状态
     properties:
@@ -1335,6 +1778,12 @@ definitions:
         description: 追踪ID（用于全链路追踪和问题排查）
         example: trace-1729756800-a1b2c3d4
         type: string
+    type: object
+  TokenAnalysisOutputResponse:
+    type: object
+  TokenBudgetOutputResponse:
+    type: object
+  TokenOptimizeOutputResponse:
     type: object
   UpdateSessionRequest:
     properties:
@@ -1513,6 +1962,416 @@ info:
   title: Genkit AI Service API
   version: 1.0.0
 paths:
+  /api/v1/chat/generate:
+    post:
+      consumes:
+      - application/json
+      description: 基于上下文生成AI响应
+      parameters:
+      - description: 对话生成输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.ChatGenerateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/ChatGenerateOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 生成AI对话响应
+      tags:
+      - Chat
+  /api/v1/chat/stream:
+    post:
+      consumes:
+      - application/json
+      description: 以流式方式生成AI响应
+      parameters:
+      - description: 流式对话输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.ChatStreamInput'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: 流式返回 AI 回复（Server-Sent Events 格式）
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 流式生成AI对话响应
+      tags:
+      - Chat
+  /api/v1/context/build:
+    post:
+      consumes:
+      - application/json
+      description: 根据会话ID和用户查询构建智能对话上下文
+      parameters:
+      - description: 上下文构建输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.ContextBuildInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/ContextBuildOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 构建对话上下文
+      tags:
+      - Context
+  /api/v1/memory/cleanup:
+    post:
+      consumes:
+      - application/json
+      description: 根据策略清理过期或低质量的记忆
+      parameters:
+      - description: 记忆清理输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.MemoryCleanupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/MemoryCleanupOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 清理记忆
+      tags:
+      - Memory
+  /api/v1/memory/search:
+    post:
+      consumes:
+      - application/json
+      description: 基于向量相似度检索相关的历史对话记忆
+      parameters:
+      - description: 记忆检索输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.MemorySearchInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/MemorySearchOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 检索记忆
+      tags:
+      - Memory
+  /api/v1/memory/store:
+    post:
+      consumes:
+      - application/json
+      description: 将对话消息转换为长期记忆并存储
+      parameters:
+      - description: 记忆存储输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.MemoryStoreInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/MemoryStoreOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 存储记忆
+      tags:
+      - Memory
+  /api/v1/summary/generate:
+    post:
+      consumes:
+      - application/json
+      description: 自动生成对话摘要以压缩历史对话
+      parameters:
+      - description: 摘要生成输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.SummaryGenerateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/SummaryGenerateOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 生成摘要
+      tags:
+      - Summary
+  /api/v1/summary/trigger:
+    post:
+      consumes:
+      - application/json
+      description: 智能判断是否需要生成摘要
+      parameters:
+      - description: 摘要触发检查输入
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/flows.SummaryTriggerInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/SummaryTriggerOutputResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 内部服务器错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - Bearer: []
+      summary: 检查摘要触发条件
+      tags:
+      - Summary
+  /api/v1/tokens/analysis:
+    post:
+      consumes:
+      - application/json
+      description: 分析指定时间范围内的Token使用情况，提供趋势和优化建议
+      parameters:
+      - description: 分析请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/flows.TokenAnalysisInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenAnalysisOutputResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: 分析Token使用情况
+      tags:
+      - Token管理
+  /api/v1/tokens/budget:
+    post:
+      consumes:
+      - application/json
+      description: 查询会话、每日或每月的Token预算使用情况
+      parameters:
+      - description: 预算查询请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/flows.TokenBudgetInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenBudgetOutputResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: 查询Token预算状态
+      tags:
+      - Token管理
+  /api/v1/tokens/optimize:
+    post:
+      consumes:
+      - application/json
+      description: 使用指定策略优化内容，减少Token消耗
+      parameters:
+      - description: 优化请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/flows.TokenOptimizeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenOptimizeOutputResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: 优化内容以减少Token
+      tags:
+      - Token管理
   /audit/auth:
     get:
       consumes:

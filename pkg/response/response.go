@@ -27,8 +27,8 @@ func getTraceID(ctx context.Context) string {
 	return ""
 }
 
-// Success 构建成功响应
-func Success[T any](data *T) model.ResponseData[T] {
+// SuccessData 构建成功响应
+func SuccessData[T any](data *T) model.ResponseData[T] {
 	return model.ResponseData[T]{
 		Code:    errors.CodeSuccess,
 		Message: errors.MsgSuccess,
@@ -45,8 +45,8 @@ func SuccessWithMessage[T any](message string, data *T) model.ResponseData[T] {
 	}
 }
 
-// Error 构建错误响应
-func Error[T any](code int, message string) model.ResponseData[T] {
+// ErrorData 构建错误响应
+func ErrorData[T any](code int, message string) model.ResponseData[T] {
 	return model.ResponseData[T]{
 		Code:    code,
 		Message: message,
@@ -121,8 +121,8 @@ func PaginationWithMessage[T any](message string, data T, pageNo, pageSize, tota
 	}
 }
 
-// PaginationError 构建分页错误响应
-func PaginationError[T any](code int, message string) model.ResponsePaginationData[T] {
+// PaginationErrorData 构建分页错误响应
+func PaginationErrorData[T any](code int, message string) model.ResponsePaginationData[T] {
 	return model.ResponsePaginationData[T]{
 		Code:    code,
 		Message: message,
