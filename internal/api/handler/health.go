@@ -73,13 +73,8 @@ func (h *HealthHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// 根据健康状态设置 HTTP 状态码
 	httpStatus := http.StatusOK
-	switch healthStatus.Status {
-	case "unhealthy":
+	if healthStatus.Status != "healthy" {
 		httpStatus = http.StatusServiceUnavailable
-	case "degraded":
-		httpStatus = http.StatusOK // 降级状态仍返回 200，但在响应中标明
-	default:
-		httpStatus = http.StatusOK
 	}
 
 	// 构建成功响应

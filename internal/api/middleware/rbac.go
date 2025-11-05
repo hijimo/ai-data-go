@@ -270,24 +270,6 @@ func logPermissionDenied(ctx context.Context, r *http.Request, claims *model.JWT
 	})
 }
 
-// LogPermissionDeniedWithAudit 记录权限验证失败的审计日志（包含数据库审计）
-// 这个函数可以在需要记录审计日志到数据库时使用
-// 需要在调用时传入 AuditRepository
-func LogPermissionDeniedWithAudit(
-	ctx context.Context,
-	r *http.Request,
-	claims *model.JWTClaims,
-	reason string,
-	auditRepo interface{},
-) {
-	// 先记录到应用日志
-	logPermissionDenied(ctx, r, claims, reason)
-	
-	// 如果提供了审计仓储，记录到数据库
-	// 注意：这里使用 interface{} 避免循环依赖
-	// 实际使用时需要类型断言
-}
-
 // getClientIP 获取客户端 IP 地址
 func getClientIP(r *http.Request) string {
 	// 尝试从 X-Forwarded-For 头获取
