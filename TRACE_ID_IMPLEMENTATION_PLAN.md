@@ -71,7 +71,7 @@ type ErrorResponse struct {
  TraceID string `json:"traceId" example:"trace-1729756800-a1b2c3d4"` // 新增
 }
 ```
-
+<!-- 1 -->
 ### 步骤 2：增强 Logger 中间件（生成 TraceID）
 
 **文件**：`internal/api/middleware/logger.go`
