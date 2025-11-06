@@ -15,7 +15,7 @@
   - 所有查询必须包含租户ID过滤和软删除过滤
   - _需求: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 2. 实现 ContextRepository
+- [x] 2. 实现 ContextRepository
   - 创建 `internal/repository/context_repository.go` 接口文件
   - 创建 `internal/repository/context_repository_impl.go` 实现文件
   - 实现 `Create` 方法：创建上下文配置
