@@ -26,20 +26,28 @@ func NewQdrantClient(config *QdrantConfig) (QdrantClient, error) {
 		return nil, fmt.Errorf("配置不能为空")
 	}
 
-	if config.Host == "" {
-		return nil, fmt.Errorf("Qdrant 主机地址不能为空")
+	if config.APIKey == "" {
+		return nil, fmt.Errorf("API Key 不能为空")
 	}
 
-	if config.Port <= 0 {
-		config.Port = 6333 // 默认端口
-	}
+	var baseURL string
 
-	// 构建基础 URL
-	scheme := "http"
-	if config.UseTLS {
-		scheme = "https"
+	// 优先使用 Endpoint（Qdrant Cloud）
+	if config.Endpoint != "" {
+		baseURL = config.Endpoint
+	} else if config.Host != "" {
+		// 使用 Host + Port（自托管）
+		if config.Port <= 0 {
+			config.Port = 6333 // 默认端口
+		}
+		scheme := "http"
+		if config.UseTLS {
+			scheme = "https"
+		}
+		baseURL = fmt.Sprintf("%s://%s:%d", scheme, config.Host, config.Port)
+	} else {
+		return nil, fmt.Errorf("必须提供 Endpoint 或 Host")
 	}
-	baseURL := fmt.Sprintf("%s://%s:%d", scheme, config.Host, config.Port)
 
 	client := &qdrantClientImpl{
 		config: config,

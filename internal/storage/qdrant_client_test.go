@@ -20,25 +20,43 @@ func TestNewQdrantClient(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "empty host",
+			name: "missing API key",
 			config: &QdrantConfig{
-				Host: "",
+				Host: "localhost",
 				Port: 6333,
 			},
 			wantErr: true,
 		},
 		{
-			name: "valid config",
+			name: "missing endpoint and host",
 			config: &QdrantConfig{
-				Host: "localhost",
-				Port: 6333,
+				APIKey: "test-key",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid config with endpoint (Qdrant Cloud)",
+			config: &QdrantConfig{
+				Endpoint:  "https://xxx.cloud.qdrant.io",
+				APIKey:    "test-api-key",
+				ClusterID: "xxx",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid config with host (self-hosted)",
+			config: &QdrantConfig{
+				Host:   "localhost",
+				Port:   6333,
+				APIKey: "test-api-key",
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid config with default port",
 			config: &QdrantConfig{
-				Host: "localhost",
+				Host:   "localhost",
+				APIKey: "test-api-key",
 			},
 			wantErr: false,
 		},

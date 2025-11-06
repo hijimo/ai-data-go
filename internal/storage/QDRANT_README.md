@@ -51,14 +51,34 @@
 
 ### 1. 创建客户端
 
+#### 方式1：使用 Qdrant Cloud（推荐）
+
 ```go
 import "genkit-ai-service/internal/storage"
 
+// 从环境变量读取配置
+config := &storage.QdrantConfig{
+    Endpoint:  os.Getenv("QDRANT_ENDPOINT"),  // https://xxx.cloud.qdrant.io
+    APIKey:    os.Getenv("QDRANT_ACCESS_KEY"), // JWT token
+    ClusterID: os.Getenv("QDRANT_CLUSTER_ID"), // 可选
+}
+
+// 创建客户端
+client, err := storage.NewQdrantClient(config)
+if err != nil {
+    log.Fatal(err)
+}
+defer client.Close()
+```
+
+#### 方式2：使用自托管 Qdrant
+
+```go
 // 创建配置
 config := &storage.QdrantConfig{
     Host:   "localhost",
     Port:   6333,
-    APIKey: "", // 可选
+    APIKey: "your-api-key", // 如果启用了认证
     UseTLS: false,
 }
 

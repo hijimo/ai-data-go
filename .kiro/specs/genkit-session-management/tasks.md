@@ -60,7 +60,7 @@
   - 配置自定义分片策略（按租户分片）
   - _需求: 2.2, 3.1_
 
-- [ ] 5. 实现向量嵌入服务
+- [x] 5. 实现向量嵌入服务
   - 创建 `internal/service/vector_service.go` 接口文件
   - 创建 `internal/service/vector_service_impl.go` 实现文件
   - 实现 `GenerateEmbedding` 方法：生成文本向量

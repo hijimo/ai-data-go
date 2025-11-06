@@ -86,10 +86,17 @@ type VectorSearchResult struct {
 
 // QdrantConfig Qdrant 配置
 type QdrantConfig struct {
+	// 方式1：使用完整的 Endpoint URL（推荐用于 Qdrant Cloud）
+	Endpoint string // 完整的 Qdrant 端点 URL，例如：https://xxx.cloud.qdrant.io
+	
+	// 方式2：使用 Host + Port（用于自托管）
 	Host   string // Qdrant 服务器地址
 	Port   int    // Qdrant 服务器端口
-	APIKey string // API Key（可选）
-	UseTLS bool   // 是否使用 TLS
+	UseTLS bool   // 是否使用 TLS（仅用于方式2）
+	
+	// 通用配置
+	APIKey    string // API Key / Access Token（必需）
+	ClusterID string // 集群ID（可选，用于日志记录）
 }
 
 // Collection 名称常量
