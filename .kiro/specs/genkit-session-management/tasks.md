@@ -2,7 +2,7 @@
 
 ## 第一阶段：Repository 层实现
 
-- [ ] 1. 实现 MemoryRepository
+- [x] 1. 实现 MemoryRepository
   - 创建 `internal/repository/memory_repository.go` 接口文件
   - 创建 `internal/repository/memory_repository_impl.go` 实现文件
   - 实现 `Create` 方法：创建记忆记录
