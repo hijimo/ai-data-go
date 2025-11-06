@@ -138,7 +138,7 @@
 
 ## 第四阶段：缓存服务实现
 
-- [ ] 10. 实现缓存服务
+- [x] 10. 实现缓存服务
   - 创建 `internal/storage/cache_service.go` 接口文件
   - 创建 `internal/storage/cache_service_impl.go` 实现文件
   - 实现 `Get` 方法：获取缓存
