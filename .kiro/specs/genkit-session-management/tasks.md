@@ -96,7 +96,7 @@
   - 添加审计日志
   - _需求: 1.1, 1.2, 1.3, 2.1, 2.2, 4.1_
 
-- [ ] 8. 实现 MemoryService
+- [x] 8. 实现 MemoryService
   - 创建 `internal/service/memory_service.go` 接口文件
   - 创建 `internal/service/memory_service_impl.go` 实现文件
   - 实现 `SearchMemories` 方法：检索记忆
