@@ -2,350 +2,137 @@ package session
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 
-	"genkit-ai-service/internal/api/middleware"
-	"genkit-ai-service/internal/config"
-	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
-	"genkit-ai-service/internal/repository"
-	"genkit-ai-service/internal/service/ai"
 )
 
-// SummaryService 摘要业务逻辑接口
+// SummaryService 摘要服务接口
+// 负责生成、评估和管理会话摘要
 type SummaryService interface {
-	// GenerateSummary 生成会话摘要
-	GenerateSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error)
+	// GenerateSummary 生成摘要
+	// 参数：
+	//   - ctx: 上下文
+	//   - req: 生成摘要请求
+	// 返回：
+	//   - *model.ConversationSummary: 生成的摘要
+	//   - error: 错误信息
+	GenerateSummary(ctx context.Context, req *GenerateSummaryRequest) (*model.ConversationSummary, error)
 
-	// GetSummary 获取会话摘要
-	GetSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error)
+	// CheckSummaryTrigger 检查是否需要生成摘要
+	// 参数：
+	//   - ctx: 上下文
+	//   - tenantID: 租户ID
+	//   - sessionID: 会话ID
+	// 返回：
+	//   - *SummaryTriggerResult: 触发检查结果
+	//   - error: 错误信息
+	CheckSummaryTrigger(ctx context.Context, tenantID, sessionID uuid.UUID) (*SummaryTriggerResult, error)
 
-	// ShouldGenerateSummary 判断是否需要生成摘要
-	ShouldGenerateSummary(ctx context.Context, sessionID string) (bool, error)
+	// EvaluateSummaryQuality 评估摘要质量
+	// 参数：
+	//   - ctx: 上下文
+	//   - req: 评估请求
+	// 返回：
+	//   - *SummaryQualityResult: 质量评估结果
+	//   - error: 错误信息
+	EvaluateSummaryQuality(ctx context.Context, req *EvaluateSummaryRequest) (*SummaryQualityResult, error)
+
+	// GetSummary 获取摘要详情
+	// 参数：
+	//   - ctx: 上下文
+	//   - tenantID: 租户ID
+	//   - summaryID: 摘要ID
+	// 返回：
+	//   - *model.ConversationSummary: 摘要详情
+	//   - error: 错误信息
+	GetSummary(ctx context.Context, tenantID, summaryID uuid.UUID) (*model.ConversationSummary, error)
+
+	// ListSummaries 获取会话摘要列表
+	// 参数：
+	//   - ctx: 上下文
+	//   - tenantID: 租户ID
+	//   - sessionID: 会话ID
+	//   - limit: 限制数量（0表示不限制）
+	// 返回：
+	//   - []*model.ConversationSummary: 摘要列表
+	//   - error: 错误信息
+	ListSummaries(ctx context.Context, tenantID, sessionID uuid.UUID, limit int) ([]*model.ConversationSummary, error)
 }
 
-// summaryService 摘要业务逻辑实现
-type summaryService struct {
-	summaryRepo repository.SummaryRepository
-	messageRepo repository.MessageRepository
-	sessionRepo repository.SessionRepository
-	aiService   ai.AIService
-	config      *config.Config
-	logger      logger.Logger
+// GenerateSummaryRequest 生成摘要请求
+type GenerateSummaryRequest struct {
+	// 租户ID
+	TenantID uuid.UUID
+	// 会话ID
+	SessionID uuid.UUID
+	// 消息ID列表（可选，如果不提供则使用StartMessageID和EndMessageID范围）
+	MessageIDs []uuid.UUID
+	// 起始消息ID（可选）
+	StartMessageID *uuid.UUID
+	// 结束消息ID（可选）
+	EndMessageID *uuid.UUID
+	// 前一个摘要内容（用于增量摘要）
+	PreviousSummary string
+	// 摘要类型 (incremental, full)
+	SummaryType string
+	// 目标长度（Token数量）
+	TargetLength int
 }
 
-// NewSummaryService 创建摘要服务实例
-func NewSummaryService(
-	summaryRepo repository.SummaryRepository,
-	messageRepo repository.MessageRepository,
-	sessionRepo repository.SessionRepository,
-	aiService ai.AIService,
-	cfg *config.Config,
-	log logger.Logger,
-) SummaryService {
-	return &summaryService{
-		summaryRepo: summaryRepo,
-		messageRepo: messageRepo,
-		sessionRepo: sessionRepo,
-		aiService:   aiService,
-		config:      cfg,
-		logger:      log,
-	}
+// SummaryTriggerResult 摘要触发检查结果
+type SummaryTriggerResult struct {
+	// 是否应该生成摘要
+	ShouldSummarize bool
+	// 触发原因
+	TriggerReason string
+	// 建议包含的消息ID列表
+	MessageIDs []uuid.UUID
+	// 消息数量
+	MessageCount int
+	// 估算的Token节省量
+	EstimatedTokenSaving int
+	// 紧急程度 (0-1)
+	Urgency float64
+	// 推荐的摘要类型
+	RecommendedType string
 }
 
-// GenerateSummary 生成会话摘要
-func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error) {
-	s.logger.Info("开始生成会话摘要", map[string]interface{}{
-		"sessionId": sessionID,
-	})
-
-	// 获取JWT声明以获取租户ID
-	claims, ok := middleware.GetJWTClaims(ctx)
-	if !ok || claims == nil {
-		return nil, fmt.Errorf("未认证")
-	}
-	tenantID, err := uuid.Parse(claims.TenantID)
-	if err != nil {
-		return nil, fmt.Errorf("无效的租户ID: %w", err)
-	}
-
-	// 1. 验证会话是否存在
-	session, err := s.sessionRepo.GetByID(ctx, sessionID)
-	if err != nil {
-		s.logger.Error("查询会话失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return nil, fmt.Errorf("查询会话失败: %w", err)
-	}
-	if session == nil {
-		s.logger.Warn("会话不存在", map[string]interface{}{
-			"sessionId": sessionID,
-		})
-		return nil, fmt.Errorf("会话不存在")
-	}
-
-	sessionUUID, err := uuid.Parse(sessionID)
-	if err != nil {
-		return nil, fmt.Errorf("无效的会话ID: %w", err)
-	}
-
-	// 2. 获取最新的摘要（如果存在）
-	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
-	if err != nil && err != repository.ErrNotFound {
-		s.logger.Error("查询最新摘要失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return nil, fmt.Errorf("查询最新摘要失败: %w", err)
-	}
-
-	// 3. 获取需要摘要的消息列表
-	var messages []*model.ChatMessage
-	if latestSummary != nil && latestSummary.EndMessageID != nil {
-		// 如果已有摘要，只获取摘要之后的消息
-		messages, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.EndMessageID.String())
-		if err != nil {
-			s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
-				"sessionId":     sessionID,
-				"lastMessageId": latestSummary.EndMessageID.String(),
-				"error":         err.Error(),
-			})
-			return nil, fmt.Errorf("获取消息失败: %w", err)
-		}
-	} else {
-		// 如果没有摘要，获取所有消息
-		messages, _, err = s.messageRepo.GetBySessionID(ctx, sessionID, 1, 10000)
-		if err != nil {
-			s.logger.Error("获取会话消息失败", map[string]interface{}{
-				"sessionId": sessionID,
-				"error":     err.Error(),
-			})
-			return nil, fmt.Errorf("获取消息失败: %w", err)
-		}
-	}
-
-	// 4. 检查是否有足够的消息生成摘要
-	if len(messages) == 0 {
-		s.logger.Warn("没有新消息需要生成摘要", map[string]interface{}{
-			"sessionId": sessionID,
-		})
-		return latestSummary, nil
-	}
-
-	// 5. 构建摘要提示词
-	summaryPrompt := s.buildSummaryPrompt(messages, latestSummary)
-
-	// 6. 调用AI服务生成摘要
-	temperature := 0.3 // 使用较低的温度以获得更稳定的摘要
-	maxTokens := 1000
-	chatReq := &model.ChatRequest{
-		Message: summaryPrompt,
-		Options: &model.ChatOptions{
-			Temperature: &temperature,
-			MaxTokens:   &maxTokens,
-		},
-	}
-
-	chatResp, err := s.aiService.Chat(ctx, chatReq)
-	if err != nil {
-		s.logger.Error("AI生成摘要失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return nil, fmt.Errorf("AI生成摘要失败: %w", err)
-	}
-
-	// 7. 创建摘要记录
-	startMessageID := messages[0].ID
-	endMessageID := messages[len(messages)-1].ID
-	summaryType := "incremental"
-	if latestSummary == nil {
-		summaryType = "full"
-	}
-
-	summary := &model.ConversationSummary{
-		TenantID:        tenantID,
-		SessionID:       session.ID,
-		SummaryType:     summaryType,
-		Content:         chatResp.Message,
-		TokenCount:      chatResp.Usage.TotalTokens,
-		MessageCount:    len(messages),
-		StartMessageID:  &startMessageID,
-		EndMessageID:    &endMessageID,
-		PreviousSummaryID: nil,
-	}
-
-	if latestSummary != nil {
-		summary.PreviousSummaryID = &latestSummary.ID
-	}
-
-	if err := s.summaryRepo.Create(ctx, summary); err != nil {
-		s.logger.Error("保存摘要失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return nil, fmt.Errorf("保存摘要失败: %w", err)
-	}
-
-	s.logger.Info("会话摘要生成成功", map[string]interface{}{
-		"sessionId":     sessionID,
-		"summaryId":     summary.ID,
-		"summaryType":   summaryType,
-		"messageCount":  len(messages),
-		"tokenCount":    summary.TokenCount,
-	})
-
-	return summary, nil
+// EvaluateSummaryRequest 评估摘要请求
+type EvaluateSummaryRequest struct {
+	// 摘要内容
+	Summary string
+	// 原始消息列表
+	OriginalMessages []*model.ChatMessage
+	// 评估维度（可选，如果不提供则评估所有维度）
+	Dimensions []string
 }
 
-// GetSummary 获取会话摘要
-func (s *summaryService) GetSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error) {
-	s.logger.Debug("获取会话摘要", map[string]interface{}{
-		"sessionId": sessionID,
-	})
-
-	// 获取JWT声明以获取租户ID
-	claims, ok := middleware.GetJWTClaims(ctx)
-	if !ok || claims == nil {
-		return nil, fmt.Errorf("未认证")
-	}
-	tenantID, err := uuid.Parse(claims.TenantID)
-	if err != nil {
-		return nil, fmt.Errorf("无效的租户ID: %w", err)
-	}
-
-	sessionUUID, err := uuid.Parse(sessionID)
-	if err != nil {
-		return nil, fmt.Errorf("无效的会话ID: %w", err)
-	}
-
-	summary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
-	if err != nil {
-		s.logger.Error("查询会话摘要失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return nil, fmt.Errorf("查询会话摘要失败: %w", err)
-	}
-
-	return summary, nil
+// SummaryQualityResult 摘要质量评估结果
+type SummaryQualityResult struct {
+	// 总体评分 (0-1)
+	OverallScore float64
+	// 各维度评分
+	DimensionScores map[string]float64
+	// 是否通过质量检查
+	Passed bool
+	// 质量问题列表
+	Issues []QualityIssue
+	// 改进建议
+	Suggestions []string
+	// 关键信息覆盖率 (0-1)
+	KeyInfoCoverage float64
 }
 
-// ShouldGenerateSummary 判断是否需要生成摘要
-func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID string) (bool, error) {
-	s.logger.Debug("检查是否需要生成摘要", map[string]interface{}{
-		"sessionId": sessionID,
-	})
-
-	// 获取JWT声明以获取租户ID
-	claims, ok := middleware.GetJWTClaims(ctx)
-	if !ok || claims == nil {
-		return false, fmt.Errorf("未认证")
-	}
-	tenantID, err := uuid.Parse(claims.TenantID)
-	if err != nil {
-		return false, fmt.Errorf("无效的租户ID: %w", err)
-	}
-
-	sessionUUID, err := uuid.Parse(sessionID)
-	if err != nil {
-		return false, fmt.Errorf("无效的会话ID: %w", err)
-	}
-
-	// 1. 获取会话的消息总数
-	messageCount, err := s.messageRepo.CountBySessionID(ctx, sessionID)
-	if err != nil {
-		s.logger.Error("统计消息数量失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return false, fmt.Errorf("统计消息数量失败: %w", err)
-	}
-
-	// 2. 检查消息数量是否达到阈值
-	threshold := s.config.Session.SummaryThreshold
-	if messageCount < threshold {
-		s.logger.Debug("消息数量未达到摘要阈值", map[string]interface{}{
-			"sessionId":    sessionID,
-			"messageCount": messageCount,
-			"threshold":    threshold,
-		})
-		return false, nil
-	}
-
-	// 3. 获取最新的摘要
-	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
-	if err != nil && err != repository.ErrNotFound {
-		s.logger.Error("查询最新摘要失败", map[string]interface{}{
-			"sessionId": sessionID,
-			"error":     err.Error(),
-		})
-		return false, fmt.Errorf("查询最新摘要失败: %w", err)
-	}
-
-	// 4. 如果没有摘要，需要生成
-	if latestSummary == nil || err == repository.ErrNotFound {
-		s.logger.Info("会话无摘要且消息数达到阈值，需要生成摘要", map[string]interface{}{
-			"sessionId":    sessionID,
-			"messageCount": messageCount,
-			"threshold":    threshold,
-		})
-		return true, nil
-	}
-
-	// 5. 计算摘要后的新消息数量
-	var messagesAfterSummary []*model.ChatMessage
-	if latestSummary.EndMessageID != nil {
-		messagesAfterSummary, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.EndMessageID.String())
-		if err != nil {
-			s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
-				"sessionId":     sessionID,
-				"lastMessageId": latestSummary.EndMessageID.String(),
-				"error":         err.Error(),
-			})
-			return false, fmt.Errorf("获取摘要后的消息失败: %w", err)
-		}
-	}
-
-	newMessageCount := len(messagesAfterSummary)
-	shouldGenerate := newMessageCount >= threshold
-
-	s.logger.Debug("检查摘要生成条件", map[string]interface{}{
-		"sessionId":       sessionID,
-		"newMessageCount": newMessageCount,
-		"threshold":       threshold,
-		"shouldGenerate":  shouldGenerate,
-	})
-
-	return shouldGenerate, nil
-}
-
-// buildSummaryPrompt 构建摘要提示词
-func (s *summaryService) buildSummaryPrompt(messages []*model.ChatMessage, previousSummary *model.ConversationSummary) string {
-	var builder strings.Builder
-
-	// 添加任务说明
-	builder.WriteString("请为以下对话生成一个简洁的摘要，保留关键信息和上下文。\n\n")
-
-	// 如果有之前的摘要，先包含它
-	if previousSummary != nil {
-		builder.WriteString("之前的对话摘要：\n")
-		builder.WriteString(previousSummary.Content)
-		builder.WriteString("\n\n新的对话内容：\n")
-	} else {
-		builder.WriteString("对话内容：\n")
-	}
-
-	// 添加消息内容
-	for _, msg := range messages {
-		builder.WriteString(fmt.Sprintf("%s: %s\n", msg.Role, msg.Content))
-	}
-
-	builder.WriteString("\n请生成摘要（200字以内）：")
-
-	return builder.String()
+// QualityIssue 质量问题
+type QualityIssue struct {
+	// 维度名称
+	Dimension string
+	// 严重程度 (low, medium, high)
+	Severity string
+	// 问题描述
+	Description string
+	// 评分
+	Score float64
 }

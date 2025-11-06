@@ -567,27 +567,57 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	sessionRepo := repository.NewSessionRepository(gormDB)
 	messageRepo := repository.NewMessageRepository(gormDB)
 	summaryRepo := repository.NewSummaryRepository(gormDB)
+	contextRepo := repository.NewContextRepository(gormDB)
 
-	// 3. 创建 Service 层实例
-	// 3.1 创建 SessionService
+	// 3. 创建依赖服务
+	// 3.1 创建 TokenManager
+	tokenManager := service.NewTokenManager(log)
+	
+	// 3.2 创建 Genkit Client（如果需要）
+	genkitClient := genkit.NewClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	// 初始化 Genkit 客户端
+	if err := genkitClient.Initialize(ctx, &genkit.Config{
+		APIKey: cfg.Genkit.APIKey,
+		Model:  cfg.Genkit.Model,
+	}); err != nil {
+		log.Warn("初始化 Genkit 客户端失败，摘要服务可能不可用", logger.Fields{"error": err})
+	} else {
+		if err := genkitClient.InitializeModel(ctx); err != nil {
+			log.Warn("初始化 Genkit 模型失败，摘要服务可能不可用", logger.Fields{"error": err})
+		}
+	}
+
+	// 4. 创建 Service 层实例
+	// 4.1 创建 SessionService
 	sessionService := session.NewSessionService(sessionRepo, messageRepo)
 	
-	// 3.2 创建 SummaryService
-	summaryService := session.NewSummaryService(summaryRepo, messageRepo, sessionRepo, aiService, cfg, log)
+	// 4.2 创建 SummaryService
+	summaryService := session.NewSummaryService(
+		summaryRepo,
+		messageRepo,
+		contextRepo,
+		sessionRepo,
+		genkitClient,
+		tokenManager,
+		log,
+	)
 	
-	// 3.3 创建 MessageService
+	// 4.3 创建 MessageService
 	messageService := session.NewMessageService(gormDB, sessionRepo, messageRepo, aiService, log)
 	
 	// 注意：SummaryService 已初始化但当前未直接使用，
 	// 它可以在未来的功能中被 MessageService 或其他服务调用
 	_ = summaryService
 
-	// 4. 创建 Handler 层实例
+	// 5. 创建 Handler 层实例
 	sessionHandler := handler.NewSessionHandler(sessionService, log)
 	messageHandler := handler.NewMessageHandler(messageService, log)
 
 	log.Info("会话管理服务初始化成功", logger.Fields{
-		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository"},
+		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository"},
 		"services":     []string{"SessionService", "MessageService", "SummaryService"},
 		"handlers":     []string{"SessionHandler", "MessageHandler"},
 	})

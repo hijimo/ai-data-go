@@ -116,7 +116,7 @@
   - 实现租户权限验证
   - _需求: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 9. 实现 SummaryService
+- [x] 9. 实现 SummaryService
   - 创建 `internal/service/summary_service.go` 接口文件
   - 创建 `internal/service/summary_service_impl.go` 实现文件
   - 实现 `GenerateSummary` 方法：生成摘要
