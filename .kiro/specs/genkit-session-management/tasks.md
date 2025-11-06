@@ -39,7 +39,7 @@
 
 ## 第二阶段：向量服务实现
 
-- [ ] 4. 实现 Qdrant 客户端服务
+- [x] 4. 实现 Qdrant 客户端服务
   - 创建 `internal/storage/qdrant_client.go` 接口文件
   - 创建 `internal/storage/qdrant_client_impl.go` 实现文件
   - 实现 `InitializeCollection` 方法：初始化单个共享 Collection
