@@ -2,9 +2,8 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 
 	"genkit-ai-service/internal/model"
 )
@@ -12,65 +11,29 @@ import (
 // SummaryRepository 摘要数据访问接口
 type SummaryRepository interface {
 	// Create 创建摘要
-	Create(ctx context.Context, summary *model.ChatSummary) error
+	Create(ctx context.Context, summary *model.ConversationSummary) error
 
-	// GetLatestBySessionID 获取会话的最新摘要
-	GetLatestBySessionID(ctx context.Context, sessionID string) (*model.ChatSummary, error)
+	// GetByID 根据ID获取摘要
+	GetByID(ctx context.Context, tenantID, summaryID uuid.UUID) (*model.ConversationSummary, error)
 
-	// GetBySessionID 获取会话的所有摘要
-	GetBySessionID(ctx context.Context, sessionID string) ([]*model.ChatSummary, error)
-}
+	// GetLatestBySessionID 获取会话最新摘要
+	GetLatestBySessionID(ctx context.Context, tenantID, sessionID uuid.UUID) (*model.ConversationSummary, error)
 
-// summaryRepository 摘要数据访问实现
-type summaryRepository struct {
-	db *gorm.DB
-}
+	// ListBySessionID 获取会话摘要列表
+	ListBySessionID(ctx context.Context, tenantID, sessionID uuid.UUID, limit int) ([]*model.ConversationSummary, error)
 
-// NewSummaryRepository 创建摘要数据访问实例
-func NewSummaryRepository(db *gorm.DB) SummaryRepository {
-	return &summaryRepository{
-		db: db,
-	}
-}
+	// Update 更新摘要
+	Update(ctx context.Context, summary *model.ConversationSummary) error
 
-// Create 创建摘要
-func (r *summaryRepository) Create(ctx context.Context, summary *model.ChatSummary) error {
-	if err := r.db.WithContext(ctx).Create(summary).Error; err != nil {
-		return fmt.Errorf("创建摘要失败: %w", err)
-	}
-	return nil
-}
+	// SoftDelete 软删除摘要
+	SoftDelete(ctx context.Context, tenantID, summaryID uuid.UUID) error
 
-// GetLatestBySessionID 获取会话的最新摘要
-func (r *summaryRepository) GetLatestBySessionID(ctx context.Context, sessionID string) (*model.ChatSummary, error) {
-	var summary model.ChatSummary
-	err := r.db.WithContext(ctx).
-		Where("session_id = ?", sessionID).
-		Order("created_at DESC").
-		First(&summary).Error
+	// HardDelete 硬删除摘要
+	HardDelete(ctx context.Context, tenantID, summaryID uuid.UUID) error
 
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil // 没有摘要时返回 nil 而不是错误
-		}
-		return nil, fmt.Errorf("查询最新摘要失败: %w", err)
-	}
+	// GetByType 根据类型获取摘要列表
+	GetByType(ctx context.Context, tenantID, sessionID uuid.UUID, summaryType string, limit int) ([]*model.ConversationSummary, error)
 
-	return &summary, nil
-}
-
-// GetBySessionID 获取会话的所有摘要
-func (r *summaryRepository) GetBySessionID(ctx context.Context, sessionID string) ([]*model.ChatSummary, error) {
-	var summaries []*model.ChatSummary
-
-	err := r.db.WithContext(ctx).
-		Where("session_id = ?", sessionID).
-		Order("created_at DESC").
-		Find(&summaries).Error
-
-	if err != nil {
-		return nil, fmt.Errorf("查询会话摘要列表失败: %w", err)
-	}
-
-	return summaries, nil
+	// CountBySessionID 统计会话摘要数量
+	CountBySessionID(ctx context.Context, tenantID, sessionID uuid.UUID) (int64, error)
 }

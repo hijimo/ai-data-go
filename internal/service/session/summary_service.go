@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
+	"genkit-ai-service/internal/api/middleware"
 	"genkit-ai-service/internal/config"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
@@ -15,10 +18,10 @@ import (
 // SummaryService 摘要业务逻辑接口
 type SummaryService interface {
 	// GenerateSummary 生成会话摘要
-	GenerateSummary(ctx context.Context, sessionID string) (*model.ChatSummary, error)
+	GenerateSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error)
 
 	// GetSummary 获取会话摘要
-	GetSummary(ctx context.Context, sessionID string) (*model.ChatSummary, error)
+	GetSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error)
 
 	// ShouldGenerateSummary 判断是否需要生成摘要
 	ShouldGenerateSummary(ctx context.Context, sessionID string) (bool, error)
@@ -54,10 +57,20 @@ func NewSummaryService(
 }
 
 // GenerateSummary 生成会话摘要
-func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) (*model.ChatSummary, error) {
+func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error) {
 	s.logger.Info("开始生成会话摘要", map[string]interface{}{
 		"sessionId": sessionID,
 	})
+
+	// 获取JWT声明以获取租户ID
+	claims, ok := middleware.GetJWTClaims(ctx)
+	if !ok || claims == nil {
+		return nil, fmt.Errorf("未认证")
+	}
+	tenantID, err := uuid.Parse(claims.TenantID)
+	if err != nil {
+		return nil, fmt.Errorf("无效的租户ID: %w", err)
+	}
 
 	// 1. 验证会话是否存在
 	session, err := s.sessionRepo.GetByID(ctx, sessionID)
@@ -75,9 +88,14 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 		return nil, fmt.Errorf("会话不存在")
 	}
 
-	// 2. 获取最新的摘要（如果存在）
-	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, sessionID)
+	sessionUUID, err := uuid.Parse(sessionID)
 	if err != nil {
+		return nil, fmt.Errorf("无效的会话ID: %w", err)
+	}
+
+	// 2. 获取最新的摘要（如果存在）
+	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
+	if err != nil && err != repository.ErrNotFound {
 		s.logger.Error("查询最新摘要失败", map[string]interface{}{
 			"sessionId": sessionID,
 			"error":     err.Error(),
@@ -87,13 +105,13 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 
 	// 3. 获取需要摘要的消息列表
 	var messages []*model.ChatMessage
-	if latestSummary != nil {
+	if latestSummary != nil && latestSummary.EndMessageID != nil {
 		// 如果已有摘要，只获取摘要之后的消息
-		messages, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID.String())
+		messages, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.EndMessageID.String())
 		if err != nil {
 			s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
 				"sessionId":     sessionID,
-				"lastMessageId": latestSummary.LastMessageID.String(),
+				"lastMessageId": latestSummary.EndMessageID.String(),
 				"error":         err.Error(),
 			})
 			return nil, fmt.Errorf("获取消息失败: %w", err)
@@ -142,12 +160,27 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 	}
 
 	// 7. 创建摘要记录
-	lastMessageID := messages[len(messages)-1].ID
-	summary := &model.ChatSummary{
-		SessionID:     session.ID,
-		Summary:       chatResp.Message,
-		LastMessageID: lastMessageID,
-		TokenCount:    chatResp.Usage.TotalTokens,
+	startMessageID := messages[0].ID
+	endMessageID := messages[len(messages)-1].ID
+	summaryType := "incremental"
+	if latestSummary == nil {
+		summaryType = "full"
+	}
+
+	summary := &model.ConversationSummary{
+		TenantID:        tenantID,
+		SessionID:       session.ID,
+		SummaryType:     summaryType,
+		Content:         chatResp.Message,
+		TokenCount:      chatResp.Usage.TotalTokens,
+		MessageCount:    len(messages),
+		StartMessageID:  &startMessageID,
+		EndMessageID:    &endMessageID,
+		PreviousSummaryID: nil,
+	}
+
+	if latestSummary != nil {
+		summary.PreviousSummaryID = &latestSummary.ID
 	}
 
 	if err := s.summaryRepo.Create(ctx, summary); err != nil {
@@ -161,7 +194,8 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 	s.logger.Info("会话摘要生成成功", map[string]interface{}{
 		"sessionId":     sessionID,
 		"summaryId":     summary.ID,
-		"lastMessageId": lastMessageID,
+		"summaryType":   summaryType,
+		"messageCount":  len(messages),
 		"tokenCount":    summary.TokenCount,
 	})
 
@@ -169,12 +203,27 @@ func (s *summaryService) GenerateSummary(ctx context.Context, sessionID string) 
 }
 
 // GetSummary 获取会话摘要
-func (s *summaryService) GetSummary(ctx context.Context, sessionID string) (*model.ChatSummary, error) {
+func (s *summaryService) GetSummary(ctx context.Context, sessionID string) (*model.ConversationSummary, error) {
 	s.logger.Debug("获取会话摘要", map[string]interface{}{
 		"sessionId": sessionID,
 	})
 
-	summary, err := s.summaryRepo.GetLatestBySessionID(ctx, sessionID)
+	// 获取JWT声明以获取租户ID
+	claims, ok := middleware.GetJWTClaims(ctx)
+	if !ok || claims == nil {
+		return nil, fmt.Errorf("未认证")
+	}
+	tenantID, err := uuid.Parse(claims.TenantID)
+	if err != nil {
+		return nil, fmt.Errorf("无效的租户ID: %w", err)
+	}
+
+	sessionUUID, err := uuid.Parse(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("无效的会话ID: %w", err)
+	}
+
+	summary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
 	if err != nil {
 		s.logger.Error("查询会话摘要失败", map[string]interface{}{
 			"sessionId": sessionID,
@@ -191,6 +240,21 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 	s.logger.Debug("检查是否需要生成摘要", map[string]interface{}{
 		"sessionId": sessionID,
 	})
+
+	// 获取JWT声明以获取租户ID
+	claims, ok := middleware.GetJWTClaims(ctx)
+	if !ok || claims == nil {
+		return false, fmt.Errorf("未认证")
+	}
+	tenantID, err := uuid.Parse(claims.TenantID)
+	if err != nil {
+		return false, fmt.Errorf("无效的租户ID: %w", err)
+	}
+
+	sessionUUID, err := uuid.Parse(sessionID)
+	if err != nil {
+		return false, fmt.Errorf("无效的会话ID: %w", err)
+	}
 
 	// 1. 获取会话的消息总数
 	messageCount, err := s.messageRepo.CountBySessionID(ctx, sessionID)
@@ -214,8 +278,8 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 	}
 
 	// 3. 获取最新的摘要
-	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, sessionID)
-	if err != nil {
+	latestSummary, err := s.summaryRepo.GetLatestBySessionID(ctx, tenantID, sessionUUID)
+	if err != nil && err != repository.ErrNotFound {
 		s.logger.Error("查询最新摘要失败", map[string]interface{}{
 			"sessionId": sessionID,
 			"error":     err.Error(),
@@ -224,7 +288,7 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 	}
 
 	// 4. 如果没有摘要，需要生成
-	if latestSummary == nil {
+	if latestSummary == nil || err == repository.ErrNotFound {
 		s.logger.Info("会话无摘要且消息数达到阈值，需要生成摘要", map[string]interface{}{
 			"sessionId":    sessionID,
 			"messageCount": messageCount,
@@ -234,14 +298,17 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 	}
 
 	// 5. 计算摘要后的新消息数量
-	messagesAfterSummary, err := s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.LastMessageID.String())
-	if err != nil {
-		s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
-			"sessionId":     sessionID,
-			"lastMessageId": latestSummary.LastMessageID.String(),
-			"error":         err.Error(),
-		})
-		return false, fmt.Errorf("获取摘要后的消息失败: %w", err)
+	var messagesAfterSummary []*model.ChatMessage
+	if latestSummary.EndMessageID != nil {
+		messagesAfterSummary, err = s.messageRepo.GetMessagesAfter(ctx, sessionID, latestSummary.EndMessageID.String())
+		if err != nil {
+			s.logger.Error("获取摘要后的消息失败", map[string]interface{}{
+				"sessionId":     sessionID,
+				"lastMessageId": latestSummary.EndMessageID.String(),
+				"error":         err.Error(),
+			})
+			return false, fmt.Errorf("获取摘要后的消息失败: %w", err)
+		}
 	}
 
 	newMessageCount := len(messagesAfterSummary)
@@ -258,7 +325,7 @@ func (s *summaryService) ShouldGenerateSummary(ctx context.Context, sessionID st
 }
 
 // buildSummaryPrompt 构建摘要提示词
-func (s *summaryService) buildSummaryPrompt(messages []*model.ChatMessage, previousSummary *model.ChatSummary) string {
+func (s *summaryService) buildSummaryPrompt(messages []*model.ChatMessage, previousSummary *model.ConversationSummary) string {
 	var builder strings.Builder
 
 	// 添加任务说明
@@ -267,7 +334,7 @@ func (s *summaryService) buildSummaryPrompt(messages []*model.ChatMessage, previ
 	// 如果有之前的摘要，先包含它
 	if previousSummary != nil {
 		builder.WriteString("之前的对话摘要：\n")
-		builder.WriteString(previousSummary.Summary)
+		builder.WriteString(previousSummary.Content)
 		builder.WriteString("\n\n新的对话内容：\n")
 	} else {
 		builder.WriteString("对话内容：\n")

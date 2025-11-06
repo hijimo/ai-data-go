@@ -26,7 +26,7 @@
   - 所有查询必须包含租户ID过滤和软删除过滤
   - _需求: 1.1, 1.2, 1.3_
 
-- [ ] 3. 实现 SummaryRepository
+- [x] 3. 实现 SummaryRepository
   - 创建 `internal/repository/summary_repository.go` 接口文件
   - 创建 `internal/repository/summary_repository_impl.go` 实现文件
   - 实现 `Create` 方法：创建摘要
