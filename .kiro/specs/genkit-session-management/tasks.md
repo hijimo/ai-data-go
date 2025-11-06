@@ -69,7 +69,7 @@
   - 添加错误处理和重试机制
   - _需求: 2.2, 3.1_
 
-- [ ] 6. 实现 Token 管理器
+- [x] 6. 实现 Token 管理器
   - 创建 `internal/service/token_manager.go` 接口文件
   - 创建 `internal/service/token_manager_impl.go` 实现文件
   - 实现 `CalculateTokens` 方法：计算文本Token数
