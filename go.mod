@@ -62,6 +62,7 @@ require (
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/mbleigh/raymond v0.0.0-20250414171441-6b3a58ab9e0a // indirect
+	github.com/pgvector/pgvector-go v0.3.0 // indirect
 	github.com/redis/go-redis/v9 v9.14.1 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
