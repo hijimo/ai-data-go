@@ -34,6 +34,12 @@ type Metrics struct {
 	// 租户指标
 	activeTenants       int64 // 活跃租户数
 	activeUsers         int64 // 活跃用户数
+	
+	// Flow 执行指标
+	flowExecutions      map[string]int64        // Flow 执行次数（按 Flow 名称）
+	flowSuccesses       map[string]int64        // Flow 成功次数
+	flowErrors          map[string]int64        // Flow 错误次数
+	flowDurations       map[string][]time.Duration // Flow 执行时间
 }
 
 // MetricsSnapshot 指标快照
@@ -81,6 +87,10 @@ func GetMetrics() *Metrics {
 		globalMetrics = &Metrics{
 			loginDurations:   make([]time.Duration, 0, 1000),
 			refreshDurations: make([]time.Duration, 0, 1000),
+			flowExecutions:   make(map[string]int64),
+			flowSuccesses:    make(map[string]int64),
+			flowErrors:       make(map[string]int64),
+			flowDurations:    make(map[string][]time.Duration),
 		}
 	})
 	return globalMetrics
@@ -236,6 +246,35 @@ func (m *Metrics) GetSnapshot() MetricsSnapshot {
 	return snapshot
 }
 
+// RecordFlowExecution 记录 Flow 执行
+func (m *Metrics) RecordFlowExecution(flowName string, status string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	m.flowExecutions[flowName]++
+	if status == "success" {
+		m.flowSuccesses[flowName]++
+	} else {
+		m.flowErrors[flowName]++
+	}
+}
+
+// RecordFlowDuration 记录 Flow 执行时间
+func (m *Metrics) RecordFlowDuration(flowName string, duration time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	if _, exists := m.flowDurations[flowName]; !exists {
+		m.flowDurations[flowName] = make([]time.Duration, 0, 1000)
+	}
+	
+	// 保留最近1000条
+	if len(m.flowDurations[flowName]) >= 1000 {
+		m.flowDurations[flowName] = m.flowDurations[flowName][1:]
+	}
+	m.flowDurations[flowName] = append(m.flowDurations[flowName], duration)
+}
+
 // Reset 重置所有指标（用于测试或定期重置）
 func (m *Metrics) Reset() {
 	m.mu.Lock()
@@ -255,6 +294,10 @@ func (m *Metrics) Reset() {
 	m.bruteForceAttempts = 0
 	m.loginDurations = make([]time.Duration, 0, 1000)
 	m.refreshDurations = make([]time.Duration, 0, 1000)
+	m.flowExecutions = make(map[string]int64)
+	m.flowSuccesses = make(map[string]int64)
+	m.flowErrors = make(map[string]int64)
+	m.flowDurations = make(map[string][]time.Duration)
 }
 
 // calculateP95 计算 P95 百分位数
@@ -283,4 +326,14 @@ func calculateP95(durations []time.Duration) float64 {
 	}
 	
 	return float64(sorted[p95Index].Milliseconds())
+}
+
+// RecordFlowExecution 全局函数：记录 Flow 执行
+func RecordFlowExecution(flowName string, status string) {
+	GetMetrics().RecordFlowExecution(flowName, status)
+}
+
+// RecordFlowDuration 全局函数：记录 Flow 执行时间
+func RecordFlowDuration(flowName string, duration time.Duration) {
+	GetMetrics().RecordFlowDuration(flowName, duration)
 }

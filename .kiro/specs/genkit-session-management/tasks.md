@@ -162,7 +162,7 @@
 
 ## 第五阶段：Genkit Flow 实现
 
-- [ ] 12. 实现上下文构建 Flow
+- [x] 12. 实现上下文构建 Flow
   - 创建 `internal/genkit/flows/context_flows.go` 文件
   - 定义 `ContextBuildInput` 结构体
   - 定义 `ContextBuildOutput` 结构体
