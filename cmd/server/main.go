@@ -240,8 +240,22 @@ func main() {
 
 	// 8.2 注册会话管理路由（如果数据库可用）
 	// 会话管理路由需要 JWT 认证中间件
+	var cacheWarmer *storage.CacheWarmer
 	if db != nil && aiService != nil && jwtAuthMW != nil {
-		sessionHandler, messageHandler := initSessionHandlers(db, aiService, cfg, log)
+		sessionHandler, messageHandler, warmer := initSessionHandlers(db, aiService, cfg, log)
+		cacheWarmer = warmer
+		
+		// 执行启动时缓存预热
+		if cacheWarmer != nil {
+			ctx := context.Background()
+			if err := cacheWarmer.WarmupOnStartup(ctx); err != nil {
+				log.Warn("启动时缓存预热失败", logger.Fields{"error": err})
+			}
+			
+			// 启动定期预热
+			cacheWarmer.StartPeriodicWarmup(ctx)
+		}
+		
 		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler, jwtAuthMW)
 		log.Info("会话管理路由已注册", logger.Fields{
 			"routes": []string{
@@ -338,6 +352,12 @@ func main() {
 		log.Info("收到关闭信号，开始优雅关闭", logger.Fields{
 			"signal": sig.String(),
 		})
+
+		// 停止缓存预热器
+		if cacheWarmer != nil {
+			cacheWarmer.Stop()
+			log.Info("缓存预热器已停止", nil)
+		}
 
 		// 停止清理服务
 		if cleanupSvc != nil {
@@ -557,7 +577,7 @@ func initProviderService(cfg *config.Config, log logger.Logger) (service.Provide
 }
 
 // initSessionHandlers 初始化会话管理相关的处理器
-func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (*handler.SessionHandler, *handler.MessageHandler) {
+func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (*handler.SessionHandler, *handler.MessageHandler, *storage.CacheWarmer) {
 	log.Info("初始化会话管理服务...", nil)
 
 	// 1. 获取 GORM 数据库实例
@@ -590,6 +610,42 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		}
 	}
 
+	// 3.3 初始化 Redis 客户端和缓存服务（如果启用）
+	var cacheService storage.CacheService
+	var cacheWarmer *storage.CacheWarmer
+	
+	if cfg.Redis.Enabled {
+		redisClient, err := database.NewRedisClient(cfg.Redis, log)
+		if err != nil {
+			log.Warn("Redis 连接失败，缓存功能将被禁用", logger.Fields{"error": err})
+		} else {
+			// 创建缓存服务
+			cacheService = storage.NewCacheService(redisClient, log)
+			log.Info("缓存服务已启用", nil)
+			
+			// 创建缓存预热器
+			cacheWarmerConfig := &storage.CacheWarmerConfig{
+				WarmupInterval:    30 * time.Minute, // 30分钟预热一次
+				ActiveSessionDays: 7,                // 7天内活跃的会话
+			}
+			cacheWarmer = storage.NewCacheWarmer(
+				cacheService,
+				contextRepo,
+				summaryRepo,
+				sessionRepo,
+				gormDB,
+				log,
+				cacheWarmerConfig,
+			)
+			log.Info("缓存预热器已创建", logger.Fields{
+				"warmup_interval_minutes": cacheWarmerConfig.WarmupInterval.Minutes(),
+				"active_session_days":     cacheWarmerConfig.ActiveSessionDays,
+			})
+		}
+	} else {
+		log.Info("Redis 已禁用，缓存功能将不可用", nil)
+	}
+
 	// 4. 创建 Service 层实例
 	// 4.1 创建 SessionService
 	sessionService := session.NewSessionService(sessionRepo, messageRepo)
@@ -618,11 +674,12 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 
 	log.Info("会话管理服务初始化成功", logger.Fields{
 		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository"},
-		"services":     []string{"SessionService", "MessageService", "SummaryService"},
+		"services":     []string{"SessionService", "MessageService", "SummaryService", "CacheService"},
 		"handlers":     []string{"SessionHandler", "MessageHandler"},
+		"cache_enabled": cacheService != nil,
 	})
 
-	return sessionHandler, messageHandler
+	return sessionHandler, messageHandler, cacheWarmer
 }
 
 // initAuthHandlers 初始化认证相关的处理器和中间件

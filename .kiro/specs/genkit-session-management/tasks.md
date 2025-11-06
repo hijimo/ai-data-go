@@ -151,7 +151,7 @@
   - 实现命名空间隔离
   - _需求: 1.3, 5.1_
 
-- [ ] 11. 实现缓存预热
+- [x] 11. 实现缓存预热
   - 创建 `internal/storage/cache_warmer.go` 文件
   - 实现 `WarmupOnStartup` 方法：启动时预热
   - 实现 `warmupActiveSessions` 方法：预热活跃会话
