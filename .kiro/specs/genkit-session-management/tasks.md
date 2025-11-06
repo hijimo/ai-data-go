@@ -80,7 +80,7 @@
 
 ## 第三阶段：核心服务层实现
 
-- [ ] 7. 实现 ContextService
+- [x] 7. 实现 ContextService
   - 创建 `internal/service/context_service.go` 接口文件
   - 创建 `internal/service/context_service_impl.go` 实现文件
   - 实现 `BuildContext` 方法：构建会话上下文
