@@ -212,7 +212,7 @@
   - 添加请求日志
   - _需求: 1.1, 1.2, 1.3_
 
-- [ ] 16. 实现记忆管理 Handler
+- [x] 16. 实现记忆管理 Handler
   - 创建 `internal/handler/memory_handler.go` 文件
   - 实现 `HandleSearchMemories` 方法：检索记忆API
   - 实现 `HandleStoreMemory` 方法：存储记忆API
