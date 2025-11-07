@@ -24,7 +24,8 @@ var validate = validator.New()
 //   - g: Genkit实例
 //   - contextSvc: 上下文服务
 func RegisterContextFlows(g *genkit.Genkit, contextSvc service.ContextService) {
-	// 注册上下文构建Flow
+	// 注册上下文构建Flow（已应用监控中间件）
+	// 注意：监控逻辑已经集成在contextBuildFlow内部
 	genkit.DefineFlow(
 		g,
 		"contextBuildFlow",

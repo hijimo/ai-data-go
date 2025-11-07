@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"genkit-ai-service/internal/logger"
+	"genkit-ai-service/internal/monitoring"
 	"genkit-ai-service/internal/service"
 )
 
@@ -218,6 +219,9 @@ func memorySearchFlow(memorySvc service.MemoryService) func(context.Context, Mem
 				"session_id": input.SessionID,
 				"query":      input.Query,
 			})
+			// 记录失败指标
+			monitoring.RecordFlowExecution("memorySearchFlow", "error")
+			monitoring.RecordFlowDuration("memorySearchFlow", time.Since(startTime))
 			return MemorySearchOutput{}, fmt.Errorf("记忆检索失败: %w", err)
 		}
 
@@ -277,6 +281,10 @@ func memorySearchFlow(memorySvc service.MemoryService) func(context.Context, Mem
 			"duration_ms": output.SearchTime,
 		})
 
+		// 记录监控指标
+		monitoring.RecordFlowExecution("memorySearchFlow", "success")
+		monitoring.RecordFlowDuration("memorySearchFlow", time.Since(startTime))
+
 		return output, nil
 	}
 }
@@ -330,6 +338,9 @@ func memoryStoreFlow(memorySvc service.MemoryService) func(context.Context, Memo
 				"session_id":  input.SessionID,
 				"memory_type": input.MemoryType,
 			})
+			// 记录失败指标
+			monitoring.RecordFlowExecution("memoryStoreFlow", "error")
+			monitoring.RecordFlowDuration("memoryStoreFlow", time.Since(startTime))
 			return MemoryStoreOutput{}, fmt.Errorf("记忆存储失败: %w", err)
 		}
 
@@ -352,6 +363,10 @@ func memoryStoreFlow(memorySvc service.MemoryService) func(context.Context, Memo
 			"token_count": output.TokenCount,
 			"duration_ms": output.StoreTime,
 		})
+
+		// 记录监控指标
+		monitoring.RecordFlowExecution("memoryStoreFlow", "success")
+		monitoring.RecordFlowDuration("memoryStoreFlow", time.Since(startTime))
 
 		return output, nil
 	}
@@ -398,6 +413,9 @@ func memoryCleanupFlow(memorySvc service.MemoryService) func(context.Context, Me
 				"strategy": input.Strategy,
 				"mode":     input.Mode,
 			})
+			// 记录失败指标
+			monitoring.RecordFlowExecution("memoryCleanupFlow", "error")
+			monitoring.RecordFlowDuration("memoryCleanupFlow", time.Since(startTime))
 			return MemoryCleanupOutput{}, fmt.Errorf("记忆清理失败: %w", err)
 		}
 
@@ -430,6 +448,10 @@ func memoryCleanupFlow(memorySvc service.MemoryService) func(context.Context, Me
 			"preview":       output.Preview,
 			"duration_ms":   output.CleanupTime,
 		})
+
+		// 记录监控指标
+		monitoring.RecordFlowExecution("memoryCleanupFlow", "success")
+		monitoring.RecordFlowDuration("memoryCleanupFlow", time.Since(startTime))
 
 		return output, nil
 	}

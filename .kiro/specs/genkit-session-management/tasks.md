@@ -305,7 +305,7 @@
   - 实现 `RecordCacheMiss` 方法
   - _需求: 5.2_
 
-- [ ] 24. 实现 Flow 监控中间件
+- [x] 24. 实现 Flow 监控中间件
   - 创建 `internal/genkit/middleware.go` 文件
   - 实现 `FlowMonitor` 结构体
   - 实现 `MonitorFlow` 方法：包装Flow执行

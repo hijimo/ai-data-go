@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"genkit-ai-service/internal/logger"
+	"genkit-ai-service/internal/monitoring"
 	"genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/internal/service/session"
 )
@@ -211,6 +212,9 @@ func summaryGenerateFlow(summarySvc session.SummaryService) func(context.Context
 				"error":      err.Error(),
 				"session_id": input.SessionID,
 			})
+			// 记录失败指标
+			monitoring.RecordFlowExecution("summaryGenerateFlow", "error")
+			monitoring.RecordFlowDuration("summaryGenerateFlow", time.Since(startTime))
 			return SummaryGenerateOutput{}, fmt.Errorf("生成摘要失败: %w", err)
 		}
 
@@ -253,6 +257,10 @@ func summaryGenerateFlow(summarySvc session.SummaryService) func(context.Context
 			"compression_rate":   output.CompressionRate,
 			"generation_time_ms": output.GenerationTime,
 		})
+
+		// 记录监控指标
+		monitoring.RecordFlowExecution("summaryGenerateFlow", "success")
+		monitoring.RecordFlowDuration("summaryGenerateFlow", time.Since(startTime))
 
 		return output, nil
 	}
@@ -311,6 +319,9 @@ func summaryTriggerCheckFlow(summarySvc session.SummaryService) func(context.Con
 				"error":      err.Error(),
 				"session_id": input.SessionID,
 			})
+			// 记录失败指标
+			monitoring.RecordFlowExecution("summaryTriggerCheckFlow", "error")
+			monitoring.RecordFlowDuration("summaryTriggerCheckFlow", time.Since(startTime))
 			return SummaryTriggerCheckOutput{}, fmt.Errorf("检查摘要触发条件失败: %w", err)
 		}
 
@@ -349,6 +360,10 @@ func summaryTriggerCheckFlow(summarySvc session.SummaryService) func(context.Con
 			"recommended_type": output.RecommendedType,
 			"check_time_ms":    output.CheckTime,
 		})
+
+		// 记录监控指标
+		monitoring.RecordFlowExecution("summaryTriggerCheckFlow", "success")
+		monitoring.RecordFlowDuration("summaryTriggerCheckFlow", time.Since(startTime))
 
 		return output, nil
 	}
