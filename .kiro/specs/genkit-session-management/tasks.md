@@ -291,7 +291,7 @@
 
 ## 第九阶段：监控和可观测性
 
-- [ ] 23. 实现监控指标
+- [x] 23. 实现监控指标
   - 创建 `internal/monitoring/metrics.go` 文件
   - 定义 Prometheus 指标
     - Flow 执行次数

@@ -40,6 +40,18 @@ type Metrics struct {
 	flowSuccesses       map[string]int64        // Flow 成功次数
 	flowErrors          map[string]int64        // Flow 错误次数
 	flowDurations       map[string][]time.Duration // Flow 执行时间
+	
+	// Token 使用量指标
+	tokenUsage          map[string]int64        // Token 使用量（按租户ID）
+	promptTokens        int64                   // Prompt Token 总数
+	completionTokens    int64                   // Completion Token 总数
+	totalTokens         int64                   // 总 Token 数
+	
+	// 缓存指标
+	cacheHits           int64                   // 缓存命中次数
+	cacheMisses         int64                   // 缓存未命中次数
+	cacheHitsByKey      map[string]int64        // 按缓存键的命中次数
+	cacheMissesByKey    map[string]int64        // 按缓存键的未命中次数
 }
 
 // MetricsSnapshot 指标快照
@@ -91,6 +103,9 @@ func GetMetrics() *Metrics {
 			flowSuccesses:    make(map[string]int64),
 			flowErrors:       make(map[string]int64),
 			flowDurations:    make(map[string][]time.Duration),
+			tokenUsage:       make(map[string]int64),
+			cacheHitsByKey:   make(map[string]int64),
+			cacheMissesByKey: make(map[string]int64),
 		}
 	})
 	return globalMetrics
@@ -247,6 +262,8 @@ func (m *Metrics) GetSnapshot() MetricsSnapshot {
 }
 
 // RecordFlowExecution 记录 Flow 执行
+// flowName: Flow 名称
+// status: 执行状态（"success" 或 "error"）
 func (m *Metrics) RecordFlowExecution(flowName string, status string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -260,6 +277,8 @@ func (m *Metrics) RecordFlowExecution(flowName string, status string) {
 }
 
 // RecordFlowDuration 记录 Flow 执行时间
+// flowName: Flow 名称
+// duration: 执行时长
 func (m *Metrics) RecordFlowDuration(flowName string, duration time.Duration) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -273,6 +292,112 @@ func (m *Metrics) RecordFlowDuration(flowName string, duration time.Duration) {
 		m.flowDurations[flowName] = m.flowDurations[flowName][1:]
 	}
 	m.flowDurations[flowName] = append(m.flowDurations[flowName], duration)
+}
+
+// RecordTokenUsage 记录 Token 使用量
+// tenantID: 租户ID
+// promptTokens: Prompt Token 数量
+// completionTokens: Completion Token 数量
+func (m *Metrics) RecordTokenUsage(tenantID string, promptTokens, completionTokens int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	totalTokens := promptTokens + completionTokens
+	
+	// 按租户记录
+	m.tokenUsage[tenantID] += int64(totalTokens)
+	
+	// 全局统计
+	m.promptTokens += int64(promptTokens)
+	m.completionTokens += int64(completionTokens)
+	m.totalTokens += int64(totalTokens)
+}
+
+// RecordCacheHit 记录缓存命中
+// cacheKey: 缓存键（可选，用于详细统计）
+func (m *Metrics) RecordCacheHit(cacheKey string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	m.cacheHits++
+	if cacheKey != "" {
+		m.cacheHitsByKey[cacheKey]++
+	}
+}
+
+// RecordCacheMiss 记录缓存未命中
+// cacheKey: 缓存键（可选，用于详细统计）
+func (m *Metrics) RecordCacheMiss(cacheKey string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	m.cacheMisses++
+	if cacheKey != "" {
+		m.cacheMissesByKey[cacheKey]++
+	}
+}
+
+// GetFlowMetrics 获取指定 Flow 的指标
+func (m *Metrics) GetFlowMetrics(flowName string) FlowMetrics {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	metrics := FlowMetrics{
+		FlowName:   flowName,
+		Executions: m.flowExecutions[flowName],
+		Successes:  m.flowSuccesses[flowName],
+		Errors:     m.flowErrors[flowName],
+	}
+	
+	// 计算成功率
+	if metrics.Executions > 0 {
+		metrics.SuccessRate = float64(metrics.Successes) / float64(metrics.Executions) * 100
+	}
+	
+	// 计算执行时间统计
+	if durations, exists := m.flowDurations[flowName]; exists && len(durations) > 0 {
+		var total time.Duration
+		for _, d := range durations {
+			total += d
+		}
+		metrics.AvgDuration = float64(total.Milliseconds()) / float64(len(durations))
+		metrics.P95Duration = calculateP95(durations)
+		metrics.P99Duration = calculateP99(durations)
+	}
+	
+	return metrics
+}
+
+// GetTokenMetrics 获取 Token 使用指标
+func (m *Metrics) GetTokenMetrics() TokenMetrics {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	return TokenMetrics{
+		PromptTokens:     m.promptTokens,
+		CompletionTokens: m.completionTokens,
+		TotalTokens:      m.totalTokens,
+		ByTenant:         copyInt64Map(m.tokenUsage),
+	}
+}
+
+// GetCacheMetrics 获取缓存指标
+func (m *Metrics) GetCacheMetrics() CacheMetrics {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	metrics := CacheMetrics{
+		Hits:   m.cacheHits,
+		Misses: m.cacheMisses,
+	}
+	
+	// 计算命中率
+	total := m.cacheHits + m.cacheMisses
+	if total > 0 {
+		metrics.HitRate = float64(m.cacheHits) / float64(total) * 100
+	}
+	
+	return metrics
 }
 
 // Reset 重置所有指标（用于测试或定期重置）
@@ -298,10 +423,55 @@ func (m *Metrics) Reset() {
 	m.flowSuccesses = make(map[string]int64)
 	m.flowErrors = make(map[string]int64)
 	m.flowDurations = make(map[string][]time.Duration)
+	m.tokenUsage = make(map[string]int64)
+	m.promptTokens = 0
+	m.completionTokens = 0
+	m.totalTokens = 0
+	m.cacheHits = 0
+	m.cacheMisses = 0
+	m.cacheHitsByKey = make(map[string]int64)
+	m.cacheMissesByKey = make(map[string]int64)
+}
+
+// FlowMetrics Flow 指标
+type FlowMetrics struct {
+	FlowName    string  `json:"flowName"`
+	Executions  int64   `json:"executions"`
+	Successes   int64   `json:"successes"`
+	Errors      int64   `json:"errors"`
+	SuccessRate float64 `json:"successRate"`
+	AvgDuration float64 `json:"avgDuration"`
+	P95Duration float64 `json:"p95Duration"`
+	P99Duration float64 `json:"p99Duration"`
+}
+
+// TokenMetrics Token 使用指标
+type TokenMetrics struct {
+	PromptTokens     int64            `json:"promptTokens"`
+	CompletionTokens int64            `json:"completionTokens"`
+	TotalTokens      int64            `json:"totalTokens"`
+	ByTenant         map[string]int64 `json:"byTenant"`
+}
+
+// CacheMetrics 缓存指标
+type CacheMetrics struct {
+	Hits    int64   `json:"hits"`
+	Misses  int64   `json:"misses"`
+	HitRate float64 `json:"hitRate"`
 }
 
 // calculateP95 计算 P95 百分位数
 func calculateP95(durations []time.Duration) float64 {
+	return calculatePercentile(durations, 0.95)
+}
+
+// calculateP99 计算 P99 百分位数
+func calculateP99(durations []time.Duration) float64 {
+	return calculatePercentile(durations, 0.99)
+}
+
+// calculatePercentile 计算指定百分位数
+func calculatePercentile(durations []time.Duration, percentile float64) float64 {
 	if len(durations) == 0 {
 		return 0
 	}
@@ -319,14 +489,25 @@ func calculateP95(durations []time.Duration) float64 {
 		}
 	}
 	
-	// 计算 P95 位置
-	p95Index := int(float64(len(sorted)) * 0.95)
-	if p95Index >= len(sorted) {
-		p95Index = len(sorted) - 1
+	// 计算百分位位置
+	index := int(float64(len(sorted)) * percentile)
+	if index >= len(sorted) {
+		index = len(sorted) - 1
 	}
 	
-	return float64(sorted[p95Index].Milliseconds())
+	return float64(sorted[index].Milliseconds())
 }
+
+// copyInt64Map 复制 int64 map（用于线程安全）
+func copyInt64Map(src map[string]int64) map[string]int64 {
+	dst := make(map[string]int64, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
+// 全局便捷函数
 
 // RecordFlowExecution 全局函数：记录 Flow 执行
 func RecordFlowExecution(flowName string, status string) {
@@ -336,4 +517,19 @@ func RecordFlowExecution(flowName string, status string) {
 // RecordFlowDuration 全局函数：记录 Flow 执行时间
 func RecordFlowDuration(flowName string, duration time.Duration) {
 	GetMetrics().RecordFlowDuration(flowName, duration)
+}
+
+// RecordTokenUsage 全局函数：记录 Token 使用量
+func RecordTokenUsage(tenantID string, promptTokens, completionTokens int) {
+	GetMetrics().RecordTokenUsage(tenantID, promptTokens, completionTokens)
+}
+
+// RecordCacheHit 全局函数：记录缓存命中
+func RecordCacheHit(cacheKey string) {
+	GetMetrics().RecordCacheHit(cacheKey)
+}
+
+// RecordCacheMiss 全局函数：记录缓存未命中
+func RecordCacheMiss(cacheKey string) {
+	GetMetrics().RecordCacheMiss(cacheKey)
 }
