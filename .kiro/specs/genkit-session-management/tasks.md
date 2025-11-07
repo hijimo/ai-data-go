@@ -187,7 +187,7 @@
   - 添加错误处理
   - _需求: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 14. 实现摘要生成 Flow
+- [x] 14. 实现摘要生成 Flow
   - 创建 `internal/genkit/flows/summary_flows.go` 文件
   - 定义 `SummaryGenerateInput` 结构体
   - 定义 `SummaryGenerateOutput` 结构体
