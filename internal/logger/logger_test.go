@@ -435,29 +435,4 @@ func TestLoggerMultipleContextFields(t *testing.T) {
 	}
 }
 
-// BenchmarkExtractContextFields 性能测试：提取上下文字段
-func BenchmarkExtractContextFields(b *testing.B) {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, TraceIDKey, "trace-bench-001")
-	ctx = context.WithValue(ctx, SessionIDKey, "session-bench-001")
-	ctx = context.WithValue(ctx, RequestIDKey, "request-bench-001")
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		extractContextFields(ctx)
-	}
-}
-
-// BenchmarkLoggerWithTraceID 性能测试：带 TraceID 的日志记录
-func BenchmarkLoggerWithTraceID(b *testing.B) {
-	var buf bytes.Buffer
-	log := New(InfoLevel, JSONFormat, &buf)
-	ctx := context.WithValue(context.Background(), TraceIDKey, "trace-bench-002")
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		log.InfoContext(ctx, "benchmark message")
-	}
-}
+// 注意：基准测试已移至 logger_benchmark_test.go 文件

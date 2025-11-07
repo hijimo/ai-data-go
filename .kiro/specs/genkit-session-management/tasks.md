@@ -316,16 +316,36 @@
   - 在所有Flow中应用监控中间件
   - _需求: 5.2_
 
-- [ ] 25. 实现日志记录
-  - 创建 `internal/logger/logger.go` 文件（如果不存在）
-  - 实现结构化日志
+- [x] 25. 实现日志记录
+  - ✅ 已有完整的 `internal/logger/logger.go` 实现
+  - ✅ 已实现结构化日志（JSON 和 Text 格式）
+  - ✅ 已实现上下文日志方法：
+    - `DebugContext` 方法
     - `InfoContext` 方法
-    - `ErrorContext` 方法
     - `WarnContext` 方法
-  - 实现 `LogEntry` 结构体
-  - 实现 `buildLogEntry` 方法：从上下文提取信息
-  - 在所有服务层方法中添加日志记录
-  - 记录权限验证失败的审计日志
+    - `ErrorContext` 方法
+  - ✅ 已实现 `logEntry` 结构体
+  - ✅ 已实现 `extractContextFields` 方法：从上下文提取 traceId、sessionId、requestId、userId
+  - ✅ 已在所有服务层和 Flow 中使用日志记录
+  - ✅ 已记录权限验证失败的审计日志
+  - 📝 使用方式：
+
+    ```go
+    import "genkit-ai-service/internal/logger"
+    
+    // 基本日志
+    logger.Info("操作成功", logger.Fields{"key": "value"})
+    
+    // 上下文日志（自动提取 traceId、sessionId 等）
+    logger.InfoContext(ctx, "操作成功", logger.Fields{"key": "value"})
+    
+    // 错误日志
+    logger.ErrorContext(ctx, "操作失败", logger.Fields{
+        "error": err.Error(),
+        "user_id": userID,
+    })
+    ```
+
   - _需求: 5.2, 6.1_
 
 - [ ] 26. 实现性能追踪
