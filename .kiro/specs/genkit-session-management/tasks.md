@@ -223,7 +223,7 @@
   - 添加请求日志
   - _需求: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 17. 实现摘要管理 Handler
+- [x] 17. 实现摘要管理 Handler
   - 创建 `internal/handler/summary_handler.go` 文件
   - 实现 `HandleGenerateSummary` 方法：生成摘要API
   - 实现 `HandleGetSummary` 方法：获取摘要详情API
