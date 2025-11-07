@@ -348,7 +348,7 @@
 
   - _需求: 5.2, 6.1_
 
-- [ ] 26. 实现性能追踪
+- [x] 26. 实现性能追踪
   - 创建 `internal/tracing/tracer.go` 文件
   - 集成 OpenTelemetry
   - 实现 `TraceFlow` 方法：追踪Flow执行
