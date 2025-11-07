@@ -368,7 +368,7 @@
   - 在所有服务层方法中使用统一错误
   - _需求: 5.3_
 
-- [ ] 28. 实现降级策略
+- [x] 28. 实现降级策略
   - 创建 `internal/service/degradation_service.go` 接口文件
   - 创建 `internal/service/degradation_service_impl.go` 实现文件
   - 实现 `DegradeAIService` 方法：AI服务降级
