@@ -174,7 +174,7 @@
   - 添加错误处理
   - _需求: 1.1, 1.2, 1.3_
 
-- [ ] 13. 实现记忆管理 Flow
+- [x] 13. 实现记忆管理 Flow
   - 创建 `internal/genkit/flows/memory_flows.go` 文件
   - 定义 `MemorySearchInput` 结构体
   - 定义 `MemorySearchOutput` 结构体
