@@ -245,7 +245,7 @@
   - 应用租户管理员权限中间件
   - _需求: 1.1, 1.2, 1.3_
 
-- [ ] 19. 配置记忆管理路由
+- [x] 19. 配置记忆管理路由
   - 在 `internal/router/router.go` 中添加记忆管理路由组
   - `POST /api/v1/memories/search` - 检索记忆
   - `POST /api/v1/memories` - 存储记忆

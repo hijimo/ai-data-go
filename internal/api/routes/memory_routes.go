@@ -33,7 +33,7 @@ func RegisterMemoryRoutes(
 		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(memoryHandler.HandleCleanupMemories))))
 
 	// GET /api/v1/memories/{id} - 获取记忆详情
-	// 获取指定ID的记忆详细信息
+	// 获取指定记忆的详细信息
 	mux.Handle("GET /api/v1/memories/{id}",
 		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(memoryHandler.HandleGetMemory))))
 }
