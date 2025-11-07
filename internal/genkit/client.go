@@ -23,6 +23,9 @@ type Client interface {
 	// GenerateStream 流式生成内容
 	GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error)
 
+	// GetGenkit 获取底层的Genkit实例（用于注册Flows）
+	GetGenkit() *genkit.Genkit
+
 	// Close 关闭客户端
 	Close() error
 }
@@ -181,6 +184,11 @@ func (c *client) GenerateStream(ctx context.Context, prompt string, options *Gen
 	}()
 
 	return streamChan, nil
+}
+
+// GetGenkit 获取底层的Genkit实例
+func (c *client) GetGenkit() *genkit.Genkit {
+	return c.g
 }
 
 // Close 关闭客户端

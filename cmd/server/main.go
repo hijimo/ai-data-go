@@ -15,6 +15,7 @@ import (
 	"genkit-ai-service/internal/config"
 	"genkit-ai-service/internal/database"
 	"genkit-ai-service/internal/genkit"
+	"genkit-ai-service/internal/genkit/flows"
 	"genkit-ai-service/internal/loader"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/repository"
@@ -705,6 +706,10 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		log.Info("向量服务未配置，向量嵌入功能将不可用", nil)
 	}
 
+	// 3.6 注册 Genkit Flows（需要在创建Service之前注册）
+	// 注意：Flows需要在Service创建之前注册，因为它们需要Service实例
+	// 我们将在创建Service之后再注册Flows
+
 	// 4. 创建 Service 层实例
 	// 4.1 创建 SessionService
 	sessionService := session.NewSessionService(sessionRepo, messageRepo)
@@ -744,6 +749,31 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		qdrantClient,
 		tokenManager,
 	)
+
+	// 4.6 注册 Genkit Flows（在Service创建之后）
+	if genkitClient != nil {
+		genkitInstance := genkitClient.GetGenkit()
+		
+		// 注册上下文管理Flow
+		flows.RegisterContextFlows(genkitInstance, contextService)
+		log.Info("上下文管理Flow已注册", logger.Fields{
+			"flows": []string{"contextBuildFlow"},
+		})
+		
+		// 注册记忆管理Flow
+		flows.RegisterMemoryFlows(genkitInstance, memoryService)
+		log.Info("记忆管理Flow已注册", logger.Fields{
+			"flows": []string{"memorySearchFlow", "memoryStoreFlow", "memoryCleanupFlow"},
+		})
+		
+		// 注册摘要管理Flow
+		flows.RegisterSummaryFlows(genkitInstance, summaryService)
+		log.Info("摘要管理Flow已注册", logger.Fields{
+			"flows": []string{"summaryGenerateFlow", "summaryTriggerCheckFlow"},
+		})
+	} else {
+		log.Warn("Genkit客户端未初始化，Flows未注册", nil)
+	}
 
 	// 5. 创建 Handler 层实例
 	sessionHandler := handler.NewSessionHandler(sessionService, log)
