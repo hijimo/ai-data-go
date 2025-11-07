@@ -241,9 +241,11 @@ func main() {
 	// 8.2 注册会话管理路由（如果数据库可用）
 	// 会话管理路由需要 JWT 认证中间件
 	var cacheWarmer *storage.CacheWarmer
+	var rbacMW func(...string) func(http.Handler) http.Handler
 	if db != nil && aiService != nil && jwtAuthMW != nil {
-		sessionHandler, messageHandler, warmer := initSessionHandlers(db, aiService, cfg, log)
+		sessionHandler, messageHandler, contextHandler, memoryHandler, summaryHandler, warmer, rbacMiddleware := initSessionHandlers(db, aiService, cfg, log)
 		cacheWarmer = warmer
+		rbacMW = rbacMiddleware
 		
 		// 执行启动时缓存预热
 		if cacheWarmer != nil {
@@ -263,6 +265,37 @@ func main() {
 				"/api/v1/chat/sessions/{id}",
 				"/api/v1/chat/sessions/{id}/messages",
 				"/api/v1/chat/messages/{id}",
+			},
+		})
+		
+		// 注册上下文管理路由
+		routes.RegisterContextRoutes(serveMux, contextHandler, jwtAuthMW, rbacMW)
+		log.Info("上下文管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/contexts/build",
+				"/api/v1/contexts/{sessionId}",
+			},
+		})
+		
+		// 注册记忆管理路由
+		routes.RegisterMemoryRoutes(serveMux, memoryHandler, jwtAuthMW, rbacMW)
+		log.Info("记忆管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/memories/search",
+				"/api/v1/memories",
+				"/api/v1/memories/cleanup",
+				"/api/v1/memories/{id}",
+			},
+		})
+		
+		// 注册摘要管理路由
+		routes.RegisterSummaryRoutes(serveMux, summaryHandler, jwtAuthMW, rbacMW)
+		log.Info("摘要管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/summaries",
+				"/api/v1/summaries/{id}",
+				"/api/v1/summaries/session/{sessionId}",
+				"/api/v1/summaries/check-trigger",
 			},
 		})
 	} else {
@@ -577,7 +610,15 @@ func initProviderService(cfg *config.Config, log logger.Logger) (service.Provide
 }
 
 // initSessionHandlers 初始化会话管理相关的处理器
-func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (*handler.SessionHandler, *handler.MessageHandler, *storage.CacheWarmer) {
+func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (
+	*handler.SessionHandler, 
+	*handler.MessageHandler, 
+	*handler.ContextHandler,
+	*handler.MemoryHandler,
+	*handler.SummaryHandler,
+	*storage.CacheWarmer,
+	func(...string) func(http.Handler) http.Handler,
+) {
 	log.Info("初始化会话管理服务...", nil)
 
 	// 1. 获取 GORM 数据库实例
@@ -588,6 +629,8 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	messageRepo := repository.NewMessageRepository(gormDB)
 	summaryRepo := repository.NewSummaryRepository(gormDB)
 	contextRepo := repository.NewContextRepository(gormDB)
+	memoryRepo := repository.NewMemoryRepository(gormDB)
+	userRepo := repository.NewUserRepository(gormDB)
 
 	// 3. 创建依赖服务
 	// 3.1 创建 TokenManager
@@ -646,6 +689,22 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		log.Info("Redis 已禁用，缓存功能将不可用", nil)
 	}
 
+	// 3.4 初始化 Qdrant 客户端（如果配置可用）
+	var qdrantClient storage.QdrantClient
+	// TODO: 从配置文件读取 Qdrant 配置
+	// 暂时使用 nil，后续需要添加配置支持
+	if cfg.Redis.Enabled { // 临时使用 Redis 配置作为判断条件
+		log.Info("Qdrant 客户端未配置，向量检索功能将不可用", nil)
+	}
+	
+	// 3.5 初始化向量服务（如果配置可用）
+	var vectorService ai.VectorService
+	// TODO: 从配置文件读取向量服务配置
+	// 暂时使用 nil，后续需要添加配置支持
+	if cfg.Genkit.APIKey != "" {
+		log.Info("向量服务未配置，向量嵌入功能将不可用", nil)
+	}
+
 	// 4. 创建 Service 层实例
 	// 4.1 创建 SessionService
 	sessionService := session.NewSessionService(sessionRepo, messageRepo)
@@ -664,22 +723,58 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	// 4.3 创建 MessageService
 	messageService := session.NewMessageService(gormDB, sessionRepo, messageRepo, aiService, log)
 	
-	// 注意：SummaryService 已初始化但当前未直接使用，
-	// 它可以在未来的功能中被 MessageService 或其他服务调用
-	_ = summaryService
+	// 4.4 创建 ContextService
+	contextService := service.NewContextService(
+		sessionRepo,
+		messageRepo,
+		memoryRepo,
+		contextRepo,
+		summaryRepo,
+		userRepo,
+		vectorService,
+		tokenManager,
+	)
+	
+	// 4.5 创建 MemoryService
+	memoryService := service.NewMemoryService(
+		memoryRepo,
+		sessionRepo,
+		userRepo,
+		vectorService,
+		qdrantClient,
+		tokenManager,
+	)
 
 	// 5. 创建 Handler 层实例
 	sessionHandler := handler.NewSessionHandler(sessionService, log)
 	messageHandler := handler.NewMessageHandler(messageService, log)
+	contextHandler := handler.NewContextHandler(contextService, log)
+	memoryHandler := handler.NewMemoryHandler(memoryService, log)
+	summaryHandler := handler.NewSummaryHandler(summaryService, log)
+	
+	// 6. 创建 RBAC 中间件工厂函数
+	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
+		// 根据角色返回相应的中间件
+		if len(roles) == 1 {
+			switch roles[0] {
+			case "system_admin":
+				return middleware.RequireSystemAdmin()
+			case "admin", "tenant_admin":
+				return middleware.RequireTenantAdmin()
+			}
+		}
+		// 默认返回租户管理员中间件
+		return middleware.RequireTenantAdmin()
+	}
 
 	log.Info("会话管理服务初始化成功", logger.Fields{
-		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository"},
-		"services":     []string{"SessionService", "MessageService", "SummaryService", "CacheService"},
-		"handlers":     []string{"SessionHandler", "MessageHandler"},
+		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository", "MemoryRepository"},
+		"services":     []string{"SessionService", "MessageService", "SummaryService", "ContextService", "MemoryService", "CacheService"},
+		"handlers":     []string{"SessionHandler", "MessageHandler", "ContextHandler", "MemoryHandler", "SummaryHandler"},
 		"cache_enabled": cacheService != nil,
 	})
 
-	return sessionHandler, messageHandler, cacheWarmer
+	return sessionHandler, messageHandler, contextHandler, memoryHandler, summaryHandler, cacheWarmer, rbacMiddleware
 }
 
 // initAuthHandlers 初始化认证相关的处理器和中间件

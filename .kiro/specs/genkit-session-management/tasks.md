@@ -236,7 +236,7 @@
 
 ## 第七阶段：路由配置
 
-- [ ] 18. 配置上下文管理路由
+- [x] 18. 配置上下文管理路由
   - 在 `internal/router/router.go` 中添加上下文管理路由组
   - `POST /api/v1/contexts/build` - 构建上下文
   - `GET /api/v1/contexts/:sessionId` - 获取上下文配置
