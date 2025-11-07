@@ -255,7 +255,7 @@
   - 应用租户管理员权限中间件
   - _需求: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 20. 配置摘要管理路由
+- [x] 20. 配置摘要管理路由
   - 在 `internal/router/router.go` 中添加摘要管理路由组
   - `POST /api/v1/summaries` - 生成摘要
   - `GET /api/v1/summaries/:id` - 获取摘要详情

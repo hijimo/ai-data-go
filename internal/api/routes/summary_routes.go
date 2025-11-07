@@ -23,7 +23,7 @@ func RegisterSummaryRoutes(
 		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(summaryHandler.HandleGenerateSummary))))
 
 	// GET /api/v1/summaries/{id} - 获取摘要详情
-	// 获取指定ID的摘要详细信息
+	// 获取指定摘要的详细信息
 	mux.Handle("GET /api/v1/summaries/{id}",
 		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(summaryHandler.HandleGetSummary))))
 
