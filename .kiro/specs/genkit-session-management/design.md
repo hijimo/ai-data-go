@@ -2500,71 +2500,349 @@ func BenchmarkContextBuildFlow(b *testing.B) {
 }
 ```
 
+## 配置管理设计
+
+### 环境变量配置
+
+本系统统一使用 `.env` 文件管理所有配置项，不使用 `config.yaml` 等配置文件。
+
+#### 配置项说明
+
+```bash
+# .env 文件示例
+
+# 服务器配置
+SERVER_PORT=8080
+SERVER_HOST=0.0.0.0
+
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ai_service
+DB_USER=postgres
+DB_PASSWORD=password
+DB_SSL_MODE=disable
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME=5m
+
+# Redis 配置
+REDIS_ENABLED=true
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# Qdrant 向量数据库配置
+QDRANT_ACCESS_KEY=your_access_key
+QDRANT_ENDPOINT=https://your-cluster.cloud.qdrant.io
+QDRANT_CLUSTER_ID=your_cluster_id
+
+# Genkit AI 配置
+GENKIT_API_KEY=your_api_key
+GENKIT_MODEL=gemini-2.5-flash
+GENKIT_DEFAULT_TEMPERATURE=0.7
+GENKIT_DEFAULT_MAX_TOKENS=2000
+
+# 缓存 TTL 配置（秒）
+CACHE_CONTEXT_TTL=300          # 上下文缓存：5分钟
+CACHE_VECTOR_RESULT_TTL=1800   # 向量查询结果：30分钟
+CACHE_SUMMARY_TTL=3600         # 摘要缓存：1小时
+CACHE_SESSION_LIST_TTL=600     # 会话列表：10分钟
+CACHE_TOKEN_USAGE_TTL=300      # Token统计：5分钟
+
+# 日志配置
+LOG_LEVEL=info
+LOG_FORMAT=json
+LOG_ENABLE_FILE=true
+LOG_DIR=logs
+LOG_ENABLE_CONSOLE=true
+
+# JWT 认证配置
+JWT_SECRET=your-secret-key-min-32-characters
+JWT_ISSUER=genkit-ai-service
+JWT_AUDIENCE=genkit-api
+ACCESS_TOKEN_TTL=60m
+REFRESH_TOKEN_TTL=720h
+```
+
+#### 配置加载实现
+
+```go
+// internal/config/config.go
+package config
+
+import (
+    "fmt"
+    "os"
+    "strconv"
+    "time"
+    
+    "github.com/joho/godotenv"
+)
+
+type Config struct {
+    Server    ServerConfig
+    Database  DatabaseConfig
+    Redis     RedisConfig
+    Qdrant    QdrantConfig
+    Genkit    GenkitConfig
+    Cache     CacheConfig
+    Log       LogConfig
+    JWT       JWTConfig
+}
+
+type ServerConfig struct {
+    Port string
+    Host string
+}
+
+type DatabaseConfig struct {
+    Host            string
+    Port            string
+    Name            string
+    User            string
+    Password        string
+    SSLMode         string
+    MaxOpenConns    int
+    MaxIdleConns    int
+    ConnMaxLifetime time.Duration
+}
+
+type RedisConfig struct {
+    Enabled  bool
+    Host     string
+    Port     string
+    Password string
+    DB       int
+}
+
+type QdrantConfig struct {
+    AccessKey string
+    Endpoint  string
+    ClusterID string
+}
+
+type GenkitConfig struct {
+    APIKey             string
+    Model              string
+    DefaultTemperature float64
+    DefaultMaxTokens   int
+}
+
+type CacheConfig struct {
+    ContextTTL       time.Duration
+    VectorResultTTL  time.Duration
+    SummaryTTL       time.Duration
+    SessionListTTL   time.Duration
+    TokenUsageTTL    time.Duration
+}
+
+type LogConfig struct {
+    Level         string
+    Format        string
+    EnableFile    bool
+    Dir           string
+    EnableConsole bool
+}
+
+type JWTConfig struct {
+    Secret          string
+    Issuer          string
+    Audience        string
+    AccessTokenTTL  time.Duration
+    RefreshTokenTTL time.Duration
+}
+
+// LoadConfig 从 .env 文件加载配置
+func LoadConfig() (*Config, error) {
+    // 加载 .env 文件
+    if err := godotenv.Load(); err != nil {
+        return nil, fmt.Errorf("加载 .env 文件失败: %w", err)
+    }
+    
+    config := &Config{
+        Server: ServerConfig{
+            Port: getEnv("SERVER_PORT", "8080"),
+            Host: getEnv("SERVER_HOST", "0.0.0.0"),
+        },
+        Database: DatabaseConfig{
+            Host:            getEnv("DB_HOST", "localhost"),
+            Port:            getEnv("DB_PORT", "5432"),
+            Name:            getEnv("DB_NAME", "ai_service"),
+            User:            getEnv("DB_USER", "postgres"),
+            Password:        getEnv("DB_PASSWORD", ""),
+            SSLMode:         getEnv("DB_SSL_MODE", "disable"),
+            MaxOpenConns:    getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
+            MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS", 5),
+            ConnMaxLifetime: getEnvAsDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
+        },
+        Redis: RedisConfig{
+            Enabled:  getEnvAsBool("REDIS_ENABLED", true),
+            Host:     getEnv("REDIS_HOST", "localhost"),
+            Port:     getEnv("REDIS_PORT", "6379"),
+            Password: getEnv("REDIS_PASSWORD", ""),
+            DB:       getEnvAsInt("REDIS_DB", 0),
+        },
+        Qdrant: QdrantConfig{
+            AccessKey: mustGetEnv("QDRANT_ACCESS_KEY"),
+            Endpoint:  mustGetEnv("QDRANT_ENDPOINT"),
+            ClusterID: mustGetEnv("QDRANT_CLUSTER_ID"),
+        },
+        Genkit: GenkitConfig{
+            APIKey:             mustGetEnv("GENKIT_API_KEY"),
+            Model:              getEnv("GENKIT_MODEL", "gemini-2.5-flash"),
+            DefaultTemperature: getEnvAsFloat("GENKIT_DEFAULT_TEMPERATURE", 0.7),
+            DefaultMaxTokens:   getEnvAsInt("GENKIT_DEFAULT_MAX_TOKENS", 2000),
+        },
+        Cache: CacheConfig{
+            ContextTTL:      getEnvAsDuration("CACHE_CONTEXT_TTL", 5*time.Minute),
+            VectorResultTTL: getEnvAsDuration("CACHE_VECTOR_RESULT_TTL", 30*time.Minute),
+            SummaryTTL:      getEnvAsDuration("CACHE_SUMMARY_TTL", 1*time.Hour),
+            SessionListTTL:  getEnvAsDuration("CACHE_SESSION_LIST_TTL", 10*time.Minute),
+            TokenUsageTTL:   getEnvAsDuration("CACHE_TOKEN_USAGE_TTL", 5*time.Minute),
+        },
+        Log: LogConfig{
+            Level:         getEnv("LOG_LEVEL", "info"),
+            Format:        getEnv("LOG_FORMAT", "json"),
+            EnableFile:    getEnvAsBool("LOG_ENABLE_FILE", true),
+            Dir:           getEnv("LOG_DIR", "logs"),
+            EnableConsole: getEnvAsBool("LOG_ENABLE_CONSOLE", true),
+        },
+        JWT: JWTConfig{
+            Secret:          mustGetEnv("JWT_SECRET"),
+            Issuer:          getEnv("JWT_ISSUER", "genkit-ai-service"),
+            Audience:        getEnv("JWT_AUDIENCE", "genkit-api"),
+            AccessTokenTTL:  getEnvAsDuration("ACCESS_TOKEN_TTL", 60*time.Minute),
+            RefreshTokenTTL: getEnvAsDuration("REFRESH_TOKEN_TTL", 720*time.Hour),
+        },
+    }
+    
+    // 验证必需配置
+    if err := config.Validate(); err != nil {
+        return nil, fmt.Errorf("配置验证失败: %w", err)
+    }
+    
+    return config, nil
+}
+
+// Validate 验证配置的有效性
+func (c *Config) Validate() error {
+    if c.Genkit.APIKey == "" {
+        return fmt.Errorf("GENKIT_API_KEY 不能为空")
+    }
+    if c.Qdrant.AccessKey == "" {
+        return fmt.Errorf("QDRANT_ACCESS_KEY 不能为空")
+    }
+    if c.Qdrant.Endpoint == "" {
+        return fmt.Errorf("QDRANT_ENDPOINT 不能为空")
+    }
+    if c.JWT.Secret == "" {
+        return fmt.Errorf("JWT_SECRET 不能为空")
+    }
+    if len(c.JWT.Secret) < 32 {
+        return fmt.Errorf("JWT_SECRET 长度必须至少 32 个字符")
+    }
+    return nil
+}
+
+// 辅助函数
+func getEnv(key, defaultValue string) string {
+    if value := os.Getenv(key); value != "" {
+        return value
+    }
+    return defaultValue
+}
+
+func mustGetEnv(key string) string {
+    value := os.Getenv(key)
+    if value == "" {
+        panic(fmt.Sprintf("环境变量 %s 未设置", key))
+    }
+    return value
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+    valueStr := os.Getenv(key)
+    if valueStr == "" {
+        return defaultValue
+    }
+    value, err := strconv.Atoi(valueStr)
+    if err != nil {
+        return defaultValue
+    }
+    return value
+}
+
+func getEnvAsFloat(key string, defaultValue float64) float64 {
+    valueStr := os.Getenv(key)
+    if valueStr == "" {
+        return defaultValue
+    }
+    value, err := strconv.ParseFloat(valueStr, 64)
+    if err != nil {
+        return defaultValue
+    }
+    return value
+}
+
+func getEnvAsBool(key string, defaultValue bool) bool {
+    valueStr := os.Getenv(key)
+    if valueStr == "" {
+        return defaultValue
+    }
+    value, err := strconv.ParseBool(valueStr)
+    if err != nil {
+        return defaultValue
+    }
+    return value
+}
+
+func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
+    valueStr := os.Getenv(key)
+    if valueStr == "" {
+        return defaultValue
+    }
+    
+    // 尝试解析为秒数
+    if seconds, err := strconv.Atoi(valueStr); err == nil {
+        return time.Duration(seconds) * time.Second
+    }
+    
+    // 尝试解析为 duration 字符串（如 "5m", "1h"）
+    if duration, err := time.ParseDuration(valueStr); err == nil {
+        return duration
+    }
+    
+    return defaultValue
+}
+```
+
+### 配置使用示例
+
+```go
+// cmd/server/main.go
+package main
+
+import (
+    "log"
+    
+    "genkit-ai-service/internal/config"
+)
+
+func main() {
+    // 加载配置
+    cfg, err := config.LoadConfig()
+    if err != nil {
+        log.Fatalf("加载配置失败: %v", err)
+    }
+    
+    // 使用配置初始化服务
+    // ...
+}
+```
+
 ## 部署考虑
-
-### 环境配置
-
-#### 开发环境
-
-```yaml
-# config/dev.yaml
-server:
-  port: 8080
-  mode: debug
-
-database:
-  host: localhost
-  port: 5432
-  database: genkit_dev
-  user: postgres
-  password: postgres
-  max_connections: 10
-
-redis:
-  host: localhost
-  port: 6379
-  database: 0
-
-genkit:
-  provider: google
-  api_key: ${GENAI_API_KEY}
-  model: gemini-1.5-flash
-  log_level: debug
-```
-
-#### 生产环境
-
-```yaml
-# config/prod.yaml
-server:
-  port: 8080
-  mode: release
-
-database:
-  host: ${DB_HOST}
-  port: 5432
-  database: ${DB_NAME}
-  user: ${DB_USER}
-  password: ${DB_PASSWORD}
-  max_connections: 50
-  ssl_mode: require
-
-redis:
-  host: ${REDIS_HOST}
-  port: 6379
-  password: ${REDIS_PASSWORD}
-  database: 0
-
-genkit:
-  provider: google
-  api_key: ${GENAI_API_KEY}
-  model: gemini-1.5-flash
-  log_level: info
-
-monitoring:
-  prometheus_port: 9090
-  jaeger_endpoint: ${JAEGER_ENDPOINT}
-```
 
 ### Docker 部署
 
@@ -2593,8 +2871,8 @@ WORKDIR /root/
 # 复制二进制文件
 COPY --from=builder /genkit-service .
 
-# 复制配置文件
-COPY config ./config
+# 注意：.env 文件通过环境变量或 Kubernetes ConfigMap/Secret 注入
+# 不在镜像中包含 .env 文件
 
 EXPOSE 8080
 

@@ -278,27 +278,16 @@
   - 启动缓存预热
   - _需求: 所有需求_
 
-- [ ] 22. 配置环境变量和配置文件
-  - 在 `config/config.yaml` 中添加 Genkit 配置
-    - API Key
-    - 模型名称
-    - 默认参数
-  - 添加 Redis 配置
-    - 主机地址
-    - 端口
-    - 密码
-    - 数据库编号
-  - 添加 Qdrant 配置
-    - 主机地址
-    - 端口
-    - API Key（如果需要）
-    - Collection 名称
-    - 向量维度
-    - 分片策略
-  - 添加缓存配置
-    - TTL 设置
-    - 命名空间
-  - _需求: 5.1_
+- [x] 22. 配置环境变量管理
+  - 确认所有配置项已在 `.env` 文件中定义
+  - 验证 Genkit 配置：GENKIT_API_KEY、GENKIT_MODEL、GENKIT_DEFAULT_TEMPERATURE、GENKIT_DEFAULT_MAX_TOKENS
+  - 验证 Redis 配置：REDIS_HOST、REDIS_PORT、REDIS_PASSWORD、REDIS_DB
+  - 验证 Qdrant 配置：QDRANT_ACCESS_KEY、QDRANT_ENDPOINT、QDRANT_CLUSTER_ID
+  - 验证缓存 TTL 配置：CACHE_CONTEXT_TTL、CACHE_VECTOR_RESULT_TTL、CACHE_SUMMARY_TTL、CACHE_SESSION_LIST_TTL、CACHE_TOKEN_USAGE_TTL
+  - 创建 `internal/config/config.go` 配置加载器（从 .env 读取）
+  - 实现配置验证逻辑
+  - 不使用 config.yaml 文件，统一使用 .env 文件
+  - _需求: 35.1, 35.2, 35.3, 35.4, 35.5, 35.6, 35.7, 35.8_
 
 ## 第九阶段：监控和可观测性
 

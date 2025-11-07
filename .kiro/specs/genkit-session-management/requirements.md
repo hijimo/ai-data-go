@@ -527,6 +527,7 @@
 8. THE 系统 SHALL 在系统启动时预热活跃会话的缓存
 9. THE 系统 SHALL 定期刷新即将过期的缓存
 10. THE 系统 SHALL 记录缓存命中率
+11. THE 系统 SHALL 从 .env 文件读取所有缓存配置（Redis 连接信息、TTL 设置等）
 
 ### 需求 31：统一错误处理
 
@@ -585,6 +586,23 @@
 5. THE 系统 SHALL 在 data 字段中返回实际业务数据
 6. WHEN data 为空时，THE 系统 SHALL 省略 data 字段或设置为 null
 7. THE 系统 SHALL 使用 Go 泛型确保类型安全
+
+## 配置管理需求
+
+### 需求 35：环境变量配置
+
+**用户故事**：作为运维人员，我希望所有配置项都通过环境变量管理，以便在不同环境中灵活部署。
+
+#### 验收标准
+
+1. THE 系统 SHALL 从 .env 文件读取所有配置项
+2. THE 系统 SHALL 支持以下 Genkit 配置：API Key、模型名称、默认参数（Temperature、MaxTokens）
+3. THE 系统 SHALL 支持以下 Redis 配置：主机地址、端口、密码、数据库编号
+4. THE 系统 SHALL 支持以下 Qdrant 配置：访问密钥、端点地址、集群 ID
+5. THE 系统 SHALL 支持以下缓存配置：各类缓存的 TTL 设置
+6. THE 系统 SHALL 在配置缺失时提供明确的错误提示
+7. THE 系统 SHALL 在启动时验证所有必需配置项
+8. THE 系统 SHALL 不使用 config.yaml 等配置文件，统一使用 .env 文件
 
 ## 非功能性需求
 
