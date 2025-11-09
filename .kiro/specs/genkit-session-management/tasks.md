@@ -473,7 +473,7 @@
   - 测试监控指标记录
   - _需求: 所有需求_
 
-- [ ] 38. 编写 API 端到端测试
+- [x] 38. 编写 API 端到端测试
   - 创建 `test/integration/context_api_test.go`
   - 创建 `test/integration/memory_api_test.go`
   - 创建 `test/integration/summary_api_test.go`
