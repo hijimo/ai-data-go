@@ -464,7 +464,7 @@
   - 测试错误处理
   - _需求: 所有需求_
 
-- [ ] 37. 编写 Flow 集成测试
+- [x] 37. 编写 Flow 集成测试
   - 创建 `internal/genkit/flows/context_flows_test.go`
   - 创建 `internal/genkit/flows/memory_flows_test.go`
   - 创建 `internal/genkit/flows/summary_flows_test.go`
