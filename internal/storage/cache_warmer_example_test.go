@@ -22,7 +22,7 @@ func ExampleCacheWarmer_WarmupOnStartup() {
 	// log := logger.New(logger.InfoLevel, logger.JSONFormat, os.Stdout)
 
 	// 创建缓存预热配置
-	config := &storage.CacheWarmerConfig{
+	_ = &storage.CacheWarmerConfig{
 		WarmupInterval:    30 * time.Minute, // 30分钟预热一次
 		ActiveSessionDays: 7,                // 7天内活跃的会话
 	}
