@@ -23,6 +23,9 @@ type QdrantClient interface {
 	// Payload 包含其他元数据
 	UpsertVector(ctx context.Context, req *UpsertVectorRequest) error
 
+	// BatchUpsertVectors 批量插入或更新向量（优化性能）
+	BatchUpsertVectors(ctx context.Context, reqs []*UpsertVectorRequest) error
+
 	// SearchVectors 向量检索
 	// 支持按 tenant_id 过滤（必须）
 	// 支持按 session_id 过滤（可选）
@@ -37,6 +40,15 @@ type QdrantClient interface {
 
 	// UpdatePayload 更新 payload（验证租户权限）
 	UpdatePayload(ctx context.Context, tenantID, memoryID uuid.UUID, payload map[string]interface{}) error
+
+	// OptimizeCollection 优化 Collection（compact、reindex）
+	OptimizeCollection(ctx context.Context) error
+
+	// GetCollectionInfo 获取 Collection 信息（用于监控）
+	GetCollectionInfo(ctx context.Context) (*CollectionInfo, error)
+
+	// UpdateCollectionConfig 更新 Collection 配置（分片、副本等）
+	UpdateCollectionConfig(ctx context.Context, config *CollectionConfig) error
 
 	// Close 关闭客户端连接
 	Close() error
@@ -97,10 +109,43 @@ type QdrantConfig struct {
 	// 通用配置
 	APIKey    string // API Key / Access Token（必需）
 	ClusterID string // 集群ID（可选，用于日志记录）
+	
+	// 性能优化配置
+	ShardNumber       int  // 分片数量（默认：4，根据租户数量调整）
+	ReplicationFactor int  // 副本数量（默认：2，高可用配置）
+	HnswM             int  // HNSW 参数 m（默认：16，控制图的连接度）
+	HnswEfConstruction int // HNSW 参数 ef_construction（默认：100，构建时的搜索深度）
+	EnableOptimization bool // 是否启用定期优化（默认：true）
+	OptimizationInterval int // 优化间隔（小时，默认：24）
+}
+
+// CollectionConfig Collection 配置
+type CollectionConfig struct {
+	ShardNumber       int // 分片数量
+	ReplicationFactor int // 副本数量
+	HnswM             int // HNSW 参数 m
+	HnswEfConstruction int // HNSW 参数 ef_construction
+}
+
+// CollectionInfo Collection 信息
+type CollectionInfo struct {
+	Status            string // Collection 状态
+	VectorsCount      int64  // 向量数量
+	IndexedVectorsCount int64 // 已索引向量数量
+	PointsCount       int64  // 点数量
+	SegmentsCount     int    // 段数量
+	Config            *CollectionConfig // 配置信息
 }
 
 // Collection 名称常量
 const (
 	CollectionName = "conversation_memories" // 共享 Collection 名称
 	VectorDim      = 1536                    // 向量维度（text-embedding-ada-002）
+	
+	// 默认配置值
+	DefaultShardNumber       = 4   // 默认分片数量
+	DefaultReplicationFactor = 2   // 默认副本数量
+	DefaultHnswM             = 16  // 默认 HNSW m 参数
+	DefaultHnswEfConstruction = 100 // 默认 HNSW ef_construction 参数
+	DefaultOptimizationInterval = 24 // 默认优化间隔（小时）
 )

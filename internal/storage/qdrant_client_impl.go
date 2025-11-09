@@ -18,10 +18,16 @@ type qdrantClientImpl struct {
 	config     *QdrantConfig
 	httpClient *http.Client
 	baseURL    string
+	cache      CacheService // 向量查询结果缓存
 }
 
 // NewQdrantClient 创建 Qdrant 客户端
 func NewQdrantClient(config *QdrantConfig) (QdrantClient, error) {
+	return NewQdrantClientWithCache(config, nil)
+}
+
+// NewQdrantClientWithCache 创建带缓存的 Qdrant 客户端
+func NewQdrantClientWithCache(config *QdrantConfig, cache CacheService) (QdrantClient, error) {
 	if config == nil {
 		return nil, fmt.Errorf("配置不能为空")
 	}
@@ -49,12 +55,30 @@ func NewQdrantClient(config *QdrantConfig) (QdrantClient, error) {
 		return nil, fmt.Errorf("必须提供 Endpoint 或 Host")
 	}
 
+	// 设置默认配置值
+	if config.ShardNumber <= 0 {
+		config.ShardNumber = DefaultShardNumber
+	}
+	if config.ReplicationFactor <= 0 {
+		config.ReplicationFactor = DefaultReplicationFactor
+	}
+	if config.HnswM <= 0 {
+		config.HnswM = DefaultHnswM
+	}
+	if config.HnswEfConstruction <= 0 {
+		config.HnswEfConstruction = DefaultHnswEfConstruction
+	}
+	if config.OptimizationInterval <= 0 {
+		config.OptimizationInterval = DefaultOptimizationInterval
+	}
+
 	client := &qdrantClientImpl{
 		config: config,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 		baseURL: baseURL,
+		cache:   cache,
 	}
 
 	return client, nil
@@ -73,18 +97,23 @@ func (c *qdrantClientImpl) InitializeCollection(ctx context.Context) error {
 		return nil
 	}
 
-	// 2. 创建共享 Collection
+	// 2. 创建共享 Collection（使用配置的优化参数）
 	createReq := map[string]interface{}{
 		"vectors": map[string]interface{}{
 			"size":     VectorDim,
 			"distance": "Cosine",
 		},
-		"shard_number":       4, // 根据租户数量调整
-		"replication_factor": 2, // 高可用配置
+		"shard_number":       c.config.ShardNumber,       // 根据租户数量调整
+		"replication_factor": c.config.ReplicationFactor, // 高可用配置
 		"hnsw_config": map[string]interface{}{
-			"m":                16,
-			"ef_construction":  100,
-			"full_scan_threshold": 10000,
+			"m":                   c.config.HnswM,             // 控制图的连接度
+			"ef_construction":     c.config.HnswEfConstruction, // 构建时的搜索深度
+			"full_scan_threshold": 10000,                      // 全扫描阈值
+		},
+		"optimizers_config": map[string]interface{}{
+			"deleted_threshold":    0.2,  // 删除阈值
+			"vacuum_min_vector_number": 1000, // 最小向量数量
+			"default_segment_number": c.config.ShardNumber, // 默认段数量
 		},
 	}
 
@@ -178,7 +207,80 @@ func (c *qdrantClientImpl) UpsertVector(ctx context.Context, req *UpsertVectorRe
 	return nil
 }
 
-// SearchVectors 向量检索
+// BatchUpsertVectors 批量插入或更新向量（优化性能）
+func (c *qdrantClientImpl) BatchUpsertVectors(ctx context.Context, reqs []*UpsertVectorRequest) error {
+	if len(reqs) == 0 {
+		return nil
+	}
+
+	// 验证所有请求
+	for i, req := range reqs {
+		if req == nil {
+			return fmt.Errorf("请求 %d 不能为空", i)
+		}
+		if req.TenantID == uuid.Nil {
+			return fmt.Errorf("请求 %d 的租户ID不能为空", i)
+		}
+		if req.MemoryID == uuid.Nil {
+			return fmt.Errorf("请求 %d 的记忆ID不能为空", i)
+		}
+		if req.SessionID == uuid.Nil {
+			return fmt.Errorf("请求 %d 的会话ID不能为空", i)
+		}
+		if len(req.Vector) != VectorDim {
+			return fmt.Errorf("请求 %d 的向量维度必须为 %d，当前为 %d", i, VectorDim, len(req.Vector))
+		}
+	}
+
+	// 构建批量 points
+	points := make([]interface{}, 0, len(reqs))
+	for _, req := range reqs {
+		// 构建 payload
+		payload := map[string]interface{}{
+			"memory_id":   req.MemoryID.String(),
+			"tenant_id":   req.TenantID.String(),
+			"session_id":  req.SessionID.String(),
+			"memory_type": req.MemoryType,
+			"importance":  req.Importance,
+			"created_at":  time.Now().Format(time.RFC3339),
+		}
+
+		// 添加过期时间
+		if req.ExpiresAt != nil {
+			payload["expires_at"] = req.ExpiresAt.Format(time.RFC3339)
+		}
+
+		// 添加其他元数据
+		if req.Metadata != nil {
+			for k, v := range req.Metadata {
+				payload[k] = v
+			}
+		}
+
+		// 构建 point
+		point := map[string]interface{}{
+			"id":      req.MemoryID.String(),
+			"vector":  req.Vector,
+			"payload": payload,
+		}
+		points = append(points, point)
+	}
+
+	// 构建批量 upsert 请求
+	upsertReq := map[string]interface{}{
+		"points": points,
+	}
+
+	// 发送请求
+	url := fmt.Sprintf("%s/collections/%s/points", c.baseURL, CollectionName)
+	if err := c.doRequest(ctx, "PUT", url, upsertReq, nil); err != nil {
+		return fmt.Errorf("批量插入向量失败: %w", err)
+	}
+
+	return nil
+}
+
+// SearchVectors 向量检索（带缓存）
 func (c *qdrantClientImpl) SearchVectors(ctx context.Context, req *SearchVectorRequest) ([]*VectorSearchResult, error) {
 	if req == nil {
 		return nil, fmt.Errorf("请求不能为空")
@@ -193,6 +295,15 @@ func (c *qdrantClientImpl) SearchVectors(ctx context.Context, req *SearchVectorR
 	}
 	if req.TopK <= 0 {
 		req.TopK = 5 // 默认返回5个结果
+	}
+
+	// 尝试从缓存获取结果
+	if c.cache != nil {
+		cacheKey := c.buildSearchCacheKey(req)
+		var cachedResults []*VectorSearchResult
+		if err := c.cache.Get(ctx, cacheKey, &cachedResults); err == nil {
+			return cachedResults, nil
+		}
 	}
 
 	// 构建过滤条件（强制包含租户ID）
@@ -239,6 +350,12 @@ func (c *qdrantClientImpl) SearchVectors(ctx context.Context, req *SearchVectorR
 			continue
 		}
 		results = append(results, result)
+	}
+
+	// 缓存结果（30分钟）
+	if c.cache != nil && len(results) > 0 {
+		cacheKey := c.buildSearchCacheKey(req)
+		_ = c.cache.Set(ctx, cacheKey, results, 30*time.Minute)
 	}
 
 	return results, nil
@@ -347,6 +464,98 @@ func (c *qdrantClientImpl) UpdatePayload(ctx context.Context, tenantID, memoryID
 	if err := c.doRequest(ctx, "PUT", url, updateReq, nil); err != nil {
 		return fmt.Errorf("更新 payload 失败: %w", err)
 	}
+
+	return nil
+}
+
+// OptimizeCollection 优化 Collection（compact、reindex）
+func (c *qdrantClientImpl) OptimizeCollection(ctx context.Context) error {
+	// 执行优化操作
+	url := fmt.Sprintf("%s/collections/%s/optimizer", c.baseURL, CollectionName)
+	
+	optimizeReq := map[string]interface{}{
+		"optimize": true,
+	}
+
+	if err := c.doRequest(ctx, "POST", url, optimizeReq, nil); err != nil {
+		return fmt.Errorf("优化 collection 失败: %w", err)
+	}
+
+	return nil
+}
+
+// GetCollectionInfo 获取 Collection 信息（用于监控）
+func (c *qdrantClientImpl) GetCollectionInfo(ctx context.Context) (*CollectionInfo, error) {
+	url := fmt.Sprintf("%s/collections/%s", c.baseURL, CollectionName)
+	
+	var response struct {
+		Result struct {
+			Status            string `json:"status"`
+			VectorsCount      int64  `json:"vectors_count"`
+			IndexedVectorsCount int64 `json:"indexed_vectors_count"`
+			PointsCount       int64  `json:"points_count"`
+			SegmentsCount     int    `json:"segments_count"`
+			Config            struct {
+				Params struct {
+					ShardNumber       int `json:"shard_number"`
+					ReplicationFactor int `json:"replication_factor"`
+				} `json:"params"`
+				HnswConfig struct {
+					M              int `json:"m"`
+					EfConstruction int `json:"ef_construction"`
+				} `json:"hnsw_config"`
+			} `json:"config"`
+		} `json:"result"`
+	}
+
+	if err := c.doRequest(ctx, "GET", url, nil, &response); err != nil {
+		return nil, fmt.Errorf("获取 collection 信息失败: %w", err)
+	}
+
+	info := &CollectionInfo{
+		Status:              response.Result.Status,
+		VectorsCount:        response.Result.VectorsCount,
+		IndexedVectorsCount: response.Result.IndexedVectorsCount,
+		PointsCount:         response.Result.PointsCount,
+		SegmentsCount:       response.Result.SegmentsCount,
+		Config: &CollectionConfig{
+			ShardNumber:        response.Result.Config.Params.ShardNumber,
+			ReplicationFactor:  response.Result.Config.Params.ReplicationFactor,
+			HnswM:              response.Result.Config.HnswConfig.M,
+			HnswEfConstruction: response.Result.Config.HnswConfig.EfConstruction,
+		},
+	}
+
+	return info, nil
+}
+
+// UpdateCollectionConfig 更新 Collection 配置（分片、副本等）
+func (c *qdrantClientImpl) UpdateCollectionConfig(ctx context.Context, config *CollectionConfig) error {
+	if config == nil {
+		return fmt.Errorf("配置不能为空")
+	}
+
+	// 更新 HNSW 配置
+	if config.HnswM > 0 || config.HnswEfConstruction > 0 {
+		updateReq := map[string]interface{}{
+			"hnsw_config": map[string]interface{}{},
+		}
+
+		if config.HnswM > 0 {
+			updateReq["hnsw_config"].(map[string]interface{})["m"] = config.HnswM
+		}
+		if config.HnswEfConstruction > 0 {
+			updateReq["hnsw_config"].(map[string]interface{})["ef_construction"] = config.HnswEfConstruction
+		}
+
+		url := fmt.Sprintf("%s/collections/%s", c.baseURL, CollectionName)
+		if err := c.doRequest(ctx, "PATCH", url, updateReq, nil); err != nil {
+			return fmt.Errorf("更新 HNSW 配置失败: %w", err)
+		}
+	}
+
+	// 注意：分片数量和副本数量在创建后无法修改
+	// 如果需要修改，需要重新创建 Collection
 
 	return nil
 }
@@ -569,4 +778,25 @@ func (c *qdrantClientImpl) setHeaders(req *http.Request) {
 	if c.config.APIKey != "" {
 		req.Header.Set("api-key", c.config.APIKey)
 	}
+}
+
+// buildSearchCacheKey 构建搜索缓存键
+func (c *qdrantClientImpl) buildSearchCacheKey(req *SearchVectorRequest) string {
+	// 使用租户ID、会话ID、记忆类型和TopK构建缓存键
+	// 注意：不包含向量本身，因为向量太大
+	key := fmt.Sprintf("qdrant:search:%s:%d", req.TenantID.String(), req.TopK)
+	
+	if req.SessionID != nil {
+		key += ":" + req.SessionID.String()
+	}
+	
+	if req.MemoryType != nil {
+		key += ":" + *req.MemoryType
+	}
+	
+	if req.MinScore > 0 {
+		key += fmt.Sprintf(":%.2f", req.MinScore)
+	}
+	
+	return key
 }
