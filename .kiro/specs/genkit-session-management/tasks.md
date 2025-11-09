@@ -445,7 +445,7 @@
 
 ## 第十三阶段：集成和端到端测试
 
-- [ ] 35. 编写 Repository 层集成测试
+- [x] 35. 编写 Repository 层集成测试
   - 创建 `internal/repository/memory_repository_test.go`
   - 创建 `internal/repository/context_repository_test.go`
   - 创建 `internal/repository/summary_repository_test.go`
