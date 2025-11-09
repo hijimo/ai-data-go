@@ -455,7 +455,7 @@
   - 使用测试数据库
   - _需求: 所有需求_
 
-- [ ] 36. 编写 Service 层集成测试
+- [x] 36. 编写 Service 层集成测试
   - 创建 `internal/service/context_service_test.go`
   - 创建 `internal/service/memory_service_test.go`
   - 创建 `internal/service/summary_service_test.go`
