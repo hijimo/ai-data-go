@@ -138,7 +138,7 @@ func (c *client) GenerateStream(ctx context.Context, prompt string, options *Gen
 	go func() {
 		defer close(streamChan)
 
-		// 调用 Genkit 流式生成
+		// 调用 Genkit 流式生成，使用 WithStreaming 回调处理每个 chunk
 		resp, err := genkit.Generate(ctx, c.g,
 			ai.WithPrompt(prompt),
 			ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {

@@ -14,6 +14,9 @@ type MessageRepository interface {
 	// Create 创建消息
 	Create(ctx context.Context, message *model.ChatMessage) error
 
+	// Update 更新消息
+	Update(ctx context.Context, message *model.ChatMessage) error
+
 	// GetByID 根据ID获取消息
 	GetByID(ctx context.Context, messageID string) (*model.ChatMessage, error)
 
@@ -49,6 +52,14 @@ func NewMessageRepository(db *gorm.DB) MessageRepository {
 func (r *messageRepository) Create(ctx context.Context, message *model.ChatMessage) error {
 	if err := r.db.WithContext(ctx).Create(message).Error; err != nil {
 		return fmt.Errorf("创建消息失败: %w", err)
+	}
+	return nil
+}
+
+// Update 更新消息
+func (r *messageRepository) Update(ctx context.Context, message *model.ChatMessage) error {
+	if err := r.db.WithContext(ctx).Save(message).Error; err != nil {
+		return fmt.Errorf("更新消息失败: %w", err)
 	}
 	return nil
 }

@@ -699,6 +699,23 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 				return
 			}
 
+			// 检查是否完成（在处理内容之前）
+			if chunk.Done {
+				// 保存模型和使用信息
+				if chunk.Model != "" {
+					lastModel = chunk.Model
+				}
+				if chunk.Usage != nil {
+					lastUsage = chunk.Usage
+				}
+				break
+			}
+
+			// 跳过空内容块
+			if chunk.Content == "" {
+				continue
+			}
+
 			// 第一个块时发送 AI 消息 ID
 			if firstChunk {
 				outputChan <- &StreamMessageChunk{
@@ -717,19 +734,6 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 
 			// 累积内容
 			fullContent += chunk.Content
-
-			// 保存模型和使用信息
-			if chunk.Model != "" {
-				lastModel = chunk.Model
-			}
-			if chunk.Usage != nil {
-				lastUsage = chunk.Usage
-			}
-
-			// 检查是否完成
-			if chunk.Done {
-				break
-			}
 		}
 
 		// 3.7 更新 AI 消息内容
@@ -738,7 +742,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			aiMessage.Tokens = lastUsage.CompletionTokens
 		}
 
-		if err := s.messageRepo.Create(ctx, aiMessage); err != nil {
+		if err := s.messageRepo.Update(ctx, aiMessage); err != nil {
 			s.logError(ctx, "更新AI消息失败", logger.Fields{
 				"messageId": aiMessage.ID.String(),
 				"error":     err.Error(),
