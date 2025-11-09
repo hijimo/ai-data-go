@@ -41,8 +41,12 @@ type PostgresConfig struct {
 
 // PostgresDatabase PostgreSQL 数据库实现
 type PostgresDatabase struct {
-	db     *gorm.DB
-	config *PostgresConfig
+	db                *gorm.DB
+	config            *PostgresConfig
+	queryOptimizer    *QueryOptimizer
+	perfMonitor       *QueryPerformanceMonitor
+	indexValidator    *IndexValidator
+	poolMonitor       *ConnectionPoolMonitor
 }
 
 // NewPostgresDatabase 创建新的 PostgreSQL 数据库实例
@@ -102,6 +106,22 @@ func (p *PostgresDatabase) Connect(ctx context.Context) error {
 	}
 
 	p.db = db
+
+	// 初始化查询优化器
+	p.queryOptimizer = NewQueryOptimizer(db, QueryOptimizerConfig{
+		BatchSize:          100,
+		EnablePreparedStmt: true,
+	})
+
+	// 初始化性能监控器
+	p.perfMonitor = NewQueryPerformanceMonitor(200*time.Millisecond, 1000)
+
+	// 初始化索引验证器
+	p.indexValidator = NewIndexValidator(db)
+
+	// 初始化连接池监控器
+	p.poolMonitor = NewConnectionPoolMonitor(db)
+
 	return nil
 }
 
@@ -158,4 +178,40 @@ func (p *PostgresDatabase) AutoMigrate(models ...interface{}) error {
 	}
 
 	return nil
+}
+
+// GetQueryOptimizer 获取查询优化器
+func (p *PostgresDatabase) GetQueryOptimizer() *QueryOptimizer {
+	return p.queryOptimizer
+}
+
+// GetPerformanceMonitor 获取性能监控器
+func (p *PostgresDatabase) GetPerformanceMonitor() *QueryPerformanceMonitor {
+	return p.perfMonitor
+}
+
+// GetIndexValidator 获取索引验证器
+func (p *PostgresDatabase) GetIndexValidator() *IndexValidator {
+	return p.indexValidator
+}
+
+// GetConnectionPoolMonitor 获取连接池监控器
+func (p *PostgresDatabase) GetConnectionPoolMonitor() *ConnectionPoolMonitor {
+	return p.poolMonitor
+}
+
+// ValidateIndexes 验证所有必需的索引
+func (p *PostgresDatabase) ValidateIndexes(ctx context.Context) ([]MissingIndex, error) {
+	if p.indexValidator == nil {
+		return nil, fmt.Errorf("索引验证器未初始化")
+	}
+	return p.indexValidator.ValidateIndexes(ctx)
+}
+
+// GetConnectionPoolStats 获取连接池统计信息
+func (p *PostgresDatabase) GetConnectionPoolStats() (*PoolStats, error) {
+	if p.poolMonitor == nil {
+		return nil, fmt.Errorf("连接池监控器未初始化")
+	}
+	return p.poolMonitor.GetPoolStats()
 }
