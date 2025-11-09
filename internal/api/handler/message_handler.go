@@ -283,6 +283,135 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 	h.writeSuccessResponseWithContext(ctx, w, messageDetail)
 }
 
+// SendMessageStream 流式发送消息
+// @Summary 流式发送消息
+// @Description 在指定会话中发送消息并以 SSE 流式返回 AI 回复
+// @Tags messages
+// @Accept json
+// @Produce text/event-stream
+// @Param id path string true "会话ID"
+// @Param request body model.SendMessageRequest true "发送消息请求"
+// @Success 200 {string} string "SSE 流式响应"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 403 {object} model.ErrorResponse "无权访问"
+// @Failure 404 {object} model.ErrorResponse "会话不存在"
+// @Failure 422 {object} model.ErrorResponse "参数验证失败"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /chat/sessions/{id}/messages/stream [post]
+func (h *MessageHandler) SendMessageStream(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// 1. 从URL路径中提取会话ID
+	sessionID := h.extractSessionIDFromStream(r.URL.Path)
+	if sessionID == "" {
+		h.logger.Warn("会话ID为空")
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("会话ID不能为空"))
+		return
+	}
+
+	// 2. 解析请求参数
+	var req model.SendMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("解析发送消息请求参数失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, r, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	// 确保请求中的 SessionID 与 URL 中的一致
+	req.SessionID = sessionID
+
+	// 3. 验证请求参数
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.logger.Warn("发送消息请求参数验证失败", logger.Fields{"errors": validationErrors})
+		h.writeValidationErrorResponse(w, r, validationErrors)
+		return
+	}
+
+	// 4. 从JWT token中获取用户ID
+	userID, ok := middleware.GetAuthUserID(ctx)
+	if !ok || userID == "" {
+		h.logger.Warn("缺少用户ID")
+		h.writeErrorResponse(w, r, errors.NewUnauthorizedError("缺少用户认证信息"))
+		return
+	}
+
+	// 5. 记录请求日志
+	h.logger.Info("收到流式发送消息请求", logger.Fields{
+		"sessionId": sessionID,
+		"userId":    userID,
+		"message":   req.Message,
+	})
+
+	// 6. 调用服务层发送流式消息
+	serviceReq := &session.SendMessageRequest{
+		SessionID: req.SessionID,
+		Message:   req.Message,
+		UserID:    userID,
+		Options:   req.Options,
+	}
+
+	streamChan, err := h.messageService.SendMessageStream(ctx, serviceReq)
+	if err != nil {
+		h.logger.Error("启动流式消息发送失败", logger.Fields{
+			"error":     err,
+			"sessionId": sessionID,
+			"userId":    userID,
+		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			h.writeErrorResponse(w, r, appErr)
+		} else {
+			h.writeErrorResponse(w, r, errors.NewInternalError(err))
+		}
+		return
+	}
+
+	// 7. 设置 SSE 响应头
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no") // 禁用 nginx 缓冲
+
+	// 8. 创建 flusher
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		h.logger.Error("响应写入器不支持流式传输")
+		h.writeErrorResponse(w, r, errors.NewInternalError(fmt.Errorf("不支持流式传输")))
+		return
+	}
+
+	// 9. 处理流式响应
+	for chunk := range streamChan {
+		// 将块转换为 JSON
+		data, err := json.Marshal(chunk)
+		if err != nil {
+			h.logger.Error("序列化流式响应块失败", logger.Fields{"error": err})
+			continue
+		}
+
+		// 写入 SSE 格式数据
+		// SSE 格式: data: {json}\n\n
+		_, err = fmt.Fprintf(w, "data: %s\n\n", string(data))
+		if err != nil {
+			h.logger.Error("写入流式响应失败", logger.Fields{"error": err})
+			return
+		}
+
+		// 立即刷新缓冲区
+		flusher.Flush()
+
+		// 如果是错误或完成事件，结束流
+		if chunk.Event == "error" || chunk.Event == "done" {
+			break
+		}
+	}
+
+	// 10. 记录响应日志
+	h.logger.Info("流式消息发送完成", logger.Fields{
+		"sessionId": sessionID,
+		"userId":    userID,
+	})
+}
+
 // AbortMessage 中止消息生成
 // @Summary 中止消息生成
 // @Description 中止指定消息的AI生成过程
@@ -352,6 +481,27 @@ func (h *MessageHandler) AbortMessage(w http.ResponseWriter, r *http.Request) {
 // 路径格式: /api/v1/chat/sessions/{id}/messages
 func (h *MessageHandler) extractSessionID(path string) string {
 	// 移除尾部的 /messages
+	path = strings.TrimSuffix(path, "/messages")
+	path = strings.TrimSuffix(path, "/")
+	
+	// 分割路径
+	parts := strings.Split(path, "/")
+	
+	// 查找 "sessions" 后的部分
+	for i, part := range parts {
+		if part == "sessions" && i+1 < len(parts) {
+			return parts[i+1]
+		}
+	}
+	
+	return ""
+}
+
+// extractSessionIDFromStream 从流式URL路径中提取会话ID
+// 路径格式: /api/v1/chat/sessions/{id}/messages/stream
+func (h *MessageHandler) extractSessionIDFromStream(path string) string {
+	// 移除尾部的 /stream 和 /messages
+	path = strings.TrimSuffix(path, "/stream")
 	path = strings.TrimSuffix(path, "/messages")
 	path = strings.TrimSuffix(path, "/")
 	

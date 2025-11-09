@@ -2403,6 +2403,53 @@ paths:
       summary: 发送消息
       tags:
       - messages
+  /chat/sessions/{id}/messages/stream:
+    post:
+      consumes:
+      - application/json
+      description: 在指定会话中发送消息并以 SSE 流式返回 AI 回复
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 发送消息请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SendMessageRequest'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: SSE 流式响应
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 无权访问
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: 参数验证失败
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: 流式发送消息
+      tags:
+      - messages
   /chat/sessions/{id}/pin:
     post:
       consumes:

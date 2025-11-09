@@ -52,6 +52,11 @@ func RegisterSessionRoutes(
 
 	// ========== 消息管理路由（需要认证）==========
 
+	// POST /api/v1/chat/sessions/{id}/messages/stream - 在会话中发送消息（流式返回）
+	// 注意：这个路由必须在 /api/v1/chat/sessions/{id}/messages 之前注册
+	mux.Handle("POST /api/v1/chat/sessions/{id}/messages/stream",
+		jwtAuthMiddleware(http.HandlerFunc(messageHandler.SendMessageStream)))
+
 	// POST /api/v1/chat/sessions/{id}/messages - 在会话中发送消息
 	mux.Handle("POST /api/v1/chat/sessions/{id}/messages",
 		jwtAuthMiddleware(http.HandlerFunc(messageHandler.SendMessage)))

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>聊天流式接口演示 (SSE)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 800px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .config-section {
+      padding: 15px 20px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .config-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .config-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .config-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .config-row input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+
+    .message {
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .message.assistant {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .message-content {
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-meta {
+      font-size: 11px;
+      color: #999;
+      margin-top: 5px;
+      padding: 0 5px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 70px;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    .input-section {
+      padding: 20px;
+      background: white;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    #messageInput:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    #sendButton {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #sendButton:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    #sendButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 AI 聊天助手</h1>
+      <p>基于 SSE 的流式对话演示</p>
+    </div>
+
+    <div class="config-section">
+      <div class="config-row">
+        <input type="text" id="apiUrl" placeholder="API 地址" value="http://localhost:8080" />
+        <input type="text" id="sessionId" placeholder="会话 ID" value="" />
+      </div>
+      <div class="config-row">
+        <input type="text" id="accessToken" placeholder="访问令牌 (JWT Token)" value="" />
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="status" id="status">准备就绪</div>
+
+    <div class="input-section">
+      <div class="input-group">
+        <input type="text" id="messageInput" placeholder="输入你的消息..." />
+        <button id="sendButton" onclick="sendMessage()">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isStreaming = false;
+
+    // 添加消息到聊天窗口
+    function addMessage(role, content, meta = '') {
+      const messagesDiv = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      contentDiv.textContent = content;
+
+      messageDiv.appendChild(contentDiv);
+
+      if (meta) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'message-meta';
+        metaDiv.textContent = meta;
+        messageDiv.appendChild(metaDiv);
+      }
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      return messageDiv;
+    }
+
+    // 显示打字指示器
+    function showTypingIndicator() {
+      const messagesDiv = document.getElementById('chatMessages');
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message assistant';
+      typingDiv.id = 'typingIndicator';
+
+      const indicator = document.createElement('div');
+      indicator.className = 'typing-indicator';
+      indicator.innerHTML = '<span></span><span></span><span></span>';
+
+      typingDiv.appendChild(indicator);
+      messagesDiv.appendChild(typingDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // 移除打字指示器
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    // 更新状态
+    function updateStatus(message, isError = false) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = message;
+      statusDiv.style.color = isError ? '#c33' : '#666';
+    }
+
+    // 显示错误
+    function showError(message) {
+      const messagesDiv = document.getElementById('chatMessages');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error';
+      errorDiv.textContent = `错误: ${message}`;
+      messagesDiv.appendChild(errorDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // 发送消息
+    async function sendMessage() {
+      if (isStreaming) {
+        updateStatus('正在处理中，请稍候...', true);
+        return;
+      }
+
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+
+      if (!message) {
+        updateStatus('请输入消息', true);
+        return;
+      }
+
+      const apiUrl = document.getElementById('apiUrl').value.trim();
+      const sessionId = document.getElementById('sessionId').value.trim();
+      const accessToken = document.getElementById('accessToken').value.trim();
+
+      if (!apiUrl || !sessionId || !accessToken) {
+        updateStatus('请填写完整的配置信息', true);
+        return;
+      }
+
+      // 添加用户消息
+      addMessage('user', message);
+      input.value = '';
+
+      // 显示打字指示器
+      showTypingIndicator();
+
+      // 禁用发送按钮
+      isStreaming = true;
+      document.getElementById('sendButton').disabled = true;
+      updateStatus('正在发送...');
+
+      try {
+        // 构建请求 URL
+        const url = `${apiUrl}/api/v1/chat/sessions/${sessionId}/messages/stream`;
+
+        // 发送请求
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            message: message,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 移除打字指示器
+        removeTypingIndicator();
+
+        // 创建 AI 消息容器
+        let aiMessageDiv = null;
+        let aiContentDiv = null;
+        let fullContent = '';
+
+        // 读取 SSE 流
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        updateStatus('正在接收回复...');
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          // 解码数据
+          buffer += decoder.decode(value, { stream: true });
+
+          // 处理 SSE 消息
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // 保留不完整的行
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              try {
+                const chunk = JSON.parse(data);
+
+                if (chunk.event === 'user_message') {
+                  // 用户消息已保存
+                  console.log('用户消息已保存:', chunk.userMessage);
+                } else if (chunk.event === 'content') {
+                  // 接收到内容块
+                  if (!aiMessageDiv) {
+                    // 创建 AI 消息容器
+                    const messagesDiv =
+                      document.getElementById('chatMessages');
+                    aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.className = 'message assistant';
+
+                    aiContentDiv = document.createElement('div');
+                    aiContentDiv.className = 'message-content';
+
+                    aiMessageDiv.appendChild(aiContentDiv);
+                    messagesDiv.appendChild(aiMessageDiv);
+                  }
+
+                  // 追加内容
+                  fullContent += chunk.content;
+                  aiContentDiv.textContent = fullContent;
+
+                  // 滚动到底部
+                  const messagesDiv = document.getElementById('chatMessages');
+                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else if (chunk.event === 'done') {
+                  // 完成
+                  console.log('流式传输完成');
+                  if (chunk.model || chunk.usage) {
+                    const meta = [];
+                    if (chunk.model) meta.push(`模型: ${chunk.model}`);
+                    if (chunk.usage) {
+                      meta.push(
+                        `Tokens: ${chunk.usage.totalTokens} (提示: ${chunk.usage.promptTokens}, 生成: ${chunk.usage.completionTokens})`
+                      );
+                    }
+
+                    if (aiMessageDiv && meta.length > 0) {
+                      const metaDiv = document.createElement('div');
+                      metaDiv.className = 'message-meta';
+                      metaDiv.textContent = meta.join(' | ');
+                      aiMessageDiv.appendChild(metaDiv);
+                    }
+                  }
+                  updateStatus('完成');
+                } else if (chunk.event === 'error') {
+                  // 错误
+                  showError(chunk.error);
+                  updateStatus('发生错误', true);
+                }
+              } catch (e) {
+                console.error('解析 SSE 数据失败:', e, data);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('发送消息失败:', error);
+        removeTypingIndicator();
+        showError(error.message);
+        updateStatus('发送失败', true);
+      } finally {
+        // 恢复发送按钮
+        isStreaming = false;
+        document.getElementById('sendButton').disabled = false;
+      }
+    }
+
+    // 回车发送
+    document
+      .getElementById('messageInput')
+      .addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !isStreaming) {
+          sendMessage();
+        }
+      });
+
+    // 页面加载时的提示
+    window.addEventListener('load', () => {
+      updateStatus('请配置 API 地址、会话 ID 和访问令牌');
+    });
+  </script>
+</body>
+
+</html>

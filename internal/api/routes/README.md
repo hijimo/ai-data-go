@@ -37,6 +37,7 @@
 
 | 方法 | 路径 | 描述 | Handler |
 |------|------|------|---------|
+| POST | /api/v1/chat/sessions/{id}/messages/stream | 在会话中发送消息（流式返回） | SendMessageStream |
 | POST | /api/v1/chat/sessions/{id}/messages | 在会话中发送消息 | SendMessage |
 | GET | /api/v1/chat/sessions/{id}/messages | 获取会话的消息历史（支持分页） | GetMessages |
 | GET | /api/v1/chat/messages/{id} | 获取单条消息详情 | GetMessageByID |
@@ -109,7 +110,7 @@ curl -X POST http://localhost:8080/api/v1/chat/sessions \
   }'
 ```
 
-### 发送消息
+### 发送消息（非流式）
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/chat/sessions/{session-id}/messages \
@@ -119,6 +120,24 @@ curl -X POST http://localhost:8080/api/v1/chat/sessions/{session-id}/messages \
     "message": "你好，请介绍一下自己"
   }'
 ```
+
+### 发送消息（流式）
+
+```bash
+curl -N -X POST http://localhost:8080/api/v1/chat/sessions/{session-id}/messages/stream \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-jwt-token" \
+  -d '{
+    "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+    "message": "你好，请介绍一下自己"
+  }'
+```
+
+**注意**：
+
+- 使用 `-N` 参数禁用缓冲，立即显示输出
+- 流式接口返回 SSE (Server-Sent Events) 格式
+- 详细使用说明请参考 [流式 API 指南](../../docs/STREAM_API_GUIDE.md)
 
 ### 获取会话列表
 

@@ -19,6 +19,9 @@ type MessageService interface {
 	// SendMessage 发送消息（包含AI回复）
 	SendMessage(ctx context.Context, req *SendMessageRequest) (*MessageResponse, error)
 
+	// SendMessageStream 发送消息（流式返回AI回复）
+	SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *StreamMessageChunk, error)
+
 	// GetMessages 获取消息历史
 	GetMessages(ctx context.Context, req *GetMessagesRequest) (*MessageListResponse, error)
 
@@ -132,6 +135,26 @@ type MessageDetailResponse struct {
 	ToolCalls map[string]interface{} `json:"toolCalls,omitempty"`
 	Error     string                 `json:"error,omitempty"`
 	Meta      map[string]interface{} `json:"meta,omitempty"`
+}
+
+// StreamMessageChunk 流式消息块
+type StreamMessageChunk struct {
+	// 事件类型: "user_message" | "content" | "done" | "error"
+	Event string `json:"event"`
+	// 用户消息（仅在 event="user_message" 时提供）
+	UserMessage *Message `json:"userMessage,omitempty"`
+	// AI 消息 ID（在第一个 content 块时提供）
+	AIMessageID string `json:"aiMessageId,omitempty"`
+	// 内容片段（event="content" 时提供）
+	Content string `json:"content,omitempty"`
+	// 是否完成（event="done" 时为 true）
+	Done bool `json:"done,omitempty"`
+	// 模型名称（event="done" 时提供）
+	Model string `json:"model,omitempty"`
+	// Token 使用情况（event="done" 时提供）
+	Usage *model.Usage `json:"usage,omitempty"`
+	// 错误信息（event="error" 时提供）
+	Error string `json:"error,omitempty"`
 }
 
 // SendMessage 发送消息
@@ -520,4 +543,244 @@ func (s *messageService) AbortMessage(ctx context.Context, messageID, userID str
 	})
 
 	return nil
+}
+
+// SendMessageStream 发送消息（流式返回）
+func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *StreamMessageChunk, error) {
+	s.logInfo(ctx, "开始流式发送消息", logger.Fields{
+		"sessionId": req.SessionID,
+		"userId":    req.UserID,
+	})
+
+	// 1. 验证会话存在且属于用户
+	session, err := s.sessionRepo.GetByID(ctx, req.SessionID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewSessionNotFoundError(req.SessionID)
+		}
+		s.logError(ctx, "获取会话失败", logger.Fields{
+			"sessionId": req.SessionID,
+			"error":     err.Error(),
+		})
+		return nil, errors.NewInternalError(err)
+	}
+
+	// 验证会话所有权
+	if session.UserID.String() != req.UserID {
+		s.logWarn(ctx, "用户尝试访问其他用户的会话", logger.Fields{
+			"sessionId":    req.SessionID,
+			"userId":       req.UserID,
+			"sessionOwner": session.UserID.String(),
+		})
+		return nil, errors.NewSessionAccessDeniedError()
+	}
+
+	// 2. 创建输出通道
+	outputChan := make(chan *StreamMessageChunk, 10)
+
+	// 3. 在 goroutine 中处理流式响应
+	go func() {
+		defer close(outputChan)
+
+		// 3.1 获取下一个序列号
+		nextSeq, err := s.messageRepo.GetNextSequence(ctx, req.SessionID)
+		if err != nil {
+			s.logError(ctx, "获取消息序列号失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			outputChan <- &StreamMessageChunk{
+				Event: "error",
+				Error: fmt.Sprintf("获取消息序列号失败: %v", err),
+			}
+			return
+		}
+
+		// 3.2 保存用户消息
+		userMessage := &model.ChatMessage{
+			SessionID: session.ID,
+			Role:      "user",
+			Content:   req.Message,
+			Sequence:  nextSeq,
+			CreatedAt: time.Now(),
+		}
+
+		if err := s.messageRepo.Create(ctx, userMessage); err != nil {
+			s.logError(ctx, "保存用户消息失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			outputChan <- &StreamMessageChunk{
+				Event: "error",
+				Error: fmt.Sprintf("保存用户消息失败: %v", err),
+			}
+			return
+		}
+
+		s.logInfo(ctx, "用户消息已保存", logger.Fields{
+			"messageId": userMessage.ID.String(),
+			"sequence":  userMessage.Sequence,
+		})
+
+		// 3.3 发送用户消息事件
+		outputChan <- &StreamMessageChunk{
+			Event: "user_message",
+			UserMessage: &Message{
+				ID:        userMessage.ID.String(),
+				Role:      userMessage.Role,
+				Content:   userMessage.Content,
+				Sequence:  userMessage.Sequence,
+				CreatedAt: userMessage.CreatedAt,
+			},
+		}
+
+		// 3.4 创建 AI 消息记录（初始为空内容）
+		aiMessage := &model.ChatMessage{
+			SessionID: session.ID,
+			Role:      "assistant",
+			Content:   "", // 初始为空，后续累积内容
+			Sequence:  nextSeq + 1,
+			CreatedAt: time.Now(),
+		}
+
+		if err := s.messageRepo.Create(ctx, aiMessage); err != nil {
+			s.logError(ctx, "创建AI消息记录失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			outputChan <- &StreamMessageChunk{
+				Event: "error",
+				Error: fmt.Sprintf("创建AI消息记录失败: %v", err),
+			}
+			return
+		}
+
+		// 3.5 调用 AI 服务获取流式响应
+		chatReq := &model.ChatRequest{
+			Message:   req.Message,
+			MessageID: req.SessionID,
+			Options:   req.Options,
+		}
+
+		streamChan, err := s.aiService.ChatStream(ctx, chatReq)
+		if err != nil {
+			s.logError(ctx, "调用AI流式服务失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			// 保存错误信息到用户消息
+			userMessage.Error = err.Error()
+			s.messageRepo.Create(ctx, userMessage)
+			
+			outputChan <- &StreamMessageChunk{
+				Event: "error",
+				Error: fmt.Sprintf("AI服务调用失败: %v", err),
+			}
+			return
+		}
+
+		// 3.6 处理流式响应
+		var fullContent string
+		var lastModel string
+		var lastUsage *model.Usage
+		firstChunk := true
+
+		for chunk := range streamChan {
+			// 处理错误
+			if chunk.Error != nil {
+				s.logError(ctx, "AI流式响应错误", logger.Fields{
+					"sessionId": req.SessionID,
+					"error":     chunk.Error.Error(),
+				})
+				outputChan <- &StreamMessageChunk{
+					Event: "error",
+					Error: chunk.Error.Error(),
+				}
+				return
+			}
+
+			// 第一个块时发送 AI 消息 ID
+			if firstChunk {
+				outputChan <- &StreamMessageChunk{
+					Event:       "content",
+					AIMessageID: aiMessage.ID.String(),
+					Content:     chunk.Content,
+				}
+				firstChunk = false
+			} else {
+				// 发送内容块
+				outputChan <- &StreamMessageChunk{
+					Event:   "content",
+					Content: chunk.Content,
+				}
+			}
+
+			// 累积内容
+			fullContent += chunk.Content
+
+			// 保存模型和使用信息
+			if chunk.Model != "" {
+				lastModel = chunk.Model
+			}
+			if chunk.Usage != nil {
+				lastUsage = chunk.Usage
+			}
+
+			// 检查是否完成
+			if chunk.Done {
+				break
+			}
+		}
+
+		// 3.7 更新 AI 消息内容
+		aiMessage.Content = fullContent
+		if lastUsage != nil {
+			aiMessage.Tokens = lastUsage.CompletionTokens
+		}
+
+		if err := s.messageRepo.Create(ctx, aiMessage); err != nil {
+			s.logError(ctx, "更新AI消息失败", logger.Fields{
+				"messageId": aiMessage.ID.String(),
+				"error":     err.Error(),
+			})
+			outputChan <- &StreamMessageChunk{
+				Event: "error",
+				Error: fmt.Sprintf("更新AI消息失败: %v", err),
+			}
+			return
+		}
+
+		// 3.8 更新会话信息
+		if err := s.sessionRepo.UpdateLastMessage(ctx, req.SessionID, aiMessage.ID.String()); err != nil {
+			s.logWarn(ctx, "更新会话最后消息失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+		}
+
+		if err := s.sessionRepo.IncrementMessageCount(ctx, req.SessionID); err != nil {
+			s.logWarn(ctx, "更新会话消息计数失败", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+		}
+
+		// 3.9 发送完成事件
+		outputChan <- &StreamMessageChunk{
+			Event: "done",
+			Done:  true,
+			Model: lastModel,
+			Usage: lastUsage,
+		}
+
+		s.logInfo(ctx, "流式消息发送完成", logger.Fields{
+			"sessionId":   req.SessionID,
+			"userMsgId":   userMessage.ID.String(),
+			"aiMsgId":     aiMessage.ID.String(),
+			"model":       lastModel,
+			"contentLen":  len(fullContent),
+		})
+	}()
+
+	return outputChan, nil
 }
