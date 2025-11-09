@@ -13,6 +13,7 @@ const (
 	CodeForbidden       = 403 // 禁止访问
 	CodeNotFound        = 404 // 资源不存在
 	CodeValidationError = 422 // 参数验证失败
+	CodeTooManyRequests = 429 // 请求过于频繁
 
 	// 服务器错误 5xx
 	CodeInternalError      = 500 // 内部错误
@@ -47,6 +48,7 @@ const (
 	MsgForbidden           = "禁止访问"
 	MsgNotFound            = "资源不存在"
 	MsgValidationError     = "参数验证失败"
+	MsgTooManyRequests     = "请求过于频繁"
 	MsgInternalError       = "内部错误"
 	MsgServiceUnavailable  = "服务不可用"
 	MsgAIServiceError      = "AI 服务错误"
@@ -162,6 +164,14 @@ func NewServiceUnavailableError(message string) *AppError {
 		message = MsgServiceUnavailable
 	}
 	return New(CodeServiceUnavailable, message)
+}
+
+// NewTooManyRequestsError 创建请求过于频繁错误
+func NewTooManyRequestsError(message string) *AppError {
+	if message == "" {
+		message = MsgTooManyRequests
+	}
+	return New(CodeTooManyRequests, message)
 }
 
 // NewProviderNotFoundError 创建提供商不存在错误
