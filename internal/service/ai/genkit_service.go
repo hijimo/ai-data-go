@@ -114,8 +114,8 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 	return response, nil
 }
 
-// ChatStream 流式对话
-func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) (<-chan model.StreamChunk, error) {
+// ChatStream 流式对话（腾讯云格式）
+func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) (<-chan *model.TencentCloudStreamMessage, error) {
 	startTime := time.Now()
 
 	// 创建或获取会话
@@ -159,11 +159,15 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 	}
 
 	// 创建输出通道
-	outputChan := make(chan model.StreamChunk, 10)
+	outputChan := make(chan *model.TencentCloudStreamMessage, 10)
 
-	// 在 goroutine 中转换流式数据
+	// 在 goroutine 中转换流式数据为腾讯云格式
 	go func() {
 		defer close(outputChan)
+
+		var fullContent string
+		var lastModel string
+		var lastUsage *model.Usage
 
 		for chunk := range genkitStream {
 			// 检查是否有错误
@@ -173,52 +177,85 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 					s.logger.WarnContext(ctx, "流式对话请求被取消", logger.Fields{
 						"sessionId": sessionID,
 					})
-					outputChan <- model.StreamChunk{
-						Done:  true,
-						Error: errors.NewContextCancelledError(),
-					}
 				} else {
 					s.logger.ErrorContext(ctx, "流式生成出错", logger.Fields{
 						"sessionId": sessionID,
 						"error":     chunk.Error.Error(),
 					})
-					outputChan <- model.StreamChunk{
-						Done:  true,
-						Error: errors.NewAIServiceError(chunk.Error),
-					}
+				}
+
+				// 发送错误消息（腾讯云格式）
+				outputChan <- &model.TencentCloudStreamMessage{
+					CompletionID: sessionID,
+					SessionID:    sessionID,
+					Processes: model.ProcessInfo{
+						Stage:   model.StreamStageOutput,
+						Message: chunk.Error.Error(),
+					},
+					FinishReason: "error",
+					IsStop:       true,
 				}
 				return
 			}
 
-			// 转换并发送数据块
-			modelChunk := model.StreamChunk{
-				Content:   chunk.Content,
-				Done:      chunk.Done,
-				SessionID: sessionID,
-			}
-
-			// 如果是最后一个块，添加模型和使用统计信息
+			// 如果是完成块
 			if chunk.Done {
-				modelChunk.Model = chunk.Model
+				// 保存模型和使用信息
+				if chunk.Model != "" {
+					lastModel = chunk.Model
+				}
 				if chunk.Usage != nil {
-					modelChunk.Usage = &model.Usage{
+					lastUsage = &model.Usage{
 						PromptTokens:     chunk.Usage.PromptTokens,
 						CompletionTokens: chunk.Usage.CompletionTokens,
 						TotalTokens:      chunk.Usage.TotalTokens,
 					}
 				}
 
+				// 发送finish事件（腾讯云格式）
+				outputChan <- &model.TencentCloudStreamMessage{
+					CompletionID: sessionID,
+					SessionID:    sessionID,
+					Processes: model.ProcessInfo{
+						Stage:   model.StreamStageOutput,
+						Message: "",
+					},
+					Content:      fullContent,
+					FinishReason: "stop",
+					IsStop:       true,
+					AnswerSource: "ai-model",
+				}
+
 				// 记录完成日志
 				duration := time.Since(startTime)
 				s.logger.InfoContext(sessionCtx, "流式对话请求处理完成", logger.Fields{
 					"sessionId": sessionID,
-					"model":     chunk.Model,
+					"model":     lastModel,
 					"duration":  duration.String(),
-					"tokens":    modelChunk.Usage,
+					"tokens":    lastUsage,
 				})
+				break
 			}
 
-			outputChan <- modelChunk
+			// 跳过空内容
+			if chunk.Content == "" {
+				continue
+			}
+
+			// 累积内容
+			fullContent += chunk.Content
+
+			// 发送增量内容（腾讯云格式）
+			outputChan <- &model.TencentCloudStreamMessage{
+				CompletionID: sessionID,
+				SessionID:    sessionID,
+				Processes: model.ProcessInfo{
+					Stage:   model.StreamStageOutput,
+					Message: "",
+				},
+				DeltaContent: chunk.Content,
+				IsStop:       false,
+			}
 		}
 	}()
 

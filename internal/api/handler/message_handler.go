@@ -379,7 +379,7 @@ func (h *MessageHandler) SendMessageStream(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 9. 处理流式响应
+	// 9. 处理流式响应（腾讯云SSE格式）
 	for chunk := range streamChan {
 		// 将块转换为 JSON
 		data, err := json.Marshal(chunk)
@@ -388,8 +388,25 @@ func (h *MessageHandler) SendMessageStream(w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
+		// 确定事件类型
+		eventType := "data"
+		if chunk.IsStop && chunk.FinishReason == "stop" {
+			eventType = "finish"
+		}
+
 		// 写入 SSE 格式数据
-		// SSE 格式: data: {json}\n\n
+		// 腾讯云格式:
+		// event: finish (仅在结束时)
+		// data: {json}
+		// (空行)
+		if eventType == "finish" {
+			_, err = fmt.Fprintf(w, "event: %s\n", eventType)
+			if err != nil {
+				h.logger.Error("写入SSE事件类型失败", logger.Fields{"error": err})
+				return
+			}
+		}
+
 		_, err = fmt.Fprintf(w, "data: %s\n\n", string(data))
 		if err != nil {
 			h.logger.Error("写入流式响应失败", logger.Fields{"error": err})
@@ -399,8 +416,8 @@ func (h *MessageHandler) SendMessageStream(w http.ResponseWriter, r *http.Reques
 		// 立即刷新缓冲区
 		flusher.Flush()
 
-		// 如果是错误或完成事件，结束流
-		if chunk.Event == "error" || chunk.Event == "done" {
+		// 如果是停止事件，结束流
+		if chunk.IsStop {
 			break
 		}
 	}

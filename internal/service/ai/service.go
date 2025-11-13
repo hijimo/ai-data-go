@@ -19,15 +19,15 @@ type AIService interface {
 	//   error: 错误信息
 	Chat(ctx context.Context, req *model.ChatRequest) (*model.ChatResponse, error)
 
-	// ChatStream 流式对话（预留接口）
-	// 支持流式返回 AI 生成的内容
+	// ChatStream 流式对话
+	// 支持流式返回 AI 生成的内容，使用腾讯云流格式
 	// 参数:
 	//   ctx: 上下文，用于控制请求生命周期
 	//   req: 对话请求，包含用户消息和可选参数
 	// 返回:
-	//   <-chan model.StreamChunk: 流式响应通道
+	//   <-chan *model.TencentCloudStreamMessage: 流式响应通道（腾讯云格式）
 	//   error: 错误信息
-	ChatStream(ctx context.Context, req *model.ChatRequest) (<-chan model.StreamChunk, error)
+	ChatStream(ctx context.Context, req *model.ChatRequest) (<-chan *model.TencentCloudStreamMessage, error)
 
 	// AbortChat 中止对话
 	// 取消正在进行的对话请求

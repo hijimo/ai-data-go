@@ -19,8 +19,8 @@ type MessageService interface {
 	// SendMessage 发送消息（包含AI回复）
 	SendMessage(ctx context.Context, req *SendMessageRequest) (*MessageResponse, error)
 
-	// SendMessageStream 发送消息（流式返回AI回复）
-	SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *StreamMessageChunk, error)
+	// SendMessageStream 发送消息（流式返回AI回复，使用腾讯云格式）
+	SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *model.TencentCloudStreamMessage, error)
 
 	// GetMessages 获取消息历史
 	GetMessages(ctx context.Context, req *GetMessagesRequest) (*MessageListResponse, error)
@@ -137,7 +137,8 @@ type MessageDetailResponse struct {
 	Meta      map[string]interface{} `json:"meta,omitempty"`
 }
 
-// StreamMessageChunk 流式消息块
+// StreamMessageChunk 流式消息块（已废弃，保留用于向后兼容）
+// 建议使用 model.TencentCloudStreamMessage
 type StreamMessageChunk struct {
 	// 事件类型: "user_message" | "content" | "done" | "error"
 	Event string `json:"event"`
@@ -545,8 +546,8 @@ func (s *messageService) AbortMessage(ctx context.Context, messageID, userID str
 	return nil
 }
 
-// SendMessageStream 发送消息（流式返回）
-func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *StreamMessageChunk, error) {
+// SendMessageStream 发送消息（流式返回，使用腾讯云格式）
+func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan *model.TencentCloudStreamMessage, error) {
 	s.logInfo(ctx, "开始流式发送消息", logger.Fields{
 		"sessionId": req.SessionID,
 		"userId":    req.UserID,
@@ -576,7 +577,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 	}
 
 	// 2. 创建输出通道
-	outputChan := make(chan *StreamMessageChunk, 10)
+	outputChan := make(chan *model.TencentCloudStreamMessage, 10)
 
 	// 3. 在 goroutine 中处理流式响应
 	go func() {
@@ -589,9 +590,15 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
-			outputChan <- &StreamMessageChunk{
-				Event: "error",
-				Error: fmt.Sprintf("获取消息序列号失败: %v", err),
+			// 发送错误消息（腾讯云格式）
+			outputChan <- &model.TencentCloudStreamMessage{
+				CompletionID: req.SessionID,
+				Processes: model.ProcessInfo{
+					Stage:   model.StreamStageOutput,
+					Message: fmt.Sprintf("获取消息序列号失败: %v", err),
+				},
+				FinishReason: "error",
+				IsStop:       true,
 			}
 			return
 		}
@@ -610,9 +617,14 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
-			outputChan <- &StreamMessageChunk{
-				Event: "error",
-				Error: fmt.Sprintf("保存用户消息失败: %v", err),
+			outputChan <- &model.TencentCloudStreamMessage{
+				CompletionID: req.SessionID,
+				Processes: model.ProcessInfo{
+					Stage:   model.StreamStageOutput,
+					Message: fmt.Sprintf("保存用户消息失败: %v", err),
+				},
+				FinishReason: "error",
+				IsStop:       true,
 			}
 			return
 		}
@@ -622,19 +634,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			"sequence":  userMessage.Sequence,
 		})
 
-		// 3.3 发送用户消息事件
-		outputChan <- &StreamMessageChunk{
-			Event: "user_message",
-			UserMessage: &Message{
-				ID:        userMessage.ID.String(),
-				Role:      userMessage.Role,
-				Content:   userMessage.Content,
-				Sequence:  userMessage.Sequence,
-				CreatedAt: userMessage.CreatedAt,
-			},
-		}
-
-		// 3.4 创建 AI 消息记录（初始为空内容）
+		// 3.3 创建 AI 消息记录（初始为空内容）
 		aiMessage := &model.ChatMessage{
 			SessionID: session.ID,
 			Role:      "assistant",
@@ -648,14 +648,19 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
-			outputChan <- &StreamMessageChunk{
-				Event: "error",
-				Error: fmt.Sprintf("创建AI消息记录失败: %v", err),
+			outputChan <- &model.TencentCloudStreamMessage{
+				CompletionID: req.SessionID,
+				Processes: model.ProcessInfo{
+					Stage:   model.StreamStageOutput,
+					Message: fmt.Sprintf("创建AI消息记录失败: %v", err),
+				},
+				FinishReason: "error",
+				IsStop:       true,
 			}
 			return
 		}
 
-		// 3.5 调用 AI 服务获取流式响应
+		// 3.4 调用 AI 服务获取流式响应
 		chatReq := &model.ChatRequest{
 			Message:   req.Message,
 			MessageID: req.SessionID,
@@ -671,72 +676,42 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			// 保存错误信息到用户消息
 			userMessage.Error = err.Error()
 			s.messageRepo.Create(ctx, userMessage)
-			
-			outputChan <- &StreamMessageChunk{
-				Event: "error",
-				Error: fmt.Sprintf("AI服务调用失败: %v", err),
+
+			outputChan <- &model.TencentCloudStreamMessage{
+				CompletionID: req.SessionID,
+				Processes: model.ProcessInfo{
+					Stage:   model.StreamStageOutput,
+					Message: fmt.Sprintf("AI服务调用失败: %v", err),
+				},
+				FinishReason: "error",
+				IsStop:       true,
 			}
 			return
 		}
 
-		// 3.6 处理流式响应
+		// 3.5 处理流式响应
 		var fullContent string
 		var lastModel string
 		var lastUsage *model.Usage
-		firstChunk := true
 
 		for chunk := range streamChan {
-			// 处理错误
-			if chunk.Error != nil {
-				s.logError(ctx, "AI流式响应错误", logger.Fields{
-					"sessionId": req.SessionID,
-					"error":     chunk.Error.Error(),
-				})
-				outputChan <- &StreamMessageChunk{
-					Event: "error",
-					Error: chunk.Error.Error(),
-				}
-				return
+			// 直接转发腾讯云格式的消息
+			outputChan <- chunk
+
+			// 累积内容（仅在输出阶段）
+			if chunk.Processes.Stage == model.StreamStageOutput && chunk.DeltaContent != "" {
+				fullContent += chunk.DeltaContent
 			}
 
-			// 检查是否完成（在处理内容之前）
-			if chunk.Done {
-				// 保存模型和使用信息
-				if chunk.Model != "" {
-					lastModel = chunk.Model
-				}
-				if chunk.Usage != nil {
-					lastUsage = chunk.Usage
-				}
+			// 记录模型和使用信息
+			if chunk.IsStop {
+				lastModel = chunk.Content // 在finish事件中可能包含模型信息
+				// 注意：腾讯云格式中没有直接的Usage字段，需要从AdditionalContent中提取
 				break
 			}
-
-			// 跳过空内容块
-			if chunk.Content == "" {
-				continue
-			}
-
-			// 第一个块时发送 AI 消息 ID
-			if firstChunk {
-				outputChan <- &StreamMessageChunk{
-					Event:       "content",
-					AIMessageID: aiMessage.ID.String(),
-					Content:     chunk.Content,
-				}
-				firstChunk = false
-			} else {
-				// 发送内容块
-				outputChan <- &StreamMessageChunk{
-					Event:   "content",
-					Content: chunk.Content,
-				}
-			}
-
-			// 累积内容
-			fullContent += chunk.Content
 		}
 
-		// 3.7 更新 AI 消息内容
+		// 3.6 更新 AI 消息内容
 		aiMessage.Content = fullContent
 		if lastUsage != nil {
 			aiMessage.Tokens = lastUsage.CompletionTokens
@@ -747,14 +722,13 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 				"messageId": aiMessage.ID.String(),
 				"error":     err.Error(),
 			})
-			outputChan <- &StreamMessageChunk{
-				Event: "error",
-				Error: fmt.Sprintf("更新AI消息失败: %v", err),
-			}
-			return
+			// 不中断流，只记录警告
+			s.logWarn(ctx, "更新AI消息失败，但流式输出已完成", logger.Fields{
+				"error": err.Error(),
+			})
 		}
 
-		// 3.8 更新会话信息
+		// 3.7 更新会话信息
 		if err := s.sessionRepo.UpdateLastMessage(ctx, req.SessionID, aiMessage.ID.String()); err != nil {
 			s.logWarn(ctx, "更新会话最后消息失败", logger.Fields{
 				"sessionId": req.SessionID,
@@ -769,20 +743,12 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			})
 		}
 
-		// 3.9 发送完成事件
-		outputChan <- &StreamMessageChunk{
-			Event: "done",
-			Done:  true,
-			Model: lastModel,
-			Usage: lastUsage,
-		}
-
 		s.logInfo(ctx, "流式消息发送完成", logger.Fields{
-			"sessionId":   req.SessionID,
-			"userMsgId":   userMessage.ID.String(),
-			"aiMsgId":     aiMessage.ID.String(),
-			"model":       lastModel,
-			"contentLen":  len(fullContent),
+			"sessionId":  req.SessionID,
+			"userMsgId":  userMessage.ID.String(),
+			"aiMsgId":    aiMessage.ID.String(),
+			"model":      lastModel,
+			"contentLen": len(fullContent),
 		})
 	}()
 

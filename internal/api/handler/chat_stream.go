@@ -95,56 +95,64 @@ func (h *ChatStreamHandler) HandleChatStream(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// 7. 流式发送响应
+	// 7. 流式发送响应（腾讯云格式）
 	for chunk := range streamChan {
-		// 检查是否有错误
-		if chunk.Error != nil {
-			h.logger.Error("流式响应出错", logger.Fields{"error": chunk.Error})
-			if appErr, ok := chunk.Error.(*errors.AppError); ok {
-				h.writeSSEError(w, appErr)
-			} else {
-				h.writeSSEError(w, errors.NewAIServiceError(chunk.Error))
-			}
-			flusher.Flush()
-			return
+		// 检查是否是错误消息
+		if chunk.FinishReason == "error" {
+			h.logger.Error("流式响应出错", logger.Fields{"message": chunk.Processes.Message})
 		}
 
 		// 发送数据块
-		if err := h.writeSSEChunk(w, &chunk); err != nil {
+		if err := h.writeSSEChunk(w, chunk); err != nil {
 			h.logger.Error("写入流式数据失败", logger.Fields{"error": err})
 			return
 		}
 		flusher.Flush()
 
-		// 如果是最后一个块，记录日志
-		if chunk.Done {
+		// 如果是停止消息，记录日志
+		if chunk.IsStop {
 			h.logger.Info("流式对话请求处理成功", logger.Fields{
-				"sessionId":     chunk.SessionID,
-				"model":         chunk.Model,
+				"sessionId":    chunk.SessionID,
+				"completionId": chunk.CompletionID,
 			})
+			break
 		}
 	}
 }
 
-// writeSSEChunk 写入 SSE 数据块
-func (h *ChatStreamHandler) writeSSEChunk(w http.ResponseWriter, chunk *model.StreamChunk) error {
+// writeSSEChunk 写入 SSE 数据块（腾讯云格式）
+func (h *ChatStreamHandler) writeSSEChunk(w http.ResponseWriter, chunk *model.TencentCloudStreamMessage) error {
 	data, err := json.Marshal(chunk)
 	if err != nil {
 		return err
 	}
 
-	// SSE 格式: data: {json}\n\n
+	// 腾讯云 SSE 格式
+	// 如果是 finish 事件，添加 event 行
+	if chunk.IsStop && chunk.FinishReason == "stop" {
+		_, err = fmt.Fprintf(w, "event: finish\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	// data: {json}\n\n
 	_, err = fmt.Fprintf(w, "data: %s\n\n", data)
 	return err
 }
 
-// writeSSEError 写入 SSE 错误
+// writeSSEError 写入 SSE 错误（腾讯云格式）
 func (h *ChatStreamHandler) writeSSEError(w http.ResponseWriter, appErr *errors.AppError) {
-	errorChunk := model.StreamChunk{
-		Done:  true,
-		Error: appErr,
+	errorChunk := &model.TencentCloudStreamMessage{
+		CompletionID: "",
+		Processes: model.ProcessInfo{
+			Stage:   model.StreamStageOutput,
+			Message: appErr.Message,
+		},
+		FinishReason: "error",
+		IsStop:       true,
 	}
-	
+
 	data, _ := json.Marshal(errorChunk)
 	fmt.Fprintf(w, "data: %s\n\n", data)
 }

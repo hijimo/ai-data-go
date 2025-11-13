@@ -24,7 +24,8 @@ type Usage struct {
 	TotalTokens int `json:"totalTokens" example:"60"`
 }
 
-// StreamChunk 流式响应块
+// StreamChunk 流式响应块（兼容旧格式，建议使用 TencentCloudStreamMessage）
+// 已废弃：请使用 TencentCloudStreamMessage 以获得完整的流式输出支持
 type StreamChunk struct {
 	// 会话ID
 	SessionID string `json:"sessionId,omitempty"`
