@@ -583,10 +583,21 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 	go func() {
 		defer close(outputChan)
 
-		// 3.1 获取下一个序列号
-		nextSeq, err := s.messageRepo.GetNextSequence(ctx, req.SessionID)
+		// 创建独立的context用于数据库操作，不受请求context取消的影响
+		// 这样即使客户端断开连接，也能完成消息的保存
+		dbCtx := context.Background()
+		// 从原始context中复制traceId等重要信息
+		if traceID := ctx.Value("traceId"); traceID != nil {
+			dbCtx = context.WithValue(dbCtx, "traceId", traceID)
+		}
+		if requestID := ctx.Value("requestId"); requestID != nil {
+			dbCtx = context.WithValue(dbCtx, "requestId", requestID)
+		}
+
+		// 3.1 获取下一个序列号（使用独立的context）
+		nextSeq, err := s.messageRepo.GetNextSequence(dbCtx, req.SessionID)
 		if err != nil {
-			s.logError(ctx, "获取消息序列号失败", logger.Fields{
+			s.logError(dbCtx, "获取消息序列号失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
@@ -603,7 +614,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			return
 		}
 
-		// 3.2 保存用户消息
+		// 3.2 保存用户消息（使用独立的context）
 		userMessage := &model.ChatMessage{
 			SessionID: session.ID,
 			Role:      "user",
@@ -612,8 +623,8 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			CreatedAt: time.Now(),
 		}
 
-		if err := s.messageRepo.Create(ctx, userMessage); err != nil {
-			s.logError(ctx, "保存用户消息失败", logger.Fields{
+		if err := s.messageRepo.Create(dbCtx, userMessage); err != nil {
+			s.logError(dbCtx, "保存用户消息失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
@@ -629,12 +640,12 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			return
 		}
 
-		s.logInfo(ctx, "用户消息已保存", logger.Fields{
+		s.logInfo(dbCtx, "用户消息已保存", logger.Fields{
 			"messageId": userMessage.ID.String(),
 			"sequence":  userMessage.Sequence,
 		})
 
-		// 3.3 创建 AI 消息记录（初始为空内容）
+		// 3.3 创建 AI 消息记录（初始为空内容，使用独立的context）
 		aiMessage := &model.ChatMessage{
 			SessionID: session.ID,
 			Role:      "assistant",
@@ -643,8 +654,8 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			CreatedAt: time.Now(),
 		}
 
-		if err := s.messageRepo.Create(ctx, aiMessage); err != nil {
-			s.logError(ctx, "创建AI消息记录失败", logger.Fields{
+		if err := s.messageRepo.Create(dbCtx, aiMessage); err != nil {
+			s.logError(dbCtx, "创建AI消息记录失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
@@ -667,15 +678,16 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			Options:   req.Options,
 		}
 
+		// 使用原始ctx调用AI服务，这样可以响应客户端取消请求
 		streamChan, err := s.aiService.ChatStream(ctx, chatReq)
 		if err != nil {
-			s.logError(ctx, "调用AI流式服务失败", logger.Fields{
+			s.logError(dbCtx, "调用AI流式服务失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
-			// 保存错误信息到用户消息
+			// 保存错误信息到用户消息（使用独立的context）
 			userMessage.Error = err.Error()
-			s.messageRepo.Create(ctx, userMessage)
+			s.messageRepo.Create(dbCtx, userMessage)
 
 			outputChan <- &model.TencentCloudStreamMessage{
 				CompletionID: req.SessionID,
@@ -711,39 +723,44 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			}
 		}
 
-		// 3.6 更新 AI 消息内容
+		// 3.6 更新 AI 消息内容（使用独立的context，确保即使客户端断开也能保存）
 		aiMessage.Content = fullContent
 		if lastUsage != nil {
 			aiMessage.Tokens = lastUsage.CompletionTokens
 		}
 
-		if err := s.messageRepo.Update(ctx, aiMessage); err != nil {
-			s.logError(ctx, "更新AI消息失败", logger.Fields{
+		if err := s.messageRepo.Update(dbCtx, aiMessage); err != nil {
+			s.logError(dbCtx, "更新AI消息失败", logger.Fields{
 				"messageId": aiMessage.ID.String(),
 				"error":     err.Error(),
 			})
 			// 不中断流，只记录警告
-			s.logWarn(ctx, "更新AI消息失败，但流式输出已完成", logger.Fields{
+			s.logWarn(dbCtx, "更新AI消息失败，但流式输出已完成", logger.Fields{
 				"error": err.Error(),
 			})
+		} else {
+			s.logInfo(dbCtx, "AI消息内容已更新", logger.Fields{
+				"messageId":  aiMessage.ID.String(),
+				"contentLen": len(fullContent),
+			})
 		}
 
-		// 3.7 更新会话信息
-		if err := s.sessionRepo.UpdateLastMessage(ctx, req.SessionID, aiMessage.ID.String()); err != nil {
-			s.logWarn(ctx, "更新会话最后消息失败", logger.Fields{
+		// 3.7 更新会话信息（使用独立的context）
+		if err := s.sessionRepo.UpdateLastMessage(dbCtx, req.SessionID, aiMessage.ID.String()); err != nil {
+			s.logWarn(dbCtx, "更新会话最后消息失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
 		}
 
-		if err := s.sessionRepo.IncrementMessageCount(ctx, req.SessionID); err != nil {
-			s.logWarn(ctx, "更新会话消息计数失败", logger.Fields{
+		if err := s.sessionRepo.IncrementMessageCount(dbCtx, req.SessionID); err != nil {
+			s.logWarn(dbCtx, "更新会话消息计数失败", logger.Fields{
 				"sessionId": req.SessionID,
 				"error":     err.Error(),
 			})
 		}
 
-		s.logInfo(ctx, "流式消息发送完成", logger.Fields{
+		s.logInfo(dbCtx, "流式消息发送完成", logger.Fields{
 			"sessionId":  req.SessionID,
 			"userMsgId":  userMessage.ID.String(),
 			"aiMsgId":    aiMessage.ID.String(),
