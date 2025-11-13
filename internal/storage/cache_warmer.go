@@ -135,7 +135,11 @@ func (w *CacheWarmer) warmupActiveSessions(ctx context.Context) (int, error) {
 func (w *CacheWarmer) warmupSession(ctx context.Context, sessionID uuid.UUID) error {
 	// 1. 预热上下文配置
 	if err := w.warmupContextConfig(ctx, sessionID); err != nil {
-		return fmt.Errorf("预热上下文配置失败: %w", err)
+		// 上下文配置可能不存在，记录调试日志但不返回错误
+		w.logger.DebugContext(ctx, "预热上下文配置失败（可能不存在）", logger.Fields{
+			"session_id": sessionID.String(),
+			"error":      err.Error(),
+		})
 	}
 
 	// 2. 预热最新摘要
@@ -169,7 +173,12 @@ func (w *CacheWarmer) warmupContextConfig(ctx context.Context, sessionID uuid.UU
 	// 从数据库查询上下文配置
 	contextConfig, err := w.contextRepo.GetBySessionID(ctx, sessionID.String())
 	if err != nil {
-		return fmt.Errorf("查询上下文配置失败: %w", err)
+		// 上下文配置可能不存在（会话刚创建时），这是正常的，不视为错误
+		w.logger.DebugContext(ctx, "上下文配置不存在，跳过预热", logger.Fields{
+			"session_id": sessionID.String(),
+			"error":      err.Error(),
+		})
+		return nil
 	}
 
 	// 设置缓存（TTL: 5分钟）
@@ -367,7 +376,8 @@ func (w *CacheWarmer) WarmupTokenUsage(ctx context.Context, sessionID uuid.UUID)
 	// 从数据库查询上下文配置（包含Token使用统计）
 	contextConfig, err := w.contextRepo.GetBySessionID(ctx, sessionID.String())
 	if err != nil {
-		return fmt.Errorf("查询上下文配置失败: %w", err)
+		// 上下文配置可能不存在，这是正常的，不视为错误
+		return nil
 	}
 
 	// 构建Token使用统计数据
