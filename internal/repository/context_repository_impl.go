@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"genkit-ai-service/internal/model"
 )
@@ -42,7 +43,8 @@ func (r *contextRepositoryImpl) GetBySessionID(ctx context.Context, sessionID st
 	}
 
 	// 查询上下文配置，包含软删除过滤
-	err = r.db.WithContext(ctx).
+	// 使用 Session 禁用日志记录，避免 record not found 产生不必要的日志
+	err = r.db.WithContext(ctx).Session(&gorm.Session{Logger: r.db.Logger.LogMode(logger.Silent)}).
 		Where("session_id = ?", sessionUUID).
 		Where("is_deleted = ?", false).
 		First(&context).Error
@@ -105,7 +107,8 @@ func (r *contextRepositoryImpl) GetLatestSummary(ctx context.Context, sessionID 
 	}
 
 	// 查询最新摘要，按创建时间降序排列
-	err = r.db.WithContext(ctx).
+	// 使用 Session 禁用日志记录，避免 record not found 产生不必要的日志
+	err = r.db.WithContext(ctx).Session(&gorm.Session{Logger: r.db.Logger.LogMode(logger.Silent)}).
 		Where("session_id = ?", sessionUUID).
 		Where("is_deleted = ?", false).
 		Order("created_at DESC").
