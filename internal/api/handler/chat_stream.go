@@ -99,7 +99,17 @@ func (h *ChatStreamHandler) HandleChatStream(w http.ResponseWriter, r *http.Requ
 	for chunk := range streamChan {
 		// 检查是否是错误消息
 		if chunk.FinishReason == "error" {
-			h.logger.Error("流式响应出错", logger.Fields{"message": chunk.Processes.Message})
+			h.logger.Error("流式响应出错", logger.Fields{
+				"message":   chunk.Processes.Message,
+				"sessionId": chunk.SessionID,
+			})
+			// 发送错误消息到客户端
+			if err := h.writeSSEChunk(w, chunk); err != nil {
+				h.logger.Error("写入错误消息失败", logger.Fields{"error": err})
+				return
+			}
+			flusher.Flush()
+			return // 错误后立即返回
 		}
 
 		// 发送数据块
@@ -131,6 +141,14 @@ func (h *ChatStreamHandler) writeSSEChunk(w http.ResponseWriter, chunk *model.Te
 	// 如果是 finish 事件，添加 event 行
 	if chunk.IsStop && chunk.FinishReason == "stop" {
 		_, err = fmt.Fprintf(w, "event: finish\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	// 如果是错误事件，添加 event 行
+	if chunk.FinishReason == "error" {
+		_, err = fmt.Fprintf(w, "event: error\n")
 		if err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	// "fmt"
+	"strings"
 	"time"
 
 	"genkit-ai-service/internal/genkit"
@@ -184,13 +185,39 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 					})
 				}
 
-				// 发送错误消息（腾讯云格式）
+				// 解析错误信息，提取错误代码和消息
+				errorMsg := chunk.Error.Error()
+				errorCode := "AI_SERVICE_ERROR"
+				
+				// 尝试识别常见错误类型
+				if sessionCtx.Err() == context.Canceled {
+					errorCode = "REQUEST_CANCELLED"
+					errorMsg = "请求已被取消"
+				} else if contains(errorMsg, "overloaded") || contains(errorMsg, "503") {
+					errorCode = "SERVICE_OVERLOADED"
+				} else if contains(errorMsg, "timeout") || contains(errorMsg, "deadline") {
+					errorCode = "REQUEST_TIMEOUT"
+				} else if contains(errorMsg, "rate limit") || contains(errorMsg, "429") {
+					errorCode = "RATE_LIMIT_EXCEEDED"
+				} else if contains(errorMsg, "401") || contains(errorMsg, "unauthorized") {
+					errorCode = "UNAUTHORIZED"
+				}
+
+				// 发送错误消息（腾讯云格式 - 使用 tool_call_error stage）
 				outputChan <- &model.TencentCloudStreamMessage{
 					CompletionID: sessionID,
 					SessionID:    sessionID,
 					Processes: model.ProcessInfo{
 						Stage:   model.StreamStageOutput,
 						Message: chunk.Error.Error(),
+						Detail: &model.ToolCallDetail{
+							ToolName: "ai_generation",
+							ToolID:   sessionID,
+							Error: &model.ToolCallError{
+								Code:    errorCode,
+								Message: errorMsg,
+							},
+						},
 					},
 					FinishReason: "error",
 					IsStop:       true,
@@ -316,4 +343,9 @@ func (s *genkitService) buildGenerateOptions(options *model.ChatOptions) *genkit
 		TopP:        options.TopP,
 		TopK:        options.TopK,
 	}
+}
+
+// contains 检查字符串是否包含子串（不区分大小写）
+func contains(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
