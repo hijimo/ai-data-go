@@ -705,8 +705,30 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 		var fullContent string
 		var lastModel string
 		var lastUsage *model.Usage
+		var hasError bool
+		var errorMessage string
 
 		for chunk := range streamChan {
+			// 检查是否是错误消息
+			if chunk.FinishReason == "error" {
+				hasError = true
+				// 提取错误信息
+				if chunk.Processes.Message != "" {
+					errorMessage = chunk.Processes.Message
+				} else if chunk.Processes.Detail != nil {
+					// 尝试类型断言为 ToolCallDetail
+					if detail, ok := chunk.Processes.Detail.(*model.ToolCallDetail); ok && detail.Error != nil {
+						errorMessage = detail.Error.Message
+					}
+				}
+				
+				s.logError(dbCtx, "流式响应出错", logger.Fields{
+					"sessionId": req.SessionID,
+					"messageId": aiMessage.ID.String(),
+					"error":     errorMessage,
+				})
+			}
+
 			// 直接转发腾讯云格式的消息
 			outputChan <- chunk
 
@@ -728,6 +750,15 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 		if lastUsage != nil {
 			aiMessage.Tokens = lastUsage.CompletionTokens
 		}
+		
+		// 如果有错误，保存错误信息
+		if hasError {
+			aiMessage.Error = errorMessage
+			s.logInfo(dbCtx, "保存错误信息到消息记录", logger.Fields{
+				"messageId": aiMessage.ID.String(),
+				"error":     errorMessage,
+			})
+		}
 
 		if err := s.messageRepo.Update(dbCtx, aiMessage); err != nil {
 			s.logError(dbCtx, "更新AI消息失败", logger.Fields{
@@ -742,6 +773,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			s.logInfo(dbCtx, "AI消息内容已更新", logger.Fields{
 				"messageId":  aiMessage.ID.String(),
 				"contentLen": len(fullContent),
+				"hasError":   hasError,
 			})
 		}
 
