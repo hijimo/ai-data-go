@@ -251,6 +251,7 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 					FinishReason: "stop",
 					IsStop:       true,
 					AnswerSource: "ai-model",
+					Usage:        lastUsage,
 				}
 
 				// 记录完成日志

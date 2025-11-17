@@ -49,6 +49,8 @@ type TencentCloudStreamMessage struct {
 	AnswerSource string `json:"answer_source,omitempty"`
 	// 附加内容
 	AdditionalContent *AdditionalContent `json:"additional_content,omitempty"`
+	// Token 使用情况（仅在finish事件中提供）
+	Usage *Usage `json:"usage,omitempty"`
 }
 
 // ProcessInfo 处理过程信息

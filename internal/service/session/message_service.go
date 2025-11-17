@@ -740,7 +740,10 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			// 记录模型和使用信息
 			if chunk.IsStop {
 				lastModel = chunk.Content // 在finish事件中可能包含模型信息
-				// 注意：腾讯云格式中没有直接的Usage字段，需要从AdditionalContent中提取
+				// 提取 token 使用信息
+				if chunk.Usage != nil {
+					lastUsage = chunk.Usage
+				}
 				break
 			}
 		}
