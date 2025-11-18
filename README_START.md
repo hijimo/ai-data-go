@@ -15,7 +15,7 @@ cat .env
 
 关键配置项：
 
-- `GEMINI_API_KEY` - 已设置 ✓
+- `AI_API_KEY` - 已设置 ✓
 - `DB_HOST` - localhost
 - `DB_PORT` - 5432
 - `DB_NAME` - ai_service
@@ -165,7 +165,7 @@ kill -TERM <pid>
 1. 检查 API 密钥：
 
    ```bash
-   echo $GEMINI_API_KEY
+   echo $AI_API_KEY
    ```
 
 2. 验证 API 密钥是否有效（访问 Google AI Studio）

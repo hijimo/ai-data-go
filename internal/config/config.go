@@ -124,10 +124,10 @@ func Load() (*Config, error) {
 	}
 
 	// 加载 Genkit 配置
-	apiKey := os.Getenv("GENKIT_API_KEY")
+	apiKey := os.Getenv("AI_API_KEY")
 	if apiKey == "" {
 		// 尝试从其他可能的环境变量名获取
-		apiKey = os.Getenv("GEMINI_API_KEY")
+		apiKey = os.Getenv("AI_API_KEY")
 	}
 	
 	config.Genkit = GenkitConfig{
@@ -234,7 +234,7 @@ func (c *Config) Validate() error {
 
 	// 验证 Genkit 配置
 	if c.Genkit.APIKey == "" {
-		return fmt.Errorf("Genkit API密钥不能为空 (GENKIT_API_KEY 或 GEMINI_API_KEY)")
+		return fmt.Errorf("Genkit API密钥不能为空 (GENKIT_API_KEY 或 AI_API_KEY)")
 	}
 	
 	if c.Genkit.Model == "" {
