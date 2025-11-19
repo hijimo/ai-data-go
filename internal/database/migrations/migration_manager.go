@@ -142,6 +142,9 @@ func RunAllMigrations(db *gorm.DB) error {
 	// 5. 注册 Genkit 会话管理模块迁移
 	manager.Register(NewGenkitSessionManagementMigration(db))
 	
+	// 6. 注册模型配置模块迁移
+	manager.Register(NewModelConfigurationMigration(db))
+	
 	// 验证迁移顺序
 	if err := validateMigrationOrder(manager.migrations); err != nil {
 		return fmt.Errorf("迁移顺序验证失败: %w", err)

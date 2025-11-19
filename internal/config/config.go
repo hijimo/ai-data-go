@@ -11,15 +11,16 @@ import (
 
 // Config 应用配置结构
 type Config struct {
-	Server    ServerConfig
-	Genkit    GenkitConfig
-	Database  DatabaseConfig
-	Log       LogConfig
-	Session   SessionConfig
-	Models    ModelsConfig
-	Auth      AuthConfig
-	Redis     RedisConfig
-	Bootstrap BootstrapConfig
+	Server     ServerConfig
+	Genkit     GenkitConfig
+	Database   DatabaseConfig
+	Log        LogConfig
+	Session    SessionConfig
+	Models     ModelsConfig
+	Auth       AuthConfig
+	Redis      RedisConfig
+	Bootstrap  BootstrapConfig
+	Encryption EncryptionConfig
 }
 
 // ServerConfig 服务器配置
@@ -108,6 +109,12 @@ type BootstrapConfig struct {
 	AdminDisplayName string // 平台管理员显示名称
 	TenantName       string // 平台租户名称
 	TenantDomain     string // 平台租户域名
+}
+
+// EncryptionConfig 加密配置
+type EncryptionConfig struct {
+	SecretKey              string        // API密钥加密密钥（32字节）
+	ProviderValidationTimeout time.Duration // 模型配置验证超时时间
 }
 
 // Load 从环境变量加载配置
@@ -210,6 +217,12 @@ func Load() (*Config, error) {
 		AdminDisplayName: getEnv("PLATFORM_ADMIN_NAME", "Platform Admin"),
 		TenantName:       getEnv("PLATFORM_TENANT_NAME", "Platform"),
 		TenantDomain:     getEnv("PLATFORM_TENANT_DOMAIN", "system.local"),
+	}
+
+	// 加载加密配置
+	config.Encryption = EncryptionConfig{
+		SecretKey:              getEnv("ENCRYPTION_SECRET_KEY", ""),
+		ProviderValidationTimeout: getEnvDuration("PROVIDER_VALIDATION_TIMEOUT", 30*time.Second),
 	}
 
 	// 验证配置
@@ -433,6 +446,19 @@ func (c *Config) Validate() error {
 
 	if c.Bootstrap.TenantDomain == "" {
 		return fmt.Errorf("平台租户域名不能为空 (PLATFORM_TENANT_DOMAIN)")
+	}
+
+	// 验证加密配置
+	if c.Encryption.SecretKey == "" {
+		return fmt.Errorf("加密密钥不能为空 (ENCRYPTION_SECRET_KEY)")
+	}
+
+	if len(c.Encryption.SecretKey) < 32 {
+		return fmt.Errorf("加密密钥长度必须至少为 32 个字符")
+	}
+
+	if c.Encryption.ProviderValidationTimeout <= 0 {
+		return fmt.Errorf("模型配置验证超时时间必须大于0")
 	}
 
 	return nil
