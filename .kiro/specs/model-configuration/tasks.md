@@ -17,7 +17,7 @@
   - 从环境变量读取加密密钥配置
   - _需求: 8.1, 8.2, 8.4_
 
-- [ ] 3. 实现Provider仓储层
+- [x] 3. 实现Provider仓储层
   - 在 `internal/repository/` 中创建 provider_repository.go
   - 实现 ProviderRepository 接口
   - 实现 Create 方法（创建模型配置）
