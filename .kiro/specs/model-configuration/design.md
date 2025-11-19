@@ -2,7 +2,24 @@
 
 ## 概述
 
-模型配置模块为多租户AI平台提供了灵活的模型提供商管理能力。该模块允许租户管理员和平台管理员配置、验证、启用/禁用和管理不同的AI模型提供商，确保租户数据隔离和安全性。
+模型配置模块为多租户AI平台提供了灵活的模型提供商连接配置管理能力。该模块允许租户管理员和平台管理员配置、验证、启用/禁用和管理不同的AI模型提供商的连接信息，确保租户数据隔离和安全性。
+
+**重要说明**：
+
+- 本模块的服务名称为 `ModelConfigurationService`，管理动态的模型配置（存储在数据库中）
+- 系统中已存在的 `ProviderService` 用于管理静态的模型元数据（从配置文件读取）
+- API 路径使用 `/api/v1/model-configurations` 以区分静态的 `/api/v1/providers`
+
+**命名对照表**：
+
+| 概念 | 静态模型元数据 | 动态模型配置 |
+|------|--------------|------------|
+| 服务名称 | `ProviderService` | `ModelConfigurationService` |
+| Handler名称 | `ProviderHandler` | `ModelConfigurationHandler` |
+| Repository名称 | N/A（从配置文件读取） | `ModelConfigurationRepository` |
+| API路径前缀 | `/api/v1/providers` | `/api/v1/model-configurations` |
+| 数据来源 | 配置文件（静态） | 数据库（动态） |
+| 用途 | 提供模型元数据信息 | 管理租户的模型连接配置 |
 
 ### 设计目标
 
@@ -21,7 +38,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                        API Layer                             │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Provider Handler (internal/api/handler)             │   │
+│  │  ModelConfiguration Handler                          │   │
+│  │  (internal/api/handler)                              │   │
 │  │  - HandleCreate                                       │   │
 │  │  - HandleList                                         │   │
 │  │  - HandleGet                                          │   │
@@ -48,7 +66,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      Service Layer                           │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Provider Service (internal/service)                 │   │
+│  │  ModelConfiguration Service                          │   │
+│  │  (internal/service)                                  │   │
 │  │  - Create(ctx, req) -> ModelConfiguration            │   │
 │  │  - List(ctx, tenantID, page) -> []ModelConfig, total│   │
 │  │  - Get(ctx, id) -> ModelConfiguration                │   │
@@ -69,7 +88,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    Repository Layer                          │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Provider Repository (internal/repository)           │   │
+│  │  ModelConfiguration Repository                       │   │
+│  │  (internal/repository)                               │   │
 │  │  - Create(ctx, config) -> ModelConfiguration         │   │
 │  │  - FindByID(ctx, id) -> ModelConfiguration           │   │
 │  │  - FindByTenant(ctx, tenantID, page) -> []Config     │   │
@@ -200,14 +220,14 @@ var ValidModelProviders = []string{
 
 #### 1. 创建模型配置
 
-**端点**: `POST /api/v1/providers`
+**端点**: `POST /api/v1/model-configurations`
 
 **权限**: tenant_admin, system_admin
 
 **请求体**:
 
 ```go
-type CreateProviderRequest struct {
+type CreateModelConfigurationRequest struct {
     TenantID      *uuid.UUID `json:"tenantId,omitempty"` // 仅system_admin需要
     Name          string     `json:"name" binding:"required"`
     Model         string     `json:"model" binding:"required"`
@@ -221,7 +241,7 @@ type CreateProviderRequest struct {
 **响应**:
 
 ```go
-type ProviderResponse struct {
+type ModelConfigurationResponse struct {
     ID            uuid.UUID  `json:"id"`
     TenantID      uuid.UUID  `json:"tenantId"`
     Name          string     `json:"name"`
@@ -240,7 +260,7 @@ type ProviderResponse struct {
 
 #### 2. 查询模型配置列表
 
-**端点**: `GET /api/v1/providers`
+**端点**: `GET /api/v1/model-configurations`
 
 **权限**: tenant_admin, system_admin
 
@@ -250,26 +270,26 @@ type ProviderResponse struct {
 - `pageNo` (默认: 1): 页码
 - `pageSize` (默认: 10): 每页大小
 
-**响应**: 使用 `ResponsePaginationData[[]ProviderResponse]` 格式
+**响应**: 使用 `ResponsePaginationData[[]ModelConfigurationResponse]` 格式
 
 #### 3. 查询单个模型配置
 
-**端点**: `GET /api/v1/providers/{id}`
+**端点**: `GET /api/v1/model-configurations/{id}`
 
 **权限**: tenant_admin, system_admin
 
-**响应**: 使用 `ResponseData[ProviderResponse]` 格式
+**响应**: 使用 `ResponseData[ModelConfigurationResponse]` 格式
 
 #### 4. 更新模型配置
 
-**端点**: `PUT /api/v1/providers/{id}`
+**端点**: `PUT /api/v1/model-configurations/{id}`
 
 **权限**: tenant_admin, system_admin
 
 **请求体**:
 
 ```go
-type UpdateProviderRequest struct {
+type UpdateModelConfigurationRequest struct {
     Name        *string `json:"name,omitempty"`
     Model       *string `json:"model,omitempty"`
     BaseURL     *string `json:"baseUrl,omitempty"`
@@ -278,11 +298,11 @@ type UpdateProviderRequest struct {
 }
 ```
 
-**响应**: 使用 `ResponseData[ProviderResponse]` 格式
+**响应**: 使用 `ResponseData[ModelConfigurationResponse]` 格式
 
 #### 5. 更新模型配置状态
 
-**端点**: `PATCH /api/v1/providers/{id}/status`
+**端点**: `PATCH /api/v1/model-configurations/{id}/status`
 
 **权限**: tenant_admin, system_admin
 
@@ -294,11 +314,11 @@ type UpdateStatusRequest struct {
 }
 ```
 
-**响应**: 使用 `ResponseData[ProviderResponse]` 格式
+**响应**: 使用 `ResponseData[ModelConfigurationResponse]` 格式
 
 #### 6. 删除模型配置
 
-**端点**: `DELETE /api/v1/providers/{id}`
+**端点**: `DELETE /api/v1/model-configurations/{id}`
 
 **权限**: tenant_admin, system_admin
 
@@ -306,7 +326,7 @@ type UpdateStatusRequest struct {
 
 #### 7. 验证模型配置
 
-**端点**: `POST /api/v1/providers/{id}/validate`
+**端点**: `POST /api/v1/model-configurations/{id}/validate`
 
 **权限**: tenant_admin, system_admin
 
@@ -324,14 +344,14 @@ type ValidationResult struct {
 
 #### 8. 查询可用模型列表
 
-**端点**: `GET /api/v1/providers/available`
+**端点**: `GET /api/v1/model-configurations/available`
 
 **权限**: 所有已认证用户
 
 **响应**:
 
 ```go
-type AvailableProviderResponse struct {
+type AvailableModelConfigurationResponse struct {
     ID            uuid.UUID `json:"id"`
     Name          string    `json:"name"`
     Model         string    `json:"model"`
@@ -339,7 +359,7 @@ type AvailableProviderResponse struct {
 }
 ```
 
-使用 `ResponseData[[]AvailableProviderResponse]` 格式
+使用 `ResponseData[[]AvailableModelConfigurationResponse]` 格式
 
 ## 核心业务逻辑
 
@@ -349,7 +369,7 @@ type AvailableProviderResponse struct {
 
 ```go
 // 创建模型配置
-func (s *ProviderService) Create(ctx context.Context, req CreateProviderRequest) (*ModelConfiguration, error) {
+func (s *ModelConfigurationService) Create(ctx context.Context, req CreateModelConfigurationRequest) (*ModelConfiguration, error) {
     claims := middleware.GetJWTClaims(ctx)
     
     // 租户管理员只能在自己的租户下创建
@@ -402,7 +422,7 @@ func (s *ProviderService) Create(ctx context.Context, req CreateProviderRequest)
 }
 
 // 查询模型配置
-func (s *ProviderService) Get(ctx context.Context, id uuid.UUID) (*ModelConfiguration, error) {
+func (s *ModelConfigurationService) Get(ctx context.Context, id uuid.UUID) (*ModelConfiguration, error) {
     config, err := s.repo.FindByID(ctx, id)
     if err != nil {
         return nil, err
@@ -432,7 +452,7 @@ func (s *ProviderService) Get(ctx context.Context, id uuid.UUID) (*ModelConfigur
 }
 
 // 更新模型配置
-func (s *ProviderService) Update(ctx context.Context, id uuid.UUID, req UpdateProviderRequest) (*ModelConfiguration, error) {
+func (s *ModelConfigurationService) Update(ctx context.Context, id uuid.UUID, req UpdateModelConfigurationRequest) (*ModelConfiguration, error) {
     // 先查询配置
     config, err := s.repo.FindByID(ctx, id)
     if err != nil {
@@ -493,7 +513,7 @@ func (s *ProviderService) Update(ctx context.Context, id uuid.UUID, req UpdatePr
 }
 
 // 列表查询
-func (s *ProviderService) List(ctx context.Context, tenantID *uuid.UUID, pageNo, pageSize int) ([]ModelConfiguration, int64, error) {
+func (s *ModelConfigurationService) List(ctx context.Context, tenantID *uuid.UUID, pageNo, pageSize int) ([]ModelConfiguration, int64, error) {
     claims := middleware.GetJWTClaims(ctx)
     
     // 租户管理员只能查看自己租户的配置
@@ -610,7 +630,7 @@ func (s *encryptionServiceImpl) MaskAPIKey(apiKey string) string {
 
 ```go
 // Validate 验证模型配置是否可以正确连接
-func (s *ProviderService) Validate(ctx context.Context, id uuid.UUID) (*ValidationResult, error) {
+func (s *ModelConfigurationService) Validate(ctx context.Context, id uuid.UUID) (*ValidationResult, error) {
     // 查询配置
     config, err := s.Get(ctx, id)
     if err != nil {
@@ -653,7 +673,7 @@ func (s *ProviderService) Validate(ctx context.Context, id uuid.UUID) (*Validati
 }
 
 // validateOpenAI 验证OpenAI配置
-func (s *ProviderService) validateOpenAI(ctx context.Context, config *ModelConfiguration, apiKey string) (*ValidationResult, error) {
+func (s *ModelConfigurationService) validateOpenAI(ctx context.Context, config *ModelConfiguration, apiKey string) (*ValidationResult, error) {
     client := &http.Client{Timeout: 30 * time.Second}
     
     baseURL := "https://api.openai.com/v1"
@@ -709,7 +729,7 @@ func (s *ProviderService) validateOpenAI(ctx context.Context, config *ModelConfi
 
 ```go
 // ListAvailable 获取当前租户下所有可用的模型配置
-func (s *ProviderService) ListAvailable(ctx context.Context) ([]ModelConfiguration, error) {
+func (s *ModelConfigurationService) ListAvailable(ctx context.Context) ([]ModelConfiguration, error) {
     claims := middleware.GetJWTClaims(ctx)
     
     // 查询当前租户下已启用且未删除的配置
@@ -875,18 +895,18 @@ type ErrorResponse struct {
 #### Service层测试
 
 ```go
-func TestProviderService_Create(t *testing.T) {
+func TestModelConfigurationService_Create(t *testing.T) {
     tests := []struct {
         name    string
         role    string
-        req     CreateProviderRequest
+        req     CreateModelConfigurationRequest
         wantErr bool
         errType error
     }{
         {
             name: "租户管理员创建配置成功",
             role: model.RoleTenantAdmin,
-            req: CreateProviderRequest{
+            req: CreateModelConfigurationRequest{
                 Name:          "OpenAI GPT-4",
                 Model:         "gpt-4",
                 ModelProvider: ModelProviderOpenAI,
@@ -897,7 +917,7 @@ func TestProviderService_Create(t *testing.T) {
         {
             name: "租户管理员尝试在其他租户创建配置失败",
             role: model.RoleTenantAdmin,
-            req: CreateProviderRequest{
+            req: CreateModelConfigurationRequest{
                 TenantID:      &otherTenantID,
                 Name:          "OpenAI GPT-4",
                 Model:         "gpt-4",
@@ -910,7 +930,7 @@ func TestProviderService_Create(t *testing.T) {
         {
             name: "平台管理员创建配置成功",
             role: model.RoleSystemAdmin,
-            req: CreateProviderRequest{
+            req: CreateModelConfigurationRequest{
                 TenantID:      &someTenantID,
                 Name:          "OpenAI GPT-4",
                 Model:         "gpt-4",
@@ -932,13 +952,13 @@ func TestProviderService_Create(t *testing.T) {
 #### Repository层测试
 
 ```go
-func TestProviderRepository_FindByTenant(t *testing.T) {
+func TestModelConfigurationRepository_FindByTenant(t *testing.T) {
     // 准备测试数据
     // 执行查询
     // 验证结果
 }
 
-func TestProviderRepository_SoftDelete(t *testing.T) {
+func TestModelConfigurationRepository_SoftDelete(t *testing.T) {
     // 测试软删除逻辑
 }
 ```
@@ -946,7 +966,7 @@ func TestProviderRepository_SoftDelete(t *testing.T) {
 ### 集成测试
 
 ```go
-func TestProviderAPI_Integration(t *testing.T) {
+func TestModelConfigurationAPI_Integration(t *testing.T) {
     // 设置测试环境
     // 测试完整的API流程
     // 验证数据库状态
@@ -999,12 +1019,12 @@ func TestProviderAPI_Integration(t *testing.T) {
 
 ```go
 // 可用模型列表缓存（可选）
-type CachedProviderService struct {
-    service ProviderService
+type CachedModelConfigurationService struct {
+    service ModelConfigurationService
     cache   cache.Cache
 }
 
-func (s *CachedProviderService) ListAvailable(ctx context.Context) ([]ModelConfiguration, error) {
+func (s *CachedModelConfigurationService) ListAvailable(ctx context.Context) ([]ModelConfiguration, error) {
     claims := middleware.GetJWTClaims(ctx)
     cacheKey := fmt.Sprintf("available_providers:%s", claims.TenantID)
     
@@ -1094,7 +1114,7 @@ PROVIDER_VALIDATION_TIMEOUT=30
 ### 配置管理
 
 ```go
-type ProviderConfig struct {
+type ModelConfigurationConfig struct {
     EncryptionKey        string        `env:"ENCRYPTION_SECRET_KEY,required"`
     ValidationTimeout    time.Duration `env:"PROVIDER_VALIDATION_TIMEOUT" envDefault:"30s"`
     CacheEnabled         bool          `env:"PROVIDER_CACHE_ENABLED" envDefault:"true"`
