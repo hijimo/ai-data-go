@@ -28,13 +28,7 @@ func (e *PathValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
 }
 
-// ValidateProviderID 验证提供商ID
-func ValidateProviderID(providerID string) error {
-	if err := validateID(providerID, "providerId"); err != nil {
-		return err
-	}
-	return nil
-}
+
 
 // ValidateModelID 验证模型ID
 func ValidateModelID(modelID string) error {

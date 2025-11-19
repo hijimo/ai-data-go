@@ -266,14 +266,6 @@ type MessageDetailDataResponse = ResponseData[MessageDetailResponse]
 // @name ChatResponseData
 type ChatResponseData = ResponseData[ChatResponse]
 
-// ProviderListDataResponse 提供商列表数据响应（用于 Swagger）
-// @name ProviderListDataResponse
-type ProviderListDataResponse = ResponseData[[]Provider]
-
-// ProviderDataResponse 提供商数据响应（用于 Swagger）
-// @name ProviderDataResponse
-type ProviderDataResponse = ResponseData[Provider]
-
 // ModelListDataResponse 模型列表数据响应（用于 Swagger）
 // @name ModelListDataResponse
 type ModelListDataResponse = ResponseData[[]Model]

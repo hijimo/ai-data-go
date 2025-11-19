@@ -50,7 +50,7 @@ func NewModelConfigurationRepository(db *gorm.DB) ModelConfigurationRepository {
 // Create 创建模型配置
 func (r *modelConfigurationRepository) Create(ctx context.Context, config *model.ModelConfiguration) (*model.ModelConfiguration, error) {
 	if err := r.db.WithContext(ctx).Create(config).Error; err != nil {
-		return nil, errors.NewInternalError("创建模型配置失败: " + err.Error())
+		return nil, errors.NewInternalError(err)
 	}
 	return config, nil
 }
@@ -66,7 +66,7 @@ func (r *modelConfigurationRepository) FindByID(ctx context.Context, id uuid.UUI
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFoundError("模型配置不存在")
 		}
-		return nil, errors.NewInternalError("查询模型配置失败: " + err.Error())
+		return nil, errors.NewInternalError(err)
 	}
 
 	return &config, nil
@@ -87,7 +87,7 @@ func (r *modelConfigurationRepository) FindByTenant(ctx context.Context, tenantI
 
 	// 查询总数
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, errors.NewInternalError("查询模型配置总数失败: " + err.Error())
+		return nil, 0, errors.NewInternalError(err)
 	}
 
 	// 分页查询
@@ -95,7 +95,7 @@ func (r *modelConfigurationRepository) FindByTenant(ctx context.Context, tenantI
 	if err := query.Offset(offset).Limit(pageSize).
 		Order("created_at DESC").
 		Find(&configs).Error; err != nil {
-		return nil, 0, errors.NewInternalError("查询模型配置列表失败: " + err.Error())
+		return nil, 0, errors.NewInternalError(err)
 	}
 
 	return configs, total, nil
@@ -111,14 +111,14 @@ func (r *modelConfigurationRepository) Update(ctx context.Context, id uuid.UUID,
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.NewNotFoundError("模型配置不存在")
 		}
-		return nil, errors.NewInternalError("查询模型配置失败: " + err.Error())
+		return nil, errors.NewInternalError(err)
 	}
 
 	// 更新记录
 	if err := r.db.WithContext(ctx).
 		Model(&existing).
 		Updates(config).Error; err != nil {
-		return nil, errors.NewInternalError("更新模型配置失败: " + err.Error())
+		return nil, errors.NewInternalError(err)
 	}
 
 	// 重新查询更新后的记录
@@ -133,7 +133,7 @@ func (r *modelConfigurationRepository) UpdateStatus(ctx context.Context, id uuid
 		Update("is_enabled", enabled)
 
 	if result.Error != nil {
-		return errors.NewInternalError("更新模型配置状态失败: " + result.Error.Error())
+		return errors.NewInternalError(result.Error)
 	}
 
 	if result.RowsAffected == 0 {
@@ -156,7 +156,7 @@ func (r *modelConfigurationRepository) SoftDelete(ctx context.Context, id uuid.U
 		})
 
 	if result.Error != nil {
-		return errors.NewInternalError("删除模型配置失败: " + result.Error.Error())
+		return errors.NewInternalError(result.Error)
 	}
 
 	if result.RowsAffected == 0 {
@@ -176,7 +176,7 @@ func (r *modelConfigurationRepository) FindAvailableByTenant(ctx context.Context
 		Find(&configs).Error
 
 	if err != nil {
-		return nil, errors.NewInternalError("查询可用模型配置失败: " + err.Error())
+		return nil, errors.NewInternalError(err)
 	}
 
 	return configs, nil

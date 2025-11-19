@@ -16,7 +16,6 @@ import (
 	"genkit-ai-service/internal/database"
 	"genkit-ai-service/internal/genkit"
 	"genkit-ai-service/internal/genkit/flows"
-	"genkit-ai-service/internal/loader"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/repository"
 	"genkit-ai-service/internal/service"
@@ -169,12 +168,7 @@ func main() {
 		genkitClient = nil
 	}
 
-	// 5. 初始化模型提供商数据
-	providerService, err := initProviderService(cfg, log)
-	if err != nil {
-		log.Error("初始化模型提供商服务失败", logger.Fields{"error": err})
-		os.Exit(1)
-	}
+
 
 	// 6. 初始化服务
 	var aiService ai.AIService
@@ -199,10 +193,7 @@ func main() {
 	// 7. 创建基础 ServeMux 并注册所有路由
 	serveMux := http.NewServeMux()
 	
-	// 8. 注册模型提供商API路由
-	providerHandler := handler.NewProviderHandler(providerService, log)
-	routes.RegisterProviderRoutes(serveMux, providerHandler)
-	log.Info("模型提供商API路由已注册", nil)
+
 
 	// 8.1 注册认证路由（如果数据库可用）
 	var cleanupSvc cleanup.CleanupService
@@ -586,29 +577,7 @@ func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Lo
 	return aiService
 }
 
-// initProviderService 初始化模型提供商服务
-func initProviderService(cfg *config.Config, log logger.Logger) (service.ProviderService, error) {
-	log.Info("初始化模型提供商服务...", nil)
 
-	// 1. 创建内存存储实例
-	store := storage.NewMemoryStore()
-
-	// 2. 创建数据加载器
-	modelLoader := loader.NewModelLoader(store, log)
-
-	// 3. 执行数据加载
-	// 使用配置中的模型目录路径（已包含默认值）
-	if err := modelLoader.LoadAll(cfg.Models.Dir); err != nil {
-		return nil, fmt.Errorf("加载模型数据失败: %w", err)
-	}
-
-	// 4. 创建服务层实例
-	providerService := service.NewProviderService(store)
-
-	log.Info("模型提供商服务初始化成功", nil)
-
-	return providerService, nil
-}
 
 // initSessionHandlers 初始化会话管理相关的处理器
 func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (

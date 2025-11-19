@@ -310,7 +310,7 @@ func extractTenantIDFromPath(path string) string {
 
 // isPathSegment 检查字符串是否是常见的路径段关键字
 func isPathSegment(s string) bool {
-	pathSegments := []string{"users", "sessions", "messages", "providers", "models"}
+	pathSegments := []string{"users", "sessions", "messages", "models"}
 	for _, segment := range pathSegments {
 		if s == segment {
 			return true
