@@ -1668,6 +1668,557 @@ const docTemplate = `{
                 }
             }
         },
+        "/model-configurations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取模型配置列表，支持分页和租户过滤\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看所有租户的配置或指定租户的配置\n- 租户管理员（tenant_admin）：只能查看自己租户下的配置\n\n**tenantId 查询参数使用规则**：\n- 租户管理员：\n- tenantId 参数会被忽略\n- 始终只返回当前用户所属租户下的配置列表\n- 平台管理员：\n- 如果提供 tenantId，返回指定租户下的配置列表\n- 如果不提供 tenantId，返回所有租户下的配置列表\n\n**参数说明**：\n- pageNo: 页码（从1开始，默认1）\n- pageSize: 每页大小（1-100，默认20）\n- tenantId: 租户ID（可选，UUID格式，仅平台管理员可用）\n\n**注意事项**：\n- 租户管理员调用此接口时，tenantId 参数会被忽略\n- 租户管理员始终只能看到自己租户下的配置",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "获取模型配置列表",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "租户ID（仅平台管理员可用）",
+                        "name": "tenantId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponsePaginationData-array_model_ModelConfiguration"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新的模型配置，支持可选的租户ID参数\n\n**权限要求**：\n- 平台管理员（system_admin）：可以在任意租户下创建模型配置\n- 租户管理员（tenant_admin）：只能在自己的租户下创建模型配置\n\n**tenantId 参数使用规则**：\n- 租户管理员：\n- 如果不提供 tenantId，系统自动使用当前用户的租户ID\n- 如果提供 tenantId，必须与当前用户的租户ID匹配，否则返回 403 错误\n- 平台管理员：\n- 必须提供 tenantId 参数\n- 可以指定任意有效的租户ID\n\n**参数说明**：\n- tenantId: 租户ID（可选，UUID格式）\n- name: 配置名称（必填）\n- model: 模型标识（必填，如：gpt-4、claude-3-opus）\n- modelProvider: 模型提供商（必填，可选值：openai、anthropic、googlegenai、azureopenai、bianlian、custom_openai）\n- baseUrl: API基础URL（可选，用于自定义端点）\n- apiKey: API密钥（必填，将被加密存储）\n- queryParams: 查询参数（可选，JSON格式）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "创建模型配置",
+                "parameters": [
+                    {
+                        "description": "创建模型配置请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateModelConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-model_ModelConfiguration"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：租户管理员只能在当前租户下创建模型配置",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/model-configurations/available": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取当前租户下所有可用的模型配置（已启用且未删除）\n\n**权限要求**：\n- 所有已认证用户都可以调用此接口\n- 自动返回当前用户所属租户下的可用配置\n\n**功能说明**：\n- 仅返回已启用（is_enabled=true）且未删除（is_deleted=false）的配置\n- 返回的配置不包含敏感信息（API密钥、查询参数等）\n- 用于前端展示可选的模型列表\n\n**返回字段**：\n- id: 配置ID\n- name: 配置名称\n- model: 模型标识\n- modelProvider: 模型提供商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "获取可用模型配置列表",
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-array_model_ModelConfiguration"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/model-configurations/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据配置ID获取模型配置详细信息\n\n**权限要求**：\n- 平台管理员（system_admin）：可以查看任意租户下的模型配置\n- 租户管理员（tenant_admin）：只能查看自己租户下的模型配置\n\n**访问权限验证**：\n- 系统会自动查询目标配置所属的租户\n- 租户管理员尝试查看其他租户的配置时，将收到 403 权限不足错误\n- 平台管理员可以查看任意租户的配置，无需额外验证\n\n**参数说明**：\n- id: 配置ID（UUID格式）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "获取模型配置详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-model_ModelConfiguration"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法访问其他租户的模型配置",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "模型配置不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新模型配置信息\n\n**权限要求**：\n- 平台管理员（system_admin）：可以更新任意租户下的模型配置\n- 租户管理员（tenant_admin）：只能更新自己租户下的模型配置\n\n**访问权限验证**：\n- 系统会自动查询目标配置所属的租户\n- 租户管理员尝试更新其他租户的配置时，将收到 403 权限不足错误\n- 平台管理员可以更新任意租户的配置，无需额外验证\n\n**参数说明**：\n- id: 配置ID（UUID格式）\n- name: 配置名称（可选）\n- model: 模型标识（可选）\n- baseUrl: API基础URL（可选）\n- apiKey: API密钥（可选，将被加密存储）\n- queryParams: 查询参数（可选，JSON格式）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "更新模型配置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新模型配置请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateModelConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-model_ModelConfiguration"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法更新其他租户的模型配置",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "模型配置不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除指定的模型配置\n\n**权限要求**：\n- 平台管理员（system_admin）：可以删除任意租户下的模型配置\n- 租户管理员（tenant_admin）：只能删除自己租户下的模型配置\n\n**访问权限验证**：\n- 系统会自动查询目标配置所属的租户\n- 租户管理员尝试删除其他租户的配置时，将收到 403 权限不足错误\n- 平台管理员可以删除任意租户的配置，无需额外验证\n\n**功能说明**：\n- 执行软删除操作（设置 is_deleted=true）\n- 删除后的配置数据仍保留在数据库中，但不再可见\n\n**参数说明**：\n- id: 配置ID（UUID格式）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "删除模型配置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法删除其他租户的模型配置",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "模型配置不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/model-configurations/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "启用或禁用模型配置\n\n**权限要求**：\n- 平台管理员（system_admin）：可以更新任意租户下的模型配置状态\n- 租户管理员（tenant_admin）：只能更新自己租户下的模型配置状态\n\n**访问权限验证**：\n- 系统会自动查询目标配置所属的租户\n- 租户管理员尝试更新其他租户的配置状态时，将收到 403 权限不足错误\n- 平台管理员可以更新任意租户的配置状态，无需额外验证\n\n**功能说明**：\n- 启用配置（status=enabled）：配置可以被使用\n- 禁用配置（status=disabled）：配置将不可用\n\n**参数说明**：\n- id: 配置ID（UUID格式）\n- status: 配置状态（enabled=启用，disabled=禁用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "更新模型配置状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新配置状态请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-any"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法更新其他租户的模型配置状态",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "模型配置不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "参数验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/model-configurations/{id}/validate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "验证模型配置是否可以正确连接到提供商\n\n**权限要求**：\n- 平台管理员（system_admin）：可以验证任意租户下的模型配置\n- 租户管理员（tenant_admin）：只能验证自己租户下的模型配置\n\n**访问权限验证**：\n- 系统会自动查询目标配置所属的租户\n- 租户管理员尝试验证其他租户的配置时，将收到 403 权限不足错误\n- 平台管理员可以验证任意租户的配置，无需额外验证\n\n**功能说明**：\n- 使用配置的参数尝试连接到模型提供商\n- 验证请求设置30秒超时\n- 返回验证结果，包括成功/失败状态和详细信息\n\n**参数说明**：\n- id: 配置ID（UUID格式）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Model Configuration"
+                ],
+                "summary": "验证模型配置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "验证完成",
+                        "schema": {
+                            "$ref": "#/definitions/ResponseData-model_ValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足：无法验证其他租户的模型配置",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "模型配置不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/monitoring/alerts": {
             "get": {
                 "description": "获取当前活跃的告警列表",
@@ -3211,6 +3762,47 @@ const docTemplate = `{
                 }
             }
         },
+        "CreateModelConfigurationRequest": {
+            "type": "object",
+            "required": [
+                "apiKey",
+                "model",
+                "modelProvider",
+                "name"
+            ],
+            "properties": {
+                "apiKey": {
+                    "type": "string"
+                },
+                "baseUrl": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "modelProvider": {
+                    "type": "string",
+                    "enum": [
+                        "openai",
+                        "anthropic",
+                        "googlegenai",
+                        "azureopenai",
+                        "bianlian",
+                        "custom_openai"
+                    ]
+                },
+                "name": {
+                    "type": "string"
+                },
+                "queryParams": {
+                    "type": "string"
+                },
+                "tenantId": {
+                    "description": "仅system_admin需要",
+                    "type": "string"
+                }
+            }
+        },
         "CreateSessionRequest": {
             "type": "object",
             "required": [
@@ -3581,6 +4173,57 @@ const docTemplate = `{
         "MetricsDataResponse": {
             "type": "object"
         },
+        "ModelConfiguration": {
+            "type": "object",
+            "properties": {
+                "baseUrl": {
+                    "description": "API基础URL（可选，用于自定义端点）",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "创建信息",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "主键，UUID类型",
+                    "type": "string"
+                },
+                "isEnabled": {
+                    "description": "是否启用",
+                    "type": "boolean"
+                },
+                "model": {
+                    "description": "模型标识（如：gpt-4、claude-3-opus等）",
+                    "type": "string"
+                },
+                "modelProvider": {
+                    "description": "模型提供商枚举",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "配置名称",
+                    "type": "string"
+                },
+                "queryParams": {
+                    "description": "查询参数（JSON格式，可选）",
+                    "type": "string"
+                },
+                "tenantId": {
+                    "description": "租户ID，外键关联",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "description": "更新信息",
+                    "type": "string"
+                }
+            }
+        },
         "PaginationData-array_model_AuthAuditItem": {
             "type": "object",
             "properties": {
@@ -3621,6 +4264,38 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/MessageDetailResponse"
+                    }
+                },
+                "pageNo": {
+                    "description": "当前页码",
+                    "type": "integer",
+                    "example": 1
+                },
+                "pageSize": {
+                    "description": "每页大小",
+                    "type": "integer",
+                    "example": 10
+                },
+                "totalCount": {
+                    "description": "总记录数",
+                    "type": "integer",
+                    "example": 100
+                },
+                "totalPage": {
+                    "description": "总页数",
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "PaginationData-array_model_ModelConfiguration": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ModelConfiguration"
                     }
                 },
                 "pageNo": {
@@ -3738,6 +4413,140 @@ const docTemplate = `{
                     "description": "总页数",
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "ResponseData-any": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "ResponseData-array_model_ModelConfiguration": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ModelConfiguration"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "ResponseData-model_ModelConfiguration": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ModelConfiguration"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "ResponseData-model_ValidationResult": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ValidationResult"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "ResponsePaginationData-array_model_ModelConfiguration": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "分页数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PaginationData-array_model_ModelConfiguration"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
                 }
             }
         },
@@ -4042,6 +4851,26 @@ const docTemplate = `{
                 }
             }
         },
+        "UpdateModelConfigurationRequest": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
+                    "type": "string"
+                },
+                "baseUrl": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "queryParams": {
+                    "type": "string"
+                }
+            }
+        },
         "UpdateSessionRequest": {
             "type": "object",
             "properties": {
@@ -4075,6 +4904,21 @@ const docTemplate = `{
                     "maximum": 1,
                     "minimum": 0,
                     "example": 0.95
+                }
+            }
+        },
+        "UpdateStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "enabled",
+                        "disabled"
+                    ]
                 }
             }
         },
@@ -4251,6 +5095,20 @@ const docTemplate = `{
                     "description": "追踪ID（用于全链路追踪和问题排查）",
                     "type": "string",
                     "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "ValidationResult": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
                 }
             }
         }

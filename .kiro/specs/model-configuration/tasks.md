@@ -54,7 +54,7 @@
   - 验证请求设置30秒超时
   - _需求: 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5, 7.1, 7.3, 7.4, 7.5_
 
-- [ ] 6. 实现API Handler层
+- [x] 6. 实现API Handler层
   - 在 `internal/api/handler/` 中创建 model_configuration_handler.go
   - 实现 HandleCreate（创建模型配置）
   - 实现 HandleList（查询模型配置列表）
