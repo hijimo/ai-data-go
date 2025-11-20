@@ -30,7 +30,7 @@
   - 所有查询自动过滤 is_deleted=true 的记录
   - _需求: 2.4, 5.4, 6.2, 6.5, 7.2_
 
-- [ ] 4. 实现ModelConfiguration服务层 - 基础CRUD
+- [x] 4. 实现ModelConfiguration服务层 - 基础CRUD
   - 在 `internal/service/` 中创建 model_configuration_service.go
   - 实现 ModelConfigurationService 接口
   - 实现 Create 方法，包含租户权限验证和API密钥加密
