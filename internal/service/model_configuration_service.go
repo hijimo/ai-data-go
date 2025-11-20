@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"genkit-ai-service/internal/logger"
@@ -32,6 +35,9 @@ type ModelConfigurationService interface {
 
 	// UpdateStatus 更新模型配置状态
 	UpdateStatus(ctx context.Context, id uuid.UUID, enabled bool) error
+
+	// Validate 验证模型配置是否可以正确连接
+	Validate(ctx context.Context, id uuid.UUID) (*model.ValidationResult, error)
 
 	// ListAvailable 获取当前租户下所有可用的模型配置
 	ListAvailable(ctx context.Context) ([]*model.ModelConfiguration, error)
@@ -508,4 +514,443 @@ func (s *modelConfigurationService) ListAvailable(ctx context.Context) ([]*model
 	}
 
 	return result, nil
+}
+
+// Validate 验证模型配置是否可以正确连接
+func (s *modelConfigurationService) Validate(ctx context.Context, id uuid.UUID) (*model.ValidationResult, error) {
+	// 获取JWT Claims
+	claims, ok := authservice.GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.NewUnauthorizedError("未找到身份认证信息")
+	}
+
+	// 查询配置
+	config, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		// 对于租户管理员，即使资源不存在也返回403
+		if !hasRole(claims, model.RoleSystemAdmin) {
+			return nil, errors.NewForbiddenError("权限不足")
+		}
+		return nil, err
+	}
+
+	// 租户管理员只能验证自己租户的配置
+	if hasRole(claims, model.RoleTenantAdmin) {
+		tenantUUID, err := uuid.Parse(claims.TenantID)
+		if err != nil {
+			return nil, errors.NewInternalError(err)
+		}
+
+		if config.TenantID != tenantUUID {
+			logger.WarnContext(ctx, "权限验证失败", logger.Fields{
+				"event":            "permission_denied",
+				"reason":           "尝试验证其他租户的模型配置",
+				"user_id":          claims.Subject,
+				"user_tenant_id":   claims.TenantID,
+				"target_config_id": id.String(),
+				"target_tenant_id": config.TenantID.String(),
+			})
+			return nil, errors.NewForbiddenError("权限不足：无法验证其他租户的模型配置")
+		}
+	}
+
+	// 解密API密钥
+	apiKey, err := s.encryptionService.DecryptAPIKey(config.APIKey)
+	if err != nil {
+		logger.ErrorContext(ctx, "解密API密钥失败", logger.Fields{
+			"error":     err.Error(),
+			"config_id": id.String(),
+		})
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "解密API密钥失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	// 设置30秒超时
+	validateCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// 根据不同的提供商进行验证
+	var result *model.ValidationResult
+	switch config.ModelProvider {
+	case model.ModelProviderOpenAI:
+		result, err = s.validateOpenAI(validateCtx, config, apiKey)
+	case model.ModelProviderAnthropic:
+		result, err = s.validateAnthropic(validateCtx, config, apiKey)
+	case model.ModelProviderGoogleGenAI:
+		result, err = s.validateGoogleGenAI(validateCtx, config, apiKey)
+	case model.ModelProviderAzureOpenAI:
+		result, err = s.validateAzureOpenAI(validateCtx, config, apiKey)
+	case model.ModelProviderBianlian:
+		result, err = s.validateBianlian(validateCtx, config, apiKey)
+	case model.ModelProviderCustomOpenAI:
+		result, err = s.validateCustomOpenAI(validateCtx, config, apiKey)
+	default:
+		result = &model.ValidationResult{
+			Valid:   false,
+			Message: "不支持的模型提供商",
+		}
+	}
+
+	if err != nil {
+		logger.ErrorContext(ctx, "模型配置验证失败", logger.Fields{
+			"event":     "validation_failed",
+			"config_id": id.String(),
+			"provider":  config.ModelProvider,
+			"error":     err.Error(),
+		})
+		return result, err
+	}
+
+	// 记录验证结果
+	if result.Valid {
+		logger.InfoContext(ctx, "模型配置验证成功", logger.Fields{
+			"event":     "validation_success",
+			"config_id": id.String(),
+			"provider":  config.ModelProvider,
+		})
+	} else {
+		logger.WarnContext(ctx, "模型配置验证失败", logger.Fields{
+			"event":     "validation_failed",
+			"config_id": id.String(),
+			"provider":  config.ModelProvider,
+			"message":   result.Message,
+			"details":   result.Details,
+		})
+	}
+
+	return result, nil
+}
+
+// validateOpenAI 验证OpenAI配置
+func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	baseURL := "https://api.openai.com/v1"
+	if config.BaseURL != nil && *config.BaseURL != "" {
+		baseURL = *config.BaseURL
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/models", nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return &model.ValidationResult{
+			Valid:   true,
+			Message: "验证成功",
+		}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return &model.ValidationResult{
+		Valid:   false,
+		Message: "验证失败",
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+	}, nil
+}
+
+// validateAnthropic 验证Anthropic配置
+func (s *modelConfigurationService) validateAnthropic(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	baseURL := "https://api.anthropic.com/v1"
+	if config.BaseURL != nil && *config.BaseURL != "" {
+		baseURL = *config.BaseURL
+	}
+
+	// Anthropic使用messages端点进行验证
+	req, err := http.NewRequestWithContext(ctx, "POST", baseURL+"/messages", nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	// Anthropic API在没有body的情况下会返回400，但如果API key有效，会返回特定的错误信息
+	// 401表示认证失败，其他错误码表示API key有效但请求格式不对
+	if resp.StatusCode == http.StatusUnauthorized {
+		body, _ := io.ReadAll(resp.Body)
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "API密钥无效",
+			Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+		}, nil
+	}
+
+	// 其他状态码表示API key有效
+	return &model.ValidationResult{
+		Valid:   true,
+		Message: "验证成功",
+	}, nil
+}
+
+// validateGoogleGenAI 验证Google GenAI配置
+func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	baseURL := "https://generativelanguage.googleapis.com/v1beta"
+	if config.BaseURL != nil && *config.BaseURL != "" {
+		baseURL = *config.BaseURL
+	}
+
+	// 使用models.list端点验证
+	url := fmt.Sprintf("%s/models?key=%s", baseURL, apiKey)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return &model.ValidationResult{
+			Valid:   true,
+			Message: "验证成功",
+		}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return &model.ValidationResult{
+		Valid:   false,
+		Message: "验证失败",
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+	}, nil
+}
+
+// validateAzureOpenAI 验证Azure OpenAI配置
+func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	if config.BaseURL == nil || *config.BaseURL == "" {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "Azure OpenAI需要配置BaseURL",
+			Details: "BaseURL格式: https://{resource-name}.openai.azure.com",
+		}, nil
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	// Azure OpenAI使用deployments端点
+	url := fmt.Sprintf("%s/openai/deployments?api-version=2023-05-15", *config.BaseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	req.Header.Set("api-key", apiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return &model.ValidationResult{
+			Valid:   true,
+			Message: "验证成功",
+		}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return &model.ValidationResult{
+		Valid:   false,
+		Message: "验证失败",
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+	}, nil
+}
+
+// validateBianlian 验证Bianlian配置
+func (s *modelConfigurationService) validateBianlian(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	if config.BaseURL == nil || *config.BaseURL == "" {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "Bianlian需要配置BaseURL",
+		}, nil
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	// 使用models端点验证（假设Bianlian使用类似OpenAI的API）
+	url := fmt.Sprintf("%s/v1/models", *config.BaseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return &model.ValidationResult{
+			Valid:   true,
+			Message: "验证成功",
+		}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return &model.ValidationResult{
+		Valid:   false,
+		Message: "验证失败",
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+	}, nil
+}
+
+// validateCustomOpenAI 验证自定义OpenAI配置
+func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+	if config.BaseURL == nil || *config.BaseURL == "" {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "自定义OpenAI需要配置BaseURL",
+		}, nil
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	// 使用models端点验证
+	url := fmt.Sprintf("%s/v1/models", *config.BaseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "创建请求失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}, nil
+		}
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "连接失败",
+			Details: err.Error(),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return &model.ValidationResult{
+			Valid:   true,
+			Message: "验证成功",
+		}, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	return &model.ValidationResult{
+		Valid:   false,
+		Message: "验证失败",
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+	}, nil
 }
