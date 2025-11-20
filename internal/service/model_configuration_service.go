@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -798,9 +800,27 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 
 	client := &http.Client{Timeout: 30 * time.Second}
 
-	// Azure OpenAI使用deployments端点
-	url := fmt.Sprintf("%s/openai/deployments?api-version=2023-05-15", *config.BaseURL)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	// 构建URL: {baseurl}/openai/deployments/{modelname}?{queryParams}
+	url := fmt.Sprintf("%sopenai/deployments/%s/responses", *config.BaseURL, config.Model)
+	
+	// 附加queryParams
+	if config.QueryParams != nil && *config.QueryParams != "" {
+		// QueryParams 是 JSON 字符串，需要解析
+		var params map[string]string
+		if err := json.Unmarshal([]byte(*config.QueryParams), &params); err == nil && len(params) > 0 {
+			url += "?"
+			first := true
+			for key, value := range params {
+				if !first {
+					url += "&"
+				}
+				url += fmt.Sprintf("%s=%s", key, value)
+				first = false
+			}
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
 	if err != nil {
 		return &model.ValidationResult{
 			Valid:   false,
@@ -839,7 +859,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 	return &model.ValidationResult{
 		Valid:   false,
 		Message: "验证失败",
-		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
+		Details: fmt.Sprintf("状态码: %d, 响应: %s, url: %s", resp.StatusCode, string(body),url),
 	}, nil
 }
 
@@ -854,9 +874,34 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 
 	client := &http.Client{Timeout: 30 * time.Second}
 
-	// 使用models端点验证（假设Bianlian使用类似OpenAI的API）
-	url := fmt.Sprintf("%s/v1/models", *config.BaseURL)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	// 构建请求体
+	requestBody := map[string]interface{}{
+		"model": config.Model,
+		"messages": []map[string]string{
+			{
+				"role":    "system",
+				"content": "最多只允许输出10个字",
+			},
+			{
+				"role":    "user",
+				"content": "你是谁？",
+			},
+		},
+	}
+
+	// 序列化请求体
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "构建请求体失败",
+			Details: err.Error(),
+		}, nil
+	}
+
+	// 使用chat/completions端点验证
+	url := fmt.Sprintf("%s/chat/completions", *config.BaseURL)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return &model.ValidationResult{
 			Valid:   false,
@@ -866,6 +911,7 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 	}
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
