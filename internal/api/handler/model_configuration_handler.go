@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -662,14 +663,29 @@ func (h *ModelConfigurationHandler) HandleValidate(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// 5. 记录响应日志
-	h.logger.Info("验证模型配置完成", logger.Fields{
+	// 5. 检查验证结果，如果验证失败则返回错误
+	if !result.Valid {
+		h.logger.Warn("模型配置验证失败", logger.Fields{
+			"configId": configID,
+			"message":  result.Message,
+			"details":  result.Details,
+		})
+		// 返回400错误，包含验证失败的详细信息
+		errMsg := result.Message
+		if result.Details != "" {
+			errMsg = fmt.Sprintf("%s: %s", result.Message, result.Details)
+		}
+		h.writeErrorResponse(w, r, errors.NewBadRequestError(errMsg))
+		return
+	}
+
+	// 6. 记录响应日志
+	h.logger.Info("验证模型配置成功", logger.Fields{
 		"configId": configID,
-		"valid":    result.Valid,
 	})
 
-	// 6. 返回验证结果
-	resp := response.SuccessWithMessageContext(ctx, "验证完成", result)
+	// 7. 返回验证成功结果
+	resp := response.SuccessWithMessageContext(ctx, "验证成功", result)
 	h.writeJSONResponse(w, http.StatusOK, resp)
 }
 

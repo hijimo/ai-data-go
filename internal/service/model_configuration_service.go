@@ -578,32 +578,19 @@ func (s *modelConfigurationService) Validate(ctx context.Context, id uuid.UUID) 
 	var result *model.ValidationResult
 	switch config.ModelProvider {
 	case model.ModelProviderOpenAI:
-		result, err = s.validateOpenAI(validateCtx, config, apiKey)
+		result = s.validateOpenAI(validateCtx, config, apiKey)
 	case model.ModelProviderAnthropic:
-		result, err = s.validateAnthropic(validateCtx, config, apiKey)
+		result = s.validateAnthropic(validateCtx, config, apiKey)
 	case model.ModelProviderGoogleGenAI:
-		result, err = s.validateGoogleGenAI(validateCtx, config, apiKey)
+		result = s.validateGoogleGenAI(validateCtx, config, apiKey)
 	case model.ModelProviderAzureOpenAI:
-		result, err = s.validateAzureOpenAI(validateCtx, config, apiKey)
+		result = s.validateAzureOpenAI(validateCtx, config, apiKey)
 	case model.ModelProviderBianlian:
-		result, err = s.validateBianlian(validateCtx, config, apiKey)
+		result = s.validateBianlian(validateCtx, config, apiKey)
 	case model.ModelProviderCustomOpenAI:
-		result, err = s.validateCustomOpenAI(validateCtx, config, apiKey)
+		result = s.validateCustomOpenAI(validateCtx, config, apiKey)
 	default:
-		result = &model.ValidationResult{
-			Valid:   false,
-			Message: "不支持的模型提供商",
-		}
-	}
-
-	if err != nil {
-		logger.ErrorContext(ctx, "模型配置验证失败", logger.Fields{
-			"event":     "validation_failed",
-			"config_id": id.String(),
-			"provider":  config.ModelProvider,
-			"error":     err.Error(),
-		})
-		return result, err
+		return nil, errors.NewBadRequestError("不支持的模型提供商")
 	}
 
 	// 记录验证结果
@@ -623,11 +610,13 @@ func (s *modelConfigurationService) Validate(ctx context.Context, id uuid.UUID) 
 		})
 	}
 
+	// 无论验证成功还是失败，都返回结果对象，不返回错误
+	// Handler层会根据result.Valid字段判断验证是否成功
 	return result, nil
 }
 
 // validateOpenAI 验证OpenAI配置
-func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	baseURL := "https://api.openai.com/v1"
@@ -641,7 +630,7 @@ func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
@@ -653,13 +642,13 @@ func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -667,7 +656,7 @@ func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *
 		return &model.ValidationResult{
 			Valid:   true,
 			Message: "验证成功",
-		}, nil
+		}
 	}
 
 	body, _ := io.ReadAll(resp.Body)
@@ -675,11 +664,11 @@ func (s *modelConfigurationService) validateOpenAI(ctx context.Context, config *
 		Valid:   false,
 		Message: "验证失败",
 		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
-	}, nil
+	}
 }
 
 // validateAnthropic 验证Anthropic配置
-func (s *modelConfigurationService) validateAnthropic(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateAnthropic(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	baseURL := "https://api.anthropic.com/v1"
@@ -694,7 +683,7 @@ func (s *modelConfigurationService) validateAnthropic(ctx context.Context, confi
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	req.Header.Set("x-api-key", apiKey)
@@ -708,13 +697,13 @@ func (s *modelConfigurationService) validateAnthropic(ctx context.Context, confi
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -726,18 +715,18 @@ func (s *modelConfigurationService) validateAnthropic(ctx context.Context, confi
 			Valid:   false,
 			Message: "API密钥无效",
 			Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
-		}, nil
+		}
 	}
 
 	// 其他状态码表示API key有效
 	return &model.ValidationResult{
 		Valid:   true,
 		Message: "验证成功",
-	}, nil
+	}
 }
 
 // validateGoogleGenAI 验证Google GenAI配置
-func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	baseURL := "https://generativelanguage.googleapis.com/v1beta"
@@ -753,7 +742,7 @@ func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, con
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	resp, err := client.Do(req)
@@ -763,13 +752,13 @@ func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, con
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -777,7 +766,7 @@ func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, con
 		return &model.ValidationResult{
 			Valid:   true,
 			Message: "验证成功",
-		}, nil
+		}
 	}
 
 	body, _ := io.ReadAll(resp.Body)
@@ -785,17 +774,17 @@ func (s *modelConfigurationService) validateGoogleGenAI(ctx context.Context, con
 		Valid:   false,
 		Message: "验证失败",
 		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
-	}, nil
+	}
 }
 
 // validateAzureOpenAI 验证Azure OpenAI配置
-func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	if config.BaseURL == nil || *config.BaseURL == "" {
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "Azure OpenAI需要配置BaseURL",
 			Details: "BaseURL格式: https://{resource-name}.openai.azure.com",
-		}, nil
+		}
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -826,7 +815,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	req.Header.Set("api-key", apiKey)
@@ -838,13 +827,13 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -852,24 +841,24 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 		return &model.ValidationResult{
 			Valid:   true,
 			Message: "验证成功",
-		}, nil
+		}
 	}
 
 	body, _ := io.ReadAll(resp.Body)
 	return &model.ValidationResult{
 		Valid:   false,
 		Message: "验证失败",
-		Details: fmt.Sprintf("状态码: %d, 响应: %s, url: %s", resp.StatusCode, string(body),url),
-	}, nil
+		Details: fmt.Sprintf("状态码: %d, 响应: %s, url: %s", resp.StatusCode, string(body), url),
+	}
 }
 
 // validateBianlian 验证Bianlian配置
-func (s *modelConfigurationService) validateBianlian(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateBianlian(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	if config.BaseURL == nil || *config.BaseURL == "" {
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "Bianlian需要配置BaseURL",
-		}, nil
+		}
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -896,7 +885,7 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 			Valid:   false,
 			Message: "构建请求体失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	// 使用chat/completions端点验证
@@ -907,7 +896,7 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
@@ -920,13 +909,13 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -934,7 +923,7 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 		return &model.ValidationResult{
 			Valid:   true,
 			Message: "验证成功",
-		}, nil
+		}
 	}
 
 	body, _ := io.ReadAll(resp.Body)
@@ -942,16 +931,16 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 		Valid:   false,
 		Message: "验证失败",
 		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
-	}, nil
+	}
 }
 
 // validateCustomOpenAI 验证自定义OpenAI配置
-func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) (*model.ValidationResult, error) {
+func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	if config.BaseURL == nil || *config.BaseURL == "" {
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "自定义OpenAI需要配置BaseURL",
-		}, nil
+		}
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -964,7 +953,7 @@ func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, co
 			Valid:   false,
 			Message: "创建请求失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
@@ -976,13 +965,13 @@ func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, co
 				Valid:   false,
 				Message: "验证超时",
 				Details: "连接超过30秒",
-			}, nil
+			}
 		}
 		return &model.ValidationResult{
 			Valid:   false,
 			Message: "连接失败",
 			Details: err.Error(),
-		}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -990,7 +979,7 @@ func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, co
 		return &model.ValidationResult{
 			Valid:   true,
 			Message: "验证成功",
-		}, nil
+		}
 	}
 
 	body, _ := io.ReadAll(resp.Body)
@@ -998,5 +987,5 @@ func (s *modelConfigurationService) validateCustomOpenAI(ctx context.Context, co
 		Valid:   false,
 		Message: "验证失败",
 		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
-	}, nil
+	}
 }
