@@ -81,7 +81,7 @@
   - 确保所有路由都有适当的认证和授权中间件
   - _需求: 所有需求的路由配置_
 
-- [ ] 8. 添加环境变量配置
+- [x] 8. 添加环境变量配置
   - 在 `.env.example` 中添加 ENCRYPTION_SECRET_KEY 配置项
   - 在 `.env.example` 中添加 PROVIDER_VALIDATION_TIMEOUT 配置项
   - 在 `internal/config/config.go` 中添加相关配置结构
