@@ -230,14 +230,36 @@ func main() {
 		log.Warn("认证路由未注册（数据库不可用）", nil)
 	}
 
-	// 8.2 注册会话管理路由（如果数据库可用）
+	// 8.2 注册模型配置管理路由（如果数据库可用）
+	// 模型配置路由需要 JWT 认证中间件和 RBAC 中间件
+	var rbacMW func(...string) func(http.Handler) http.Handler
+	if db != nil && jwtAuthMW != nil {
+		modelConfigHandler, rbacMiddleware := initModelConfigurationHandler(db, cfg, log)
+		rbacMW = rbacMiddleware
+		
+		routes.RegisterModelConfigurationRoutes(serveMux, modelConfigHandler, jwtAuthMW, rbacMW)
+		log.Info("模型配置管理路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/model-configurations",
+				"/api/v1/model-configurations/available",
+				"/api/v1/model-configurations/{id}",
+				"/api/v1/model-configurations/{id}/status",
+				"/api/v1/model-configurations/{id}/validate",
+			},
+		})
+	} else {
+		log.Warn("模型配置管理路由未注册（数据库不可用）", nil)
+	}
+
+	// 8.3 注册会话管理路由（如果数据库可用）
 	// 会话管理路由需要 JWT 认证中间件
 	var cacheWarmer *storage.CacheWarmer
-	var rbacMW func(...string) func(http.Handler) http.Handler
 	if db != nil && aiService != nil && jwtAuthMW != nil {
 		sessionHandler, messageHandler, contextHandler, memoryHandler, summaryHandler, warmer, rbacMiddleware := initSessionHandlers(db, aiService, cfg, log)
 		cacheWarmer = warmer
-		rbacMW = rbacMiddleware
+		if rbacMW == nil {
+			rbacMW = rbacMiddleware
+		}
 		
 		// 执行启动时缓存预热
 		if cacheWarmer != nil {
@@ -895,6 +917,77 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	})
 
 	return authHandler, tenantHandler, userHandler, auditHandler, tenantMiddleware, jwtAuthMiddleware, rbacMiddleware
+}
+
+// initModelConfigurationHandler 初始化模型配置管理处理器
+func initModelConfigurationHandler(db database.Database, cfg *config.Config, log logger.Logger) (
+	*handler.ModelConfigurationHandler,
+	func(...string) func(http.Handler) http.Handler,
+) {
+	log.Info("初始化模型配置管理服务...", nil)
+
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+
+	// 2. 创建 Repository 层实例
+	modelConfigRepo := repository.NewModelConfigurationRepository(gormDB)
+
+	// 3. 创建 EncryptionService
+	// 将字符串密钥转换为32字节数组
+	secretKeyBytes := []byte(cfg.Encryption.SecretKey)
+	// 确保密钥长度为32字节
+	if len(secretKeyBytes) < 32 {
+		// 如果密钥不足32字节，填充到32字节
+		paddedKey := make([]byte, 32)
+		copy(paddedKey, secretKeyBytes)
+		secretKeyBytes = paddedKey
+	} else if len(secretKeyBytes) > 32 {
+		// 如果密钥超过32字节，截取前32字节
+		secretKeyBytes = secretKeyBytes[:32]
+	}
+	
+	encryptionService, err := service.NewEncryptionService(secretKeyBytes)
+	if err != nil {
+		log.Error("创建加密服务失败", logger.Fields{"error": err})
+		// 如果加密服务创建失败，使用环境变量方式
+		encryptionService, err = service.NewEncryptionServiceFromEnv()
+		if err != nil {
+			log.Error("从环境变量创建加密服务失败", logger.Fields{"error": err})
+			panic(fmt.Sprintf("无法创建加密服务: %v", err))
+		}
+	}
+
+	// 4. 创建 ModelConfigurationService
+	modelConfigService := service.NewModelConfigurationService(
+		modelConfigRepo,
+		encryptionService,
+	)
+
+	// 5. 创建 Handler 层实例
+	modelConfigHandler := handler.NewModelConfigurationHandler(modelConfigService, log)
+
+	// 6. 创建 RBAC 中间件工厂函数
+	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
+		// 根据角色返回相应的中间件
+		if len(roles) == 1 {
+			switch roles[0] {
+			case "system_admin":
+				return middleware.RequireSystemAdmin()
+			case "admin", "tenant_admin":
+				return middleware.RequireTenantAdmin()
+			}
+		}
+		// 默认返回租户管理员中间件
+		return middleware.RequireTenantAdmin()
+	}
+
+	log.Info("模型配置管理服务初始化成功", logger.Fields{
+		"repositories": []string{"ModelConfigurationRepository"},
+		"services":     []string{"EncryptionService", "ModelConfigurationService"},
+		"handlers":     []string{"ModelConfigurationHandler"},
+	})
+
+	return modelConfigHandler, rbacMiddleware
 }
 
 // initCleanupService 初始化数据库清理服务

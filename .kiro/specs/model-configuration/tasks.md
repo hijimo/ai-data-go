@@ -68,7 +68,7 @@
   - 正确处理错误并返回适当的HTTP状态码
   - _需求: 所有需求的API层实现_
 
-- [ ] 7. 配置路由和中间件
+- [x] 7. 配置路由和中间件
   - 在 `internal/api/routes/` 中配置ModelConfiguration相关路由
   - POST /api/v1/model-configurations - 创建（RequireTenantAdmin）
   - GET /api/v1/model-configurations - 列表（RequireTenantAdmin）
