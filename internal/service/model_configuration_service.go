@@ -789,10 +789,15 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 
 	client := &http.Client{Timeout: 30 * time.Second}
 
-	// 构建URL: {baseurl}/openai/deployments/{modelname}?{queryParams}
-	url := fmt.Sprintf("%sopenai/deployments/%s/responses", *config.BaseURL, config.Model)
+	// 构建URL: {baseurl}/openai/responses?api-version=xxx
+	baseURL := *config.BaseURL
+	// 移除末尾的斜杠（如果有）
+	if len(baseURL) > 0 && baseURL[len(baseURL)-1] == '/' {
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+	url := fmt.Sprintf("%s/openai/responses", baseURL)
 	
-	// 附加queryParams
+	// 附加queryParams（通常包含api-version）
 	if config.QueryParams != nil && *config.QueryParams != "" {
 		// QueryParams 是 JSON 字符串，需要解析
 		var params map[string]string
@@ -807,9 +812,38 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 				first = false
 			}
 		}
+	} else {
+		// 如果没有提供queryParams，使用默认的api-version
+		url += "?api-version=2025-04-01-preview"
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
+	// 构建请求体（使用input字段，符合Azure OpenAI Responses API规范）
+	requestBody := map[string]interface{}{
+		"model":  config.Model,
+		"stream": true,
+		"input": []map[string]string{
+			{
+				"role":    "system",
+				"content": "回答简洁不超过10个字",
+			},
+			{
+				"role":    "user",
+				"content": "介绍Azure OpenAI的核心优势",
+			},
+		},
+	}
+
+	// 序列化请求体
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "构建请求体失败",
+			Details: err.Error(),
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return &model.ValidationResult{
 			Valid:   false,
@@ -819,6 +853,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 	}
 
 	req.Header.Set("api-key", apiKey)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -837,6 +872,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 	}
 	defer resp.Body.Close()
 
+	// Azure OpenAI API 成功时返回200
 	if resp.StatusCode == http.StatusOK {
 		return &model.ValidationResult{
 			Valid:   true,
@@ -848,7 +884,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 	return &model.ValidationResult{
 		Valid:   false,
 		Message: "验证失败",
-		Details: fmt.Sprintf("状态码: %d, 响应: %s, url: %s", resp.StatusCode, string(body), url),
+		Details: fmt.Sprintf("状态码: %d, 响应: %s", resp.StatusCode, string(body)),
 	}
 }
 
