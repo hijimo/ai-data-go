@@ -1,5 +1,10 @@
 package genkit
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // Config Genkit 配置结构
 type Config struct {
 	// API 密钥
@@ -10,6 +15,93 @@ type Config struct {
 	DefaultTemperature float64
 	// 默认最大 token 数
 	DefaultMaxTokens int
+}
+
+// GenkitConfig 用于解析 model_configurations.configuration 的配置结构
+// 这个结构体包含了所有提供商可能需要的配置字段
+type GenkitConfig struct {
+	// Azure OpenAI 特定配置
+	AzureEndpoint   string `json:"azureEndpoint,omitempty"`
+	AzureDeployment string `json:"azureDeployment,omitempty"`
+	AzureAPIVersion string `json:"azureApiVersion,omitempty"`
+
+	// 百炼特定配置
+	BailianEndpoint  string `json:"bailianEndpoint,omitempty"`
+	BailianWorkspace string `json:"bailianWorkspace,omitempty"`
+
+	// 通用配置
+	Model              string  `json:"model"`
+	DefaultTemperature float64 `json:"defaultTemperature,omitempty"`
+	DefaultMaxTokens   int     `json:"defaultMaxTokens,omitempty"`
+}
+
+// ParseGenkitConfig 从 JSON 字符串解析 GenkitConfig
+func ParseGenkitConfig(configJSON string) (*GenkitConfig, error) {
+	if configJSON == "" {
+		return nil, fmt.Errorf("配置JSON不能为空")
+	}
+
+	var config GenkitConfig
+	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
+		return nil, fmt.Errorf("解析配置JSON失败: %w", err)
+	}
+
+	return &config, nil
+}
+
+// Validate 验证配置的有效性
+func (c *GenkitConfig) Validate(providerType string) error {
+	// 验证通用字段
+	if c.Model == "" {
+		return fmt.Errorf("模型名称不能为空")
+	}
+
+	// 根据提供商类型验证特定字段
+	switch providerType {
+	case "azureopenai":
+		return c.validateAzureConfig()
+	case "bianlian":
+		return c.validateBailianConfig()
+	case "googlegenai", "openai", "anthropic", "custom_openai":
+		// 这些提供商只需要通用配置
+		return nil
+	default:
+		return fmt.Errorf("不支持的提供商类型: %s", providerType)
+	}
+}
+
+// validateAzureConfig 验证 Azure OpenAI 特定配置
+func (c *GenkitConfig) validateAzureConfig() error {
+	if c.AzureEndpoint == "" {
+		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint")
+	}
+	if c.AzureDeployment == "" {
+		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureDeployment")
+	}
+	if c.AzureAPIVersion == "" {
+		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureApiVersion")
+	}
+	return nil
+}
+
+// validateBailianConfig 验证百炼特定配置
+func (c *GenkitConfig) validateBailianConfig() error {
+	if c.BailianEndpoint == "" {
+		return fmt.Errorf("百炼配置缺少必需字段: bailianEndpoint")
+	}
+	if c.BailianWorkspace == "" {
+		return fmt.Errorf("百炼配置缺少必需字段: bailianWorkspace")
+	}
+	return nil
+}
+
+// ToJSON 将配置转换为 JSON 字符串
+func (c *GenkitConfig) ToJSON() (string, error) {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return "", fmt.Errorf("序列化配置失败: %w", err)
+	}
+	return string(data), nil
 }
 
 // GenerateOptions 生成选项
