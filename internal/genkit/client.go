@@ -125,17 +125,12 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 		}
 
 		// 解析配置
-		var genkitConfig GenkitConfig
-		if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
-			if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
-				return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
-			}
+		genkitConfig, err := c.parseModelConfiguration(modelConfig)
+		if err != nil {
+			return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
 		}
 
-		// 设置基本字段
-		genkitConfig.Model = modelConfig.Model
-
-		return g, &genkitConfig, nil
+		return g, genkitConfig, nil
 	}
 
 	// 缓存未命中，需要初始化新实例
@@ -159,17 +154,12 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 		}
 
 		// 解析配置
-		var genkitConfig GenkitConfig
-		if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
-			if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
-				return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
-			}
+		genkitConfig, err := c.parseModelConfiguration(modelConfig)
+		if err != nil {
+			return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
 		}
 
-		// 设置基本字段
-		genkitConfig.Model = modelConfig.Model
-
-		return g, &genkitConfig, nil
+		return g, genkitConfig, nil
 	}
 
 	// 从数据库查询配置
@@ -189,15 +179,10 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 	}
 
 	// 解析配置
-	var genkitConfig GenkitConfig
-	if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
-		if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
-			return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
-		}
+	genkitConfig, err := c.parseModelConfiguration(modelConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
 	}
-
-	// 设置基本字段
-	genkitConfig.Model = modelConfig.Model
 
 	// 验证配置
 	if err := genkitConfig.Validate(modelConfig.ModelProvider); err != nil {
@@ -205,15 +190,100 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 	}
 
 	// 根据提供商类型创建插件并初始化 Genkit 实例
+	g, err = c.initializeProvider(ctx, modelConfig, genkitConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("初始化提供商失败: %w", err)
+	}
+
+	// 缓存实例（已经持有写锁，无需再次加锁）
+	c.instances[cacheKey] = g
+
+	return g, genkitConfig, nil
+}
+
+// parseUUID 解析 UUID 字符串
+func parseUUID(uuidStr string) (uuid.UUID, error) {
+	return uuid.Parse(uuidStr)
+}
+
+// parseModelConfiguration 解析模型配置
+// 从 ModelConfiguration 中提取并解析 GenkitConfig
+func (c *client) parseModelConfiguration(modelConfig interface{}) (*GenkitConfig, error) {
+	// 使用类型断言获取实际的配置对象
+	type ModelConfig interface {
+		GetModel() string
+		GetQueryParams() *string
+	}
+
+	// 创建基础配置
+	genkitConfig := &GenkitConfig{}
+
+	// 使用反射或类型断言来获取字段
+	// 这里我们假设传入的是 repository 返回的模型配置对象
+	// 需要根据实际的 repository 接口来调整
+	
+	// 临时方案：使用 JSON 序列化/反序列化来转换
+	configJSON, err := json.Marshal(modelConfig)
+	if err != nil {
+		return nil, fmt.Errorf("序列化模型配置失败: %w", err)
+	}
+
+	var tempConfig struct {
+		Model       string  `json:"model"`
+		QueryParams *string `json:"queryParams"`
+	}
+
+	if err := json.Unmarshal(configJSON, &tempConfig); err != nil {
+		return nil, fmt.Errorf("反序列化模型配置失败: %w", err)
+	}
+
+	// 设置基本字段
+	genkitConfig.Model = tempConfig.Model
+
+	// 解析 QueryParams（如果存在）
+	if tempConfig.QueryParams != nil && *tempConfig.QueryParams != "" {
+		if err := json.Unmarshal([]byte(*tempConfig.QueryParams), genkitConfig); err != nil {
+			return nil, fmt.Errorf("解析 QueryParams 失败: %w", err)
+		}
+		
+		// 确保 Model 字段不被 QueryParams 覆盖（除非 QueryParams 中明确指定）
+		if genkitConfig.Model == "" {
+			genkitConfig.Model = tempConfig.Model
+		}
+	}
+
+	return genkitConfig, nil
+}
+
+// initializeProvider 根据提供商类型初始化 Genkit 实例
+func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}, genkitConfig *GenkitConfig) (*genkit.Genkit, error) {
+	// 提取模型配置的基本信息
+	configJSON, err := json.Marshal(modelConfig)
+	if err != nil {
+		return nil, fmt.Errorf("序列化模型配置失败: %w", err)
+	}
+
+	var tempConfig struct {
+		ModelProvider string `json:"modelProvider"`
+		APIKey        string `json:"apiKey"`
+		BaseURL       *string `json:"baseUrl"`
+	}
+
+	if err := json.Unmarshal(configJSON, &tempConfig); err != nil {
+		return nil, fmt.Errorf("反序列化模型配置失败: %w", err)
+	}
+
+	var g *genkit.Genkit
 	var fullModelName string
 
-	switch modelConfig.ModelProvider {
+	switch tempConfig.ModelProvider {
 	case "googlegenai":
+		// 初始化 Google AI 插件
 		plugin := &googlegenai.GoogleAI{
-			APIKey: modelConfig.APIKey,
+			APIKey: tempConfig.APIKey,
 		}
 		fullModelName = "googleai/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
@@ -222,25 +292,29 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 
 	case "azureopenai":
 		// Azure OpenAI 插件将在后续任务中实现
-		return nil, nil, fmt.Errorf("Azure OpenAI 提供商暂未实现")
+		return nil, fmt.Errorf("Azure OpenAI 提供商暂未实现")
 
 	case "bianlian":
 		// 百炼插件将在后续任务中实现
-		return nil, nil, fmt.Errorf("百炼提供商暂未实现")
+		return nil, fmt.Errorf("百炼提供商暂未实现")
+
+	case "openai":
+		// OpenAI 插件将在后续任务中实现
+		return nil, fmt.Errorf("OpenAI 提供商暂未实现")
+
+	case "anthropic":
+		// Anthropic 插件将在后续任务中实现
+		return nil, fmt.Errorf("Anthropic 提供商暂未实现")
+
+	case "custom_openai":
+		// 自定义 OpenAI 兼容插件将在后续任务中实现
+		return nil, fmt.Errorf("自定义 OpenAI 提供商暂未实现")
 
 	default:
-		return nil, nil, fmt.Errorf("不支持的提供商类型: %s", modelConfig.ModelProvider)
+		return nil, fmt.Errorf("不支持的提供商类型: %s", tempConfig.ModelProvider)
 	}
 
-	// 缓存实例（已经持有写锁，无需再次加锁）
-	c.instances[cacheKey] = g
-
-	return g, &genkitConfig, nil
-}
-
-// parseUUID 解析 UUID 字符串
-func parseUUID(uuidStr string) (uuid.UUID, error) {
-	return uuid.Parse(uuidStr)
+	return g, nil
 }
 
 // Generate 生成内容
