@@ -12,6 +12,14 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
+func TestNewClientWithRepo(t *testing.T) {
+	// 创建一个 nil 的 repository（在实际使用中会注入真实的 repository）
+	client := NewClientWithRepo(nil)
+	if client == nil {
+		t.Fatal("NewClientWithRepo 应该返回非空客户端")
+	}
+}
+
 func TestClientInitialize(t *testing.T) {
 	tests := []struct {
 		name    string

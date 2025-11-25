@@ -62,8 +62,8 @@
 
 **验收标准**:
 
-- [ ] 修改 `client` 结构体，注入 ModelConfigurationRepository
-- [ ] 实现 `getOrInitGenkit()` 方法（根据租户ID和模型名称）
+- [x] 修改 `client` 结构体，注入 ModelConfigurationRepository
+- [x] 实现 `getOrInitGenkit()` 方法（根据租户ID和模型名称）
 - [ ] 实现 Genkit 实例缓存机制（key: tenantID_modelName）
 - [ ] 添加并发安全的读写锁
 - [ ] 实现配置解析逻辑

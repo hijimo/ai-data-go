@@ -33,6 +33,9 @@ type ModelConfigurationRepository interface {
 
 	// FindAvailableByTenant 查询租户下所有可用的模型配置（已启用且未删除）
 	FindAvailableByTenant(ctx context.Context, tenantID uuid.UUID) ([]*model.ModelConfiguration, error)
+
+	// GetByTenantAndModel 根据租户ID和模型名称获取配置
+	GetByTenantAndModel(ctx context.Context, tenantID uuid.UUID, modelName string) (*model.ModelConfiguration, error)
 }
 
 // modelConfigurationRepository 模型配置仓储实现
@@ -180,4 +183,21 @@ func (r *modelConfigurationRepository) FindAvailableByTenant(ctx context.Context
 	}
 
 	return configs, nil
+}
+
+// GetByTenantAndModel 根据租户ID和模型名称获取配置
+func (r *modelConfigurationRepository) GetByTenantAndModel(ctx context.Context, tenantID uuid.UUID, modelName string) (*model.ModelConfiguration, error) {
+	var config model.ModelConfiguration
+	err := r.db.WithContext(ctx).
+		Where("tenant_id = ? AND name = ? AND is_deleted = ?", tenantID, modelName, false).
+		First(&config).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.NewNotFoundError("模型配置不存在")
+		}
+		return nil, errors.NewInternalError(err)
+	}
+
+	return &config, nil
 }

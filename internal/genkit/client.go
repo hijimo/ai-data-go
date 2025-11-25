@@ -2,11 +2,16 @@ package genkit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"sync"
+
+	"genkit-ai-service/internal/repository"
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
 	"github.com/firebase/genkit/go/plugins/googlegenai"
+	"github.com/google/uuid"
 )
 
 // Client Genkit 客户端接口
@@ -32,13 +37,26 @@ type Client interface {
 
 // client Genkit 客户端实现
 type client struct {
-	config *Config
-	g      *genkit.Genkit
+	config     *Config
+	g          *genkit.Genkit
+	configRepo repository.ModelConfigurationRepository // 模型配置仓储
+	instances  map[string]*genkit.Genkit                // Genkit 实例缓存，key: tenantID_modelName
+	mu         sync.RWMutex                             // 读写锁，保护 instances
 }
 
 // NewClient 创建新的 Genkit 客户端
 func NewClient() Client {
-	return &client{}
+	return &client{
+		instances: make(map[string]*genkit.Genkit),
+	}
+}
+
+// NewClientWithRepo 创建新的 Genkit 客户端（注入 ModelConfigurationRepository）
+func NewClientWithRepo(configRepo repository.ModelConfigurationRepository) Client {
+	return &client{
+		configRepo: configRepo,
+		instances:  make(map[string]*genkit.Genkit),
+	}
 }
 
 // Initialize 初始化客户端
@@ -75,6 +93,121 @@ func (c *client) InitializeModel(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+// getOrInitGenkit 获取或初始化 Genkit 实例
+// 根据租户ID和模型名称从数据库查询配置，并初始化对应的 Genkit 实例
+// 实例会被缓存以提高性能
+func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string) (*genkit.Genkit, *GenkitConfig, error) {
+	if c.configRepo == nil {
+		return nil, nil, fmt.Errorf("模型配置仓储未初始化")
+	}
+
+	// 生成缓存键
+	cacheKey := fmt.Sprintf("%s_%s", tenantID, modelName)
+
+	// 尝试从缓存获取实例
+	c.mu.RLock()
+	g, exists := c.instances[cacheKey]
+	c.mu.RUnlock()
+
+	if exists {
+		// 从数据库获取配置（用于返回配置信息）
+		tenantUUID, err := parseUUID(tenantID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("无效的租户ID: %w", err)
+		}
+
+		modelConfig, err := c.configRepo.GetByTenantAndModel(ctx, tenantUUID, modelName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("获取模型配置失败: %w", err)
+		}
+
+		// 解析配置
+		var genkitConfig GenkitConfig
+		if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
+			if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
+				return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
+			}
+		}
+
+		// 设置基本字段
+		genkitConfig.Model = modelConfig.Model
+
+		return g, &genkitConfig, nil
+	}
+
+	// 从数据库查询配置
+	tenantUUID, err := parseUUID(tenantID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("无效的租户ID: %w", err)
+	}
+
+	modelConfig, err := c.configRepo.GetByTenantAndModel(ctx, tenantUUID, modelName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("获取模型配置失败: %w", err)
+	}
+
+	// 检查模型是否启用
+	if !modelConfig.IsEnabled {
+		return nil, nil, fmt.Errorf("模型已禁用: %s", modelName)
+	}
+
+	// 解析配置
+	var genkitConfig GenkitConfig
+	if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
+		if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
+			return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
+		}
+	}
+
+	// 设置基本字段
+	genkitConfig.Model = modelConfig.Model
+
+	// 验证配置
+	if err := genkitConfig.Validate(modelConfig.ModelProvider); err != nil {
+		return nil, nil, fmt.Errorf("配置验证失败: %w", err)
+	}
+
+	// 根据提供商类型创建插件并初始化 Genkit 实例
+	var fullModelName string
+
+	switch modelConfig.ModelProvider {
+	case "googlegenai":
+		plugin := &googlegenai.GoogleAI{
+			APIKey: modelConfig.APIKey,
+		}
+		fullModelName = "googleai/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
+
+	case "azureopenai":
+		// Azure OpenAI 插件将在后续任务中实现
+		return nil, nil, fmt.Errorf("Azure OpenAI 提供商暂未实现")
+
+	case "bianlian":
+		// 百炼插件将在后续任务中实现
+		return nil, nil, fmt.Errorf("百炼提供商暂未实现")
+
+	default:
+		return nil, nil, fmt.Errorf("不支持的提供商类型: %s", modelConfig.ModelProvider)
+	}
+
+	// 缓存实例
+	c.mu.Lock()
+	c.instances[cacheKey] = g
+	c.mu.Unlock()
+
+	return g, &genkitConfig, nil
+}
+
+// parseUUID 解析 UUID 字符串
+func parseUUID(uuidStr string) (uuid.UUID, error) {
+	return uuid.Parse(uuidStr)
 }
 
 // Generate 生成内容
