@@ -10,8 +10,11 @@ import (
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
+	anthropic "github.com/firebase/genkit/go/plugins/compat_oai/anthropic"
+	oai "github.com/firebase/genkit/go/plugins/compat_oai/openai"
 	"github.com/firebase/genkit/go/plugins/googlegenai"
 	"github.com/google/uuid"
+	"github.com/openai/openai-go/option"
 )
 
 // Client Genkit 客户端接口
@@ -256,6 +259,13 @@ func (c *client) parseModelConfiguration(modelConfig interface{}) (*GenkitConfig
 }
 
 // initializeProvider 根据提供商类型初始化 Genkit 实例
+// 支持的提供商：
+// - googlegenai: Google AI (Gemini)
+// - openai: OpenAI
+// - azureopenai: Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
+// - bianlian: 阿里云百炼 (使用 OpenAI 插件 + 百炼兼容模式 BaseURL)
+// - anthropic: Anthropic (Claude)
+// - custom_openai: 自定义 OpenAI 兼容服务
 func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}, genkitConfig *GenkitConfig) (*genkit.Genkit, error) {
 	// 提取模型配置的基本信息
 	configJSON, err := json.Marshal(modelConfig)
@@ -264,8 +274,8 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 	}
 
 	var tempConfig struct {
-		ModelProvider string `json:"modelProvider"`
-		APIKey        string `json:"apiKey"`
+		ModelProvider string  `json:"modelProvider"`
+		APIKey        string  `json:"apiKey"`
 		BaseURL       *string `json:"baseUrl"`
 	}
 
@@ -273,17 +283,39 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 		return nil, fmt.Errorf("反序列化模型配置失败: %w", err)
 	}
 
-	var g *genkit.Genkit
 	var fullModelName string
+	var g *genkit.Genkit
 
 	switch tempConfig.ModelProvider {
 	case "googlegenai":
-		// 初始化 Google AI 插件
+		// Google AI (Gemini) 插件
 		plugin := &googlegenai.GoogleAI{
 			APIKey: tempConfig.APIKey,
 		}
 		fullModelName = "googleai/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
 
+	case "openai":
+		// OpenAI 插件
+		opts := []option.RequestOption{
+			option.WithAPIKey(tempConfig.APIKey),
+		}
+		
+		// 如果配置了自定义 BaseURL，添加到选项中
+		if tempConfig.BaseURL != nil && *tempConfig.BaseURL != "" {
+			opts = append(opts, option.WithBaseURL(*tempConfig.BaseURL))
+		}
+		
+		plugin := &oai.OpenAI{
+			Opts: opts,
+		}
+		fullModelName = "openai/" + genkitConfig.Model
+		
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
@@ -291,24 +323,92 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 		)
 
 	case "azureopenai":
-		// Azure OpenAI 插件将在后续任务中实现
-		return nil, fmt.Errorf("Azure OpenAI 提供商暂未实现")
+		// Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
+		// 构建 Azure OpenAI 的 BaseURL
+		// 格式: https://{endpoint}/openai/deployments/{deployment}
+		if genkitConfig.AzureEndpoint == "" || genkitConfig.AzureDeployment == "" {
+			return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint 或 azureDeployment")
+		}
+
+		baseURL := fmt.Sprintf("%s/openai/deployments/%s",
+			genkitConfig.AzureEndpoint,
+			genkitConfig.AzureDeployment,
+		)
+
+		plugin := &oai.OpenAI{
+			Opts: []option.RequestOption{
+				option.WithAPIKey(tempConfig.APIKey),
+				option.WithBaseURL(baseURL),
+			},
+		}
+		fullModelName = "openai/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
 
 	case "bianlian":
-		// 百炼插件将在后续任务中实现
-		return nil, fmt.Errorf("百炼提供商暂未实现")
+		// 阿里云百炼 (使用 OpenAI 插件 + 百炼兼容模式 BaseURL)
+		// 百炼提供 OpenAI 兼容接口
+		bailianBaseURL := "https://dashscope.aliyuncs.com/compatible-mode/v1"
+		
+		// 如果配置中指定了 bailianEndpoint，使用配置的值
+		if genkitConfig.BailianEndpoint != "" {
+			bailianBaseURL = genkitConfig.BailianEndpoint
+		}
 
-	case "openai":
-		// OpenAI 插件将在后续任务中实现
-		return nil, fmt.Errorf("OpenAI 提供商暂未实现")
+		plugin := &oai.OpenAI{
+			Opts: []option.RequestOption{
+				option.WithAPIKey(tempConfig.APIKey),
+				option.WithBaseURL(bailianBaseURL),
+			},
+		}
+		fullModelName = "openai/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
 
 	case "anthropic":
-		// Anthropic 插件将在后续任务中实现
-		return nil, fmt.Errorf("Anthropic 提供商暂未实现")
+		// Anthropic (Claude) 插件
+		// Anthropic 插件使用环境变量 ANTHROPIC_API_KEY 或通过 Opts 设置
+		plugin := &anthropic.Anthropic{
+			Opts: []option.RequestOption{
+				option.WithAPIKey(tempConfig.APIKey),
+			},
+		}
+		fullModelName = "anthropic/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
 
 	case "custom_openai":
-		// 自定义 OpenAI 兼容插件将在后续任务中实现
-		return nil, fmt.Errorf("自定义 OpenAI 提供商暂未实现")
+		// 自定义 OpenAI 兼容服务
+		// 必须提供 BaseURL
+		if tempConfig.BaseURL == nil || *tempConfig.BaseURL == "" {
+			return nil, fmt.Errorf("自定义 OpenAI 提供商必须指定 baseUrl")
+		}
+
+		plugin := &oai.OpenAI{
+			Opts: []option.RequestOption{
+				option.WithAPIKey(tempConfig.APIKey),
+				option.WithBaseURL(*tempConfig.BaseURL),
+			},
+		}
+		fullModelName = "openai/" + genkitConfig.Model
+		
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
 
 	default:
 		return nil, fmt.Errorf("不支持的提供商类型: %s", tempConfig.ModelProvider)
