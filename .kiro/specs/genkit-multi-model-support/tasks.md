@@ -64,8 +64,8 @@
 
 - [x] 修改 `client` 结构体，注入 ModelConfigurationRepository
 - [x] 实现 `getOrInitGenkit()` 方法（根据租户ID和模型名称）
-- [ ] 实现 Genkit 实例缓存机制（key: tenantID_modelName）
-- [ ] 添加并发安全的读写锁
+- [x] 实现 Genkit 实例缓存机制（key: tenantID_modelName）
+- [x] 添加并发安全的读写锁
 - [ ] 实现配置解析逻辑
 - [ ] 实现插件动态创建逻辑
 - [ ] 保持向后兼容性

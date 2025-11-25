@@ -98,6 +98,7 @@ func (c *client) InitializeModel(ctx context.Context) error {
 // getOrInitGenkit 获取或初始化 Genkit 实例
 // 根据租户ID和模型名称从数据库查询配置，并初始化对应的 Genkit 实例
 // 实例会被缓存以提高性能
+// 使用双重检查锁定模式确保并发安全
 func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string) (*genkit.Genkit, *GenkitConfig, error) {
 	if c.configRepo == nil {
 		return nil, nil, fmt.Errorf("模型配置仓储未初始化")
@@ -106,13 +107,47 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 	// 生成缓存键
 	cacheKey := fmt.Sprintf("%s_%s", tenantID, modelName)
 
-	// 尝试从缓存获取实例
+	// 第一次检查：尝试从缓存获取实例（使用读锁）
 	c.mu.RLock()
 	g, exists := c.instances[cacheKey]
 	c.mu.RUnlock()
 
 	if exists {
 		// 从数据库获取配置（用于返回配置信息）
+		tenantUUID, err := parseUUID(tenantID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("无效的租户ID: %w", err)
+		}
+
+		modelConfig, err := c.configRepo.GetByTenantAndModel(ctx, tenantUUID, modelName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("获取模型配置失败: %w", err)
+		}
+
+		// 解析配置
+		var genkitConfig GenkitConfig
+		if modelConfig.QueryParams != nil && *modelConfig.QueryParams != "" {
+			if err := json.Unmarshal([]byte(*modelConfig.QueryParams), &genkitConfig); err != nil {
+				return nil, nil, fmt.Errorf("解析模型配置失败: %w", err)
+			}
+		}
+
+		// 设置基本字段
+		genkitConfig.Model = modelConfig.Model
+
+		return g, &genkitConfig, nil
+	}
+
+	// 缓存未命中，需要初始化新实例
+	// 使用写锁保护初始化过程
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// 第二次检查：在获取写锁后再次检查缓存
+	// 防止多个 goroutine 同时初始化同一个实例
+	if g, exists := c.instances[cacheKey]; exists {
+		// 另一个 goroutine 已经初始化了实例
+		// 从数据库获取配置
 		tenantUUID, err := parseUUID(tenantID)
 		if err != nil {
 			return nil, nil, fmt.Errorf("无效的租户ID: %w", err)
@@ -197,10 +232,8 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 		return nil, nil, fmt.Errorf("不支持的提供商类型: %s", modelConfig.ModelProvider)
 	}
 
-	// 缓存实例
-	c.mu.Lock()
+	// 缓存实例（已经持有写锁，无需再次加锁）
 	c.instances[cacheKey] = g
-	c.mu.Unlock()
 
 	return g, &genkitConfig, nil
 }
@@ -326,7 +359,39 @@ func (c *client) GetGenkit() *genkit.Genkit {
 
 // Close 关闭客户端
 func (c *client) Close() error {
-	// Genkit 客户端通常不需要显式关闭
-	// 这里预留接口以便未来扩展
+	// 清理所有缓存的实例
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
+	// 清空缓存
+	c.instances = make(map[string]*genkit.Genkit)
+	
 	return nil
+}
+
+// ClearCache 清理指定租户和模型的缓存实例
+// 用于配置更新后强制重新初始化
+func (c *client) ClearCache(tenantID, modelName string) {
+	cacheKey := fmt.Sprintf("%s_%s", tenantID, modelName)
+	
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
+	delete(c.instances, cacheKey)
+}
+
+// ClearAllCache 清理所有缓存实例
+func (c *client) ClearAllCache() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
+	c.instances = make(map[string]*genkit.Genkit)
+}
+
+// GetCacheSize 获取当前缓存的实例数量
+func (c *client) GetCacheSize() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	
+	return len(c.instances)
 }

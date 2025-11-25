@@ -2,6 +2,7 @@ package genkit
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"genkit-ai-service/internal/model"
@@ -433,4 +434,217 @@ func TestParseUUID(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestClearCache 测试清理指定缓存
+func TestClearCache(t *testing.T) {
+	ctx := context.Background()
+	tenantID := uuid.New()
+	modelName := "gemini-pro"
+
+	// 创建模拟仓储
+	mockRepo := new(MockModelConfigurationRepository)
+
+	// 准备测试配置
+	queryParams := `{"model":"gemini-1.5-pro","defaultTemperature":0.7,"defaultMaxTokens":2048}`
+	modelConfig := &model.ModelConfiguration{
+		ID:            uuid.New(),
+		TenantID:      tenantID,
+		Name:          modelName,
+		Model:         "gemini-1.5-pro",
+		ModelProvider: "googlegenai",
+		APIKey:        "test-api-key",
+		QueryParams:   &queryParams,
+		IsEnabled:     true,
+	}
+
+	// 设置模拟期望
+	mockRepo.On("GetByTenantAndModel", ctx, tenantID, modelName).Return(modelConfig, nil)
+
+	// 创建客户端
+	client := NewClientWithRepo(mockRepo).(*client)
+
+	// 初始化实例
+	_, _, err := client.getOrInitGenkit(ctx, tenantID.String(), modelName)
+	assert.NoError(t, err)
+
+	// 验证缓存存在
+	assert.Equal(t, 1, client.GetCacheSize())
+
+	// 清理缓存
+	client.ClearCache(tenantID.String(), modelName)
+
+	// 验证缓存已清理
+	assert.Equal(t, 0, client.GetCacheSize())
+
+	mockRepo.AssertExpectations(t)
+}
+
+// TestClearAllCache 测试清理所有缓存
+func TestClearAllCache(t *testing.T) {
+	ctx := context.Background()
+	tenantID1 := uuid.New()
+	tenantID2 := uuid.New()
+	modelName1 := "gemini-pro"
+	modelName2 := "gemini-flash"
+
+	// 创建模拟仓储
+	mockRepo := new(MockModelConfigurationRepository)
+
+	// 准备测试配置
+	queryParams := `{"model":"gemini-1.5-pro","defaultTemperature":0.7,"defaultMaxTokens":2048}`
+	modelConfig1 := &model.ModelConfiguration{
+		ID:            uuid.New(),
+		TenantID:      tenantID1,
+		Name:          modelName1,
+		Model:         "gemini-1.5-pro",
+		ModelProvider: "googlegenai",
+		APIKey:        "test-api-key",
+		QueryParams:   &queryParams,
+		IsEnabled:     true,
+	}
+
+	modelConfig2 := &model.ModelConfiguration{
+		ID:            uuid.New(),
+		TenantID:      tenantID2,
+		Name:          modelName2,
+		Model:         "gemini-1.5-flash",
+		ModelProvider: "googlegenai",
+		APIKey:        "test-api-key",
+		QueryParams:   &queryParams,
+		IsEnabled:     true,
+	}
+
+	// 设置模拟期望
+	mockRepo.On("GetByTenantAndModel", ctx, tenantID1, modelName1).Return(modelConfig1, nil)
+	mockRepo.On("GetByTenantAndModel", ctx, tenantID2, modelName2).Return(modelConfig2, nil)
+
+	// 创建客户端
+	client := NewClientWithRepo(mockRepo).(*client)
+
+	// 初始化多个实例
+	_, _, err := client.getOrInitGenkit(ctx, tenantID1.String(), modelName1)
+	assert.NoError(t, err)
+	_, _, err = client.getOrInitGenkit(ctx, tenantID2.String(), modelName2)
+	assert.NoError(t, err)
+
+	// 验证缓存存在
+	assert.Equal(t, 2, client.GetCacheSize())
+
+	// 清理所有缓存
+	client.ClearAllCache()
+
+	// 验证所有缓存已清理
+	assert.Equal(t, 0, client.GetCacheSize())
+
+	mockRepo.AssertExpectations(t)
+}
+
+// TestGetCacheSize 测试获取缓存大小
+func TestGetCacheSize(t *testing.T) {
+	// 创建客户端
+	client := NewClient().(*client)
+
+	// 初始状态应该为 0
+	assert.Equal(t, 0, client.GetCacheSize())
+
+	// 手动添加缓存项
+	client.mu.Lock()
+	client.instances["test_key_1"] = nil
+	client.instances["test_key_2"] = nil
+	client.mu.Unlock()
+
+	// 验证缓存大小
+	assert.Equal(t, 2, client.GetCacheSize())
+}
+
+// TestClose 测试关闭客户端
+func TestClose(t *testing.T) {
+	// 创建客户端
+	client := NewClient().(*client)
+
+	// 手动添加缓存项
+	client.mu.Lock()
+	client.instances["test_key_1"] = nil
+	client.instances["test_key_2"] = nil
+	client.mu.Unlock()
+
+	// 验证缓存存在
+	assert.Equal(t, 2, client.GetCacheSize())
+
+	// 关闭客户端
+	err := client.Close()
+	assert.NoError(t, err)
+
+	// 验证缓存已清理
+	assert.Equal(t, 0, client.GetCacheSize())
+}
+
+// TestConcurrentGetOrInitGenkit 测试并发访问缓存的安全性
+func TestConcurrentGetOrInitGenkit(t *testing.T) {
+	ctx := context.Background()
+	tenantID := uuid.New()
+	modelName := "gemini-pro"
+
+	// 创建模拟仓储
+	mockRepo := new(MockModelConfigurationRepository)
+
+	// 准备测试配置
+	queryParams := `{"model":"gemini-1.5-pro","defaultTemperature":0.7,"defaultMaxTokens":2048}`
+	modelConfig := &model.ModelConfiguration{
+		ID:            uuid.New(),
+		TenantID:      tenantID,
+		Name:          modelName,
+		Model:         "gemini-1.5-pro",
+		ModelProvider: "googlegenai",
+		APIKey:        "test-api-key",
+		QueryParams:   &queryParams,
+		IsEnabled:     true,
+	}
+
+	// 设置模拟期望 - 由于每次调用都会查询数据库获取配置，所以需要多次返回
+	// 但实际的 Genkit 实例只会初始化一次
+	mockRepo.On("GetByTenantAndModel", ctx, tenantID, modelName).Return(modelConfig, nil)
+
+	// 创建客户端
+	client := NewClientWithRepo(mockRepo).(*client)
+
+	// 并发调用次数
+	concurrency := 10
+	done := make(chan bool, concurrency)
+	var mu sync.Mutex
+	var instances []interface{}
+
+	// 启动多个 goroutine 并发调用
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			g, _, err := client.getOrInitGenkit(ctx, tenantID.String(), modelName)
+			assert.NoError(t, err)
+			assert.NotNil(t, g)
+			
+			// 收集实例
+			mu.Lock()
+			instances = append(instances, g)
+			mu.Unlock()
+			
+			done <- true
+		}()
+	}
+
+	// 等待所有 goroutine 完成
+	for i := 0; i < concurrency; i++ {
+		<-done
+	}
+
+	// 验证只有一个实例被创建
+	assert.Equal(t, 1, client.GetCacheSize())
+
+	// 验证所有返回的实例都是同一个
+	firstInstance := instances[0]
+	for _, instance := range instances {
+		assert.Equal(t, firstInstance, instance)
+	}
+
+	// 验证 mock 被调用了（至少一次，可能多次因为每次都查询配置）
+	mockRepo.AssertCalled(t, "GetByTenantAndModel", ctx, tenantID, modelName)
 }
