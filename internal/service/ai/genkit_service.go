@@ -65,11 +65,24 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		"message":   req.Message,
 	})
 
+	// TODO: TASK-5.1 - 从请求中获取模型名称
+	// TODO: TASK-5.2 - 从上下文中获取租户ID
+	// 临时使用默认值以保持编译通过
+	tenantID := "default-tenant"
+	modelName := "gemini-pro"
+	
+	// 如果请求中有 Options 且包含模型名称，使用它
+	// 注意：这是临时方案，TASK-5.1 会在 ChatOptions 中添加 ModelName 字段
+	if req.Options != nil {
+		// 暂时使用默认模型
+		// 在 TASK-5.1 完成后，这里会从 req.Options.ModelName 获取
+	}
+
 	// 构建生成选项
 	options := s.buildGenerateOptions(req.Options)
 
 	// 调用 Genkit 生成响应
-	result, err := s.client.Generate(sessionCtx, req.Message, options)
+	result, err := s.client.Generate(sessionCtx, tenantID, modelName, req.Message, options)
 	if err != nil {
 		// 检查是否是上下文取消错误
 		if sessionCtx.Err() == context.Canceled {
@@ -146,11 +159,24 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 		"message":   req.Message,
 	})
 
+	// TODO: TASK-5.1 - 从请求中获取模型名称
+	// TODO: TASK-5.2 - 从上下文中获取租户ID
+	// 临时使用默认值以保持编译通过
+	tenantID := "default-tenant"
+	modelName := "gemini-pro"
+	
+	// 如果请求中有 Options 且包含模型名称，使用它
+	// 注意：这是临时方案，TASK-5.1 会在 ChatOptions 中添加 ModelName 字段
+	if req.Options != nil {
+		// 暂时使用默认模型
+		// 在 TASK-5.1 完成后，这里会从 req.Options.ModelName 获取
+	}
+
 	// 构建生成选项
 	options := s.buildGenerateOptions(req.Options)
 
 	// 调用 Genkit 流式生成
-	genkitStream, err := s.client.GenerateStream(sessionCtx, req.Message, options)
+	genkitStream, err := s.client.GenerateStream(sessionCtx, tenantID, modelName, req.Message, options)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "启动流式生成失败", logger.Fields{
 			"sessionId": sessionID,

@@ -68,58 +68,146 @@ func TestClientInitialize(t *testing.T) {
 	}
 }
 
-// TODO: 这些测试依赖的方法尚未实现，暂时注释掉
-// func TestBuildGenerateConfig(t *testing.T) {
-// 	c := &client{
-// 		config: &Config{
-// 			DefaultTemperature: 0.7,
-// 			DefaultMaxTokens:   2000,
-// 		},
-// 	}
+func TestClientGenerate(t *testing.T) {
+	tests := []struct {
+		name      string
+		tenantID  string
+		modelName string
+		prompt    string
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "租户ID为空",
+			tenantID:  "",
+			modelName: "gemini-pro",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "租户ID不能为空",
+		},
+		{
+			name:      "模型名称为空",
+			tenantID:  "tenant-123",
+			modelName: "",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "模型名称不能为空",
+		},
+		{
+			name:      "提示词为空",
+			tenantID:  "tenant-123",
+			modelName: "gemini-pro",
+			prompt:    "",
+			wantErr:   true,
+			errMsg:    "提示词不能为空",
+		},
+		{
+			name:      "配置仓储未初始化",
+			tenantID:  "tenant-123",
+			modelName: "gemini-pro",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "模型配置仓储未初始化",
+		},
+	}
 
-// 	// 测试使用自定义选项
-// 	temp := 0.9
-// 	maxTokens := 1000
-// 	topP := 0.95
-// 	topK := 40
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 创建客户端（不注入 repository）
+			client := NewClient()
+			
+			// 调用 Generate
+			_, err := client.Generate(context.Background(), tt.tenantID, tt.modelName, tt.prompt, nil)
+			
+			// 验证错误
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			
+			if err != nil && tt.errMsg != "" {
+				// 使用 strings.Contains 检查错误消息
+				if err.Error() != tt.errMsg && !stringContains(err.Error(), tt.errMsg) {
+					t.Errorf("Generate() error message = %v, want to contain %v", err.Error(), tt.errMsg)
+				}
+			}
+		})
+	}
+}
 
-// 	options := &GenerateOptions{
-// 		Temperature: &temp,
-// 		MaxTokens:   &maxTokens,
-// 		TopP:        &topP,
-// 		TopK:        &topK,
-// 	}
+// stringContains 检查字符串是否包含子串
+func stringContains(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
 
-// 	config := c.buildGenerateConfig(options)
+func TestClientGenerateStream(t *testing.T) {
+	tests := []struct {
+		name      string
+		tenantID  string
+		modelName string
+		prompt    string
+		wantErr   bool
+		errMsg    string
+	}{
+		{
+			name:      "租户ID为空",
+			tenantID:  "",
+			modelName: "gemini-pro",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "租户ID不能为空",
+		},
+		{
+			name:      "模型名称为空",
+			tenantID:  "tenant-123",
+			modelName: "",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "模型名称不能为空",
+		},
+		{
+			name:      "提示词为空",
+			tenantID:  "tenant-123",
+			modelName: "gemini-pro",
+			prompt:    "",
+			wantErr:   true,
+			errMsg:    "提示词不能为空",
+		},
+		{
+			name:      "配置仓储未初始化",
+			tenantID:  "tenant-123",
+			modelName: "gemini-pro",
+			prompt:    "Hello",
+			wantErr:   true,
+			errMsg:    "模型配置仓储未初始化",
+		},
+	}
 
-// 	if config.Temperature != temp {
-// 		t.Errorf("Temperature = %v, want %v", config.Temperature, temp)
-// 	}
-// 	if config.MaxOutputTokens != maxTokens {
-// 		t.Errorf("MaxOutputTokens = %v, want %v", config.MaxOutputTokens, maxTokens)
-// 	}
-// 	if config.TopP != topP {
-// 		t.Errorf("TopP = %v, want %v", config.TopP, topP)
-// 	}
-// 	if config.TopK != topK {
-// 		t.Errorf("TopK = %v, want %v", config.TopK, topK)
-// 	}
-// }
-
-// func TestBuildDefaultConfig(t *testing.T) {
-// 	c := &client{
-// 		config: &Config{
-// 			DefaultTemperature: 0.7,
-// 			DefaultMaxTokens:   2000,
-// 		},
-// 	}
-
-// 	config := c.buildDefaultConfig()
-
-// 	if config.Temperature != 0.7 {
-// 		t.Errorf("Temperature = %v, want %v", config.Temperature, 0.7)
-// 	}
-// 	if config.MaxOutputTokens != 2000 {
-// 		t.Errorf("MaxOutputTokens = %v, want %v", config.MaxOutputTokens, 2000)
-// 	}
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 创建客户端（不注入 repository）
+			client := NewClient()
+			
+			// 调用 GenerateStream
+			_, err := client.GenerateStream(context.Background(), tt.tenantID, tt.modelName, tt.prompt, nil)
+			
+			// 验证错误
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GenerateStream() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			
+			if err != nil && tt.errMsg != "" {
+				// 使用 strings.Contains 检查错误消息
+				if err.Error() != tt.errMsg && !stringContains(err.Error(), tt.errMsg) {
+					t.Errorf("GenerateStream() error message = %v, want to contain %v", err.Error(), tt.errMsg)
+				}
+			}
+		})
+	}
+}

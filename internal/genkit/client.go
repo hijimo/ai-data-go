@@ -25,11 +25,11 @@ type Client interface {
 	// InitializeModel 初始化并设置模型
 	InitializeModel(ctx context.Context) error
 
-	// Generate 生成内容
-	Generate(ctx context.Context, prompt string, options *GenerateOptions) (*GenerateResult, error)
+	// Generate 生成内容（根据租户ID和模型名称）
+	Generate(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (*GenerateResult, error)
 
-	// GenerateStream 流式生成内容
-	GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error)
+	// GenerateStream 流式生成内容（根据租户ID和模型名称）
+	GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (<-chan StreamChunk, error)
 
 	// GetGenkit 获取底层的Genkit实例（用于注册Flows）
 	GetGenkit() *genkit.Genkit
@@ -417,24 +417,32 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 	return g, nil
 }
 
-// Generate 生成内容
-func (c *client) Generate(ctx context.Context, prompt string, options *GenerateOptions) (*GenerateResult, error) {
-	if c.config == nil {
-		return nil, fmt.Errorf("客户端未初始化")
+// Generate 生成内容（根据租户ID和模型名称）
+func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (*GenerateResult, error) {
+	// 参数验证
+	if tenantID == "" {
+		return nil, fmt.Errorf("租户ID不能为空")
 	}
 
-	if c.g == nil {
-		return nil, fmt.Errorf("模型未初始化，请先通过 InitializeModel 设置模型")
+	if modelName == "" {
+		return nil, fmt.Errorf("模型名称不能为空")
 	}
 
 	if prompt == "" {
 		return nil, fmt.Errorf("提示词不能为空")
 	}
 
+	// 获取或初始化 Genkit 实例
+	g, genkitConfig, err := c.getOrInitGenkit(ctx, tenantID, modelName)
+	if err != nil {
+		// 错误处理：配置不存在或模型禁用
+		return nil, fmt.Errorf("获取模型实例失败: %w", err)
+	}
+
 	// 调用 Genkit 生成
 	// 注意：当前简化实现，暂不支持自定义 temperature、maxTokens 等参数
 	// 这些参数可以通过 genkit.WithDefaultModel 在初始化时设置
-	resp, err := genkit.Generate(ctx, c.g, ai.WithPrompt(prompt))
+	resp, err := genkit.Generate(ctx, g, ai.WithPrompt(prompt))
 	if err != nil {
 		return nil, fmt.Errorf("生成内容失败: %w", err)
 	}
@@ -442,7 +450,7 @@ func (c *client) Generate(ctx context.Context, prompt string, options *GenerateO
 	// 构建结果
 	result := &GenerateResult{
 		Text:  resp.Text(),
-		Model: c.config.Model,
+		Model: genkitConfig.Model,
 	}
 
 	// 提取 token 使用情况
@@ -457,18 +465,26 @@ func (c *client) Generate(ctx context.Context, prompt string, options *GenerateO
 	return result, nil
 }
 
-// GenerateStream 流式生成内容
-func (c *client) GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
-	if c.config == nil {
-		return nil, fmt.Errorf("客户端未初始化")
+// GenerateStream 流式生成内容（根据租户ID和模型名称）
+func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
+	// 参数验证
+	if tenantID == "" {
+		return nil, fmt.Errorf("租户ID不能为空")
 	}
 
-	if c.g == nil {
-		return nil, fmt.Errorf("模型未初始化，请先通过 InitializeModel 设置模型")
+	if modelName == "" {
+		return nil, fmt.Errorf("模型名称不能为空")
 	}
 
 	if prompt == "" {
 		return nil, fmt.Errorf("提示词不能为空")
+	}
+
+	// 获取或初始化 Genkit 实例
+	g, genkitConfig, err := c.getOrInitGenkit(ctx, tenantID, modelName)
+	if err != nil {
+		// 错误处理：配置不存在或模型禁用
+		return nil, fmt.Errorf("获取模型实例失败: %w", err)
 	}
 
 	// 创建流式响应通道
@@ -479,7 +495,7 @@ func (c *client) GenerateStream(ctx context.Context, prompt string, options *Gen
 		defer close(streamChan)
 
 		// 调用 Genkit 流式生成，使用 WithStreaming 回调处理每个 chunk
-		resp, err := genkit.Generate(ctx, c.g,
+		resp, err := genkit.Generate(ctx, g,
 			ai.WithPrompt(prompt),
 			ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
 				// 发送流式数据块
@@ -518,7 +534,7 @@ func (c *client) GenerateStream(ctx context.Context, prompt string, options *Gen
 		streamChan <- StreamChunk{
 			Content: "",
 			Done:    true,
-			Model:   c.config.Model,
+			Model:   genkitConfig.Model,
 			Usage:   usage,
 		}
 	}()

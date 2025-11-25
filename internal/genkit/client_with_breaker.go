@@ -54,16 +54,18 @@ func (c *ClientWithCircuitBreaker) InitializeModel(ctx context.Context) error {
 }
 
 // Generate 生成内容（带熔断保护）
-func (c *ClientWithCircuitBreaker) Generate(ctx context.Context, prompt string, options *GenerateOptions) (*GenerateResult, error) {
+func (c *ClientWithCircuitBreaker) Generate(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (*GenerateResult, error) {
 	// 使用熔断器执行
 	result, err := c.circuitBreaker.Execute(ctx, func(ctx context.Context) (interface{}, error) {
-		return c.client.Generate(ctx, prompt, options)
+		return c.client.Generate(ctx, tenantID, modelName, prompt, options)
 	})
 
 	if err != nil {
 		// 检查是否是熔断器打开导致的错误
 		if err == middleware.ErrCircuitBreakerOpen {
 			logger.WarnContext(ctx, "AI服务熔断器已打开，请求被拒绝", logger.Fields{
+				"tenant_id":     tenantID,
+				"model_name":    modelName,
 				"prompt_length": len(prompt),
 			})
 			return nil, model.NewAIServiceError(err)
@@ -72,6 +74,8 @@ func (c *ClientWithCircuitBreaker) Generate(ctx context.Context, prompt string, 
 		// 其他错误
 		logger.ErrorContext(ctx, "AI服务生成内容失败", logger.Fields{
 			"error":         err.Error(),
+			"tenant_id":     tenantID,
+			"model_name":    modelName,
 			"prompt_length": len(prompt),
 		})
 		return nil, err
@@ -91,11 +95,13 @@ func (c *ClientWithCircuitBreaker) Generate(ctx context.Context, prompt string, 
 }
 
 // GenerateStream 流式生成内容（带熔断保护）
-func (c *ClientWithCircuitBreaker) GenerateStream(ctx context.Context, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
+func (c *ClientWithCircuitBreaker) GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
 	// 检查熔断器状态
 	state := c.circuitBreaker.GetState()
 	if state == middleware.StateOpen {
 		logger.WarnContext(ctx, "AI服务熔断器已打开，流式请求被拒绝", logger.Fields{
+			"tenant_id":     tenantID,
+			"model_name":    modelName,
 			"prompt_length": len(prompt),
 		})
 		
@@ -111,7 +117,7 @@ func (c *ClientWithCircuitBreaker) GenerateStream(ctx context.Context, prompt st
 	}
 
 	// 调用底层客户端
-	streamChan, err := c.client.GenerateStream(ctx, prompt, options)
+	streamChan, err := c.client.GenerateStream(ctx, tenantID, modelName, prompt, options)
 	if err != nil {
 		// 记录失败
 		c.circuitBreaker.Execute(ctx, func(ctx context.Context) (interface{}, error) {
@@ -120,6 +126,8 @@ func (c *ClientWithCircuitBreaker) GenerateStream(ctx context.Context, prompt st
 
 		logger.ErrorContext(ctx, "AI服务流式生成失败", logger.Fields{
 			"error":         err.Error(),
+			"tenant_id":     tenantID,
+			"model_name":    modelName,
 			"prompt_length": len(prompt),
 		})
 		return nil, err

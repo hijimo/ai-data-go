@@ -77,8 +77,13 @@ func (s *summaryServiceImpl) GenerateSummary(ctx context.Context, req *GenerateS
 	prompt := s.buildSummaryPrompt(messages, req.PreviousSummary, req.SummaryType, req.TargetLength)
 
 	// 4. 调用 Genkit AI 生成摘要
+	// TODO: TASK-5.2 - 从上下文中获取租户ID，从配置中获取摘要专用模型
+	// 临时使用默认值以保持编译通过
+	tenantID := req.TenantID.String()
+	modelName := "gemini-pro" // 摘要服务使用的默认模型
+	
 	temperature := 0.3
-	result, err := s.genkitClient.Generate(ctx, prompt, &genkit.GenerateOptions{
+	result, err := s.genkitClient.Generate(ctx, tenantID, modelName, prompt, &genkit.GenerateOptions{
 		Temperature: &temperature, // 使用较低的温度以保证摘要稳定性
 	})
 	if err != nil {

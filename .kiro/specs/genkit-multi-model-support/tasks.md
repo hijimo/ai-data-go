@@ -89,12 +89,12 @@
 
 **验收标准**:
 
-- [ ] 修改 `Generate()` 方法签名，添加 tenantID 和 modelName 参数
-- [ ] 修改 `GenerateStream()` 方法签名，添加 tenantID 和 modelName 参数
-- [ ] 调用 `getOrInitGenkit()` 获取配置和实例
-- [ ] 添加配置不存在的错误处理
-- [ ] 添加模型禁用的错误处理
-- [ ] 编写单元测试
+- [x] 修改 `Generate()` 方法签名，添加 tenantID 和 modelName 参数
+- [x] 修改 `GenerateStream()` 方法签名，添加 tenantID 和 modelName 参数
+- [x] 调用 `getOrInitGenkit()` 获取配置和实例
+- [x] 添加配置不存在的错误处理
+- [x] 添加模型禁用的错误处理
+- [x] 编写单元测试
 
 **实现文件**:
 
