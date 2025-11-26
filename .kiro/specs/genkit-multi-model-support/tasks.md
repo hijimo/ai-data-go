@@ -116,14 +116,37 @@
 
 **验收标准**:
 
-- [ ] 检查 Genkit 官方仓库是否有 Azure OpenAI 插件
-- [ ] 检查是否可以使用 OpenAI 插件 + 自定义 BaseURL
-- [ ] 确定最终的集成方案
-- [ ] 记录调研结果和决策
+- [x] 检查 Genkit 官方仓库是否有 Azure OpenAI 插件
+- [x] 检查是否可以使用 OpenAI 插件 + 自定义 BaseURL
+- [x] 确定最终的集成方案
+- [x] 记录调研结果和决策
 
 **输出文档**:
 
 - `docs/azure-openai-integration-research.md`
+
+**最终决策**:
+
+✅ **采用方案 A：使用 OpenAI 插件 + 自定义 BaseURL**
+
+**决策理由**：
+
+- 技术可行性已验证（代码实现完成，单元测试通过）
+- 无需开发自定义插件，维护成本低
+- 与 Genkit 生态系统完全兼容
+- 实施风险低，实现简洁
+
+**核心实现**：
+
+```go
+plugin := &oai.OpenAI{
+    Opts: []option.RequestOption{
+        option.WithAPIKey(apiKey),
+        option.WithBaseURL(fmt.Sprintf("%s/openai/deployments/%s", 
+            azureEndpoint, azureDeployment)),
+    },
+}
+```
 
 ---
 
