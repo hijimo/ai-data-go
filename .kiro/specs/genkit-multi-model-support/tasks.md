@@ -161,12 +161,12 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 实现 `createAzurePlugin()` 函数
-- [ ] 在 `InitializeProvider()` 中添加 Azure 分支
-- [ ] 配置正确的模型名称格式
-- [ ] 处理 Azure 特定的配置参数
-- [ ] 添加错误处理
-- [ ] 编写单元测试
+- [x] 实现 `createAzurePlugin()` 函数
+- [x] 在 `InitializeProvider()` 中添加 Azure 分支
+- [x] 配置正确的模型名称格式
+- [x] 处理 Azure 特定的配置参数
+- [x] 添加错误处理
+- [x] 编写单元测试
 
 **实现文件**:
 

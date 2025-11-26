@@ -189,3 +189,115 @@ func TestAzureModelNameMapping(t *testing.T) {
 		})
 	}
 }
+
+// TestCreateAzurePlugin 测试 createAzurePlugin 函数
+func TestCreateAzurePlugin(t *testing.T) {
+	tests := []struct {
+		name        string
+		apiKey      string
+		config      *GenkitConfig
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:   "完整的 Azure 配置",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-4",
+				AzureEndpoint:   "https://my-resource.openai.azure.com",
+				AzureDeployment: "gpt-4-deployment",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "缺少 AzureEndpoint",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-4",
+				AzureDeployment: "gpt-4-deployment",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr:     true,
+			errContains: "azureEndpoint",
+		},
+		{
+			name:   "缺少 AzureDeployment",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-4",
+				AzureEndpoint:   "https://my-resource.openai.azure.com",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr:     true,
+			errContains: "azureDeployment",
+		},
+		{
+			name:   "空的 AzureEndpoint",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-4",
+				AzureEndpoint:   "",
+				AzureDeployment: "gpt-4-deployment",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr:     true,
+			errContains: "azureEndpoint",
+		},
+		{
+			name:   "空的 AzureDeployment",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-4",
+				AzureEndpoint:   "https://my-resource.openai.azure.com",
+				AzureDeployment: "",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr:     true,
+			errContains: "azureDeployment",
+		},
+		{
+			name:   "带尾部斜杠的 Endpoint",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "gpt-35-turbo",
+				AzureEndpoint:   "https://my-resource.openai.azure.com/",
+				AzureDeployment: "gpt-35-turbo",
+				AzureAPIVersion: "2024-02-15-preview",
+			},
+			wantErr: false,
+		},
+		{
+			name:   "自定义域名",
+			apiKey: "test-azure-key",
+			config: &GenkitConfig{
+				Model:           "custom-model",
+				AzureEndpoint:   "https://custom-domain.com",
+				AzureDeployment: "my-deployment",
+				AzureAPIVersion: "2023-12-01",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plugin, err := createAzurePlugin(tt.apiKey, tt.config)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				assert.Nil(t, plugin)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, plugin)
+				
+				// 验证插件配置
+				assert.NotNil(t, plugin.Opts)
+				assert.NotEmpty(t, plugin.Opts)
+			}
+		})
+	}
+}

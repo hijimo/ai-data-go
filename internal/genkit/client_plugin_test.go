@@ -117,7 +117,7 @@ func TestInitializeProvider_AzureOpenAI_MissingConfig(t *testing.T) {
 				Model:           "gpt-4",
 				AzureDeployment: "gpt-4-deployment",
 			},
-			wantErr: "Azure OpenAI 配置缺少必需字段: azureEndpoint 或 azureDeployment",
+			wantErr: "azureEndpoint",
 		},
 		{
 			name: "缺少 AzureDeployment",
@@ -125,7 +125,7 @@ func TestInitializeProvider_AzureOpenAI_MissingConfig(t *testing.T) {
 				Model:         "gpt-4",
 				AzureEndpoint: "https://test-resource.openai.azure.com",
 			},
-			wantErr: "Azure OpenAI 配置缺少必需字段: azureEndpoint 或 azureDeployment",
+			wantErr: "azureDeployment",
 		},
 	}
 

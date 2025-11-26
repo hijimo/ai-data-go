@@ -258,6 +258,36 @@ func (c *client) parseModelConfiguration(modelConfig interface{}) (*GenkitConfig
 	return genkitConfig, nil
 }
 
+// createAzurePlugin 创建 Azure OpenAI 插件
+// 使用 OpenAI 插件 + 自定义 BaseURL 的方式集成 Azure OpenAI
+// BaseURL 格式: https://{endpoint}/openai/deployments/{deployment}
+func createAzurePlugin(apiKey string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
+	// 验证必需的配置字段
+	if genkitConfig.AzureEndpoint == "" {
+		return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint")
+	}
+	if genkitConfig.AzureDeployment == "" {
+		return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureDeployment")
+	}
+
+	// 构建 Azure OpenAI 的 BaseURL
+	// 格式: https://{endpoint}/openai/deployments/{deployment}
+	baseURL := fmt.Sprintf("%s/openai/deployments/%s",
+		genkitConfig.AzureEndpoint,
+		genkitConfig.AzureDeployment,
+	)
+
+	// 创建 OpenAI 插件，配置 Azure 特定的 BaseURL
+	plugin := &oai.OpenAI{
+		Opts: []option.RequestOption{
+			option.WithAPIKey(apiKey),
+			option.WithBaseURL(baseURL),
+		},
+	}
+
+	return plugin, nil
+}
+
 // initializeProvider 根据提供商类型初始化 Genkit 实例
 // 支持的提供商：
 // - googlegenai: Google AI (Gemini)
@@ -324,23 +354,11 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 
 	case "azureopenai":
 		// Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
-		// 构建 Azure OpenAI 的 BaseURL
-		// 格式: https://{endpoint}/openai/deployments/{deployment}
-		if genkitConfig.AzureEndpoint == "" || genkitConfig.AzureDeployment == "" {
-			return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint 或 azureDeployment")
+		plugin, err := createAzurePlugin(tempConfig.APIKey, genkitConfig)
+		if err != nil {
+			return nil, fmt.Errorf("创建 Azure OpenAI 插件失败: %w", err)
 		}
-
-		baseURL := fmt.Sprintf("%s/openai/deployments/%s",
-			genkitConfig.AzureEndpoint,
-			genkitConfig.AzureDeployment,
-		)
-
-		plugin := &oai.OpenAI{
-			Opts: []option.RequestOption{
-				option.WithAPIKey(tempConfig.APIKey),
-				option.WithBaseURL(baseURL),
-			},
-		}
+		
 		fullModelName = "openai/" + genkitConfig.Model
 		
 		// 初始化 Genkit 实例
