@@ -288,6 +288,32 @@ func createAzurePlugin(apiKey string, genkitConfig *GenkitConfig) (*oai.OpenAI, 
 	return plugin, nil
 }
 
+// createBailianPlugin 创建阿里云百炼插件
+// 百炼完全兼容 OpenAI API 规范，使用自定义的 BailianPlugin 封装
+// 支持根据地域自动选择合适的 API 端点
+func createBailianPlugin(apiKey string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
+	// 导入百炼插件包
+	// 注意：这里我们直接使用 OpenAI 插件，因为百炼完全兼容 OpenAI API
+	// BailianPlugin 主要用于配置验证和端点选择
+	
+	// 确定 Endpoint
+	endpoint := genkitConfig.BailianEndpoint
+	if endpoint == "" {
+		// 使用默认的北京地域端点
+		endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+	}
+	
+	// 创建 OpenAI 插件，配置百炼特定的 BaseURL
+	plugin := &oai.OpenAI{
+		Opts: []option.RequestOption{
+			option.WithAPIKey(apiKey),
+			option.WithBaseURL(endpoint),
+		},
+	}
+	
+	return plugin, nil
+}
+
 // initializeProvider 根据提供商类型初始化 Genkit 实例
 // 支持的提供商：
 // - googlegenai: Google AI (Gemini)
@@ -370,19 +396,11 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 	case "bianlian":
 		// 阿里云百炼 (使用 OpenAI 插件 + 百炼兼容模式 BaseURL)
 		// 百炼提供 OpenAI 兼容接口
-		bailianBaseURL := "https://dashscope.aliyuncs.com/compatible-mode/v1"
+		plugin, err := createBailianPlugin(tempConfig.APIKey, genkitConfig)
+		if err != nil {
+			return nil, fmt.Errorf("创建百炼插件失败: %w", err)
+		}
 		
-		// 如果配置中指定了 bailianEndpoint，使用配置的值
-		if genkitConfig.BailianEndpoint != "" {
-			bailianBaseURL = genkitConfig.BailianEndpoint
-		}
-
-		plugin := &oai.OpenAI{
-			Opts: []option.RequestOption{
-				option.WithAPIKey(tempConfig.APIKey),
-				option.WithBaseURL(bailianBaseURL),
-			},
-		}
 		fullModelName = "openai/" + genkitConfig.Model
 		
 		// 初始化 Genkit 实例

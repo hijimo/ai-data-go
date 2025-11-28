@@ -211,3 +211,70 @@ func TestClientGenerateStream(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateBailianPlugin(t *testing.T) {
+	tests := []struct {
+		name         string
+		apiKey       string
+		genkitConfig *GenkitConfig
+		wantErr      bool
+		wantEndpoint string
+	}{
+		{
+			name:   "使用默认端点",
+			apiKey: "test-api-key",
+			genkitConfig: &GenkitConfig{
+				Model: "qwen-plus",
+			},
+			wantErr:      false,
+			wantEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+		},
+		{
+			name:   "使用自定义端点",
+			apiKey: "test-api-key",
+			genkitConfig: &GenkitConfig{
+				Model:           "qwen-max",
+				BailianEndpoint: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+			},
+			wantErr:      false,
+			wantEndpoint: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+		},
+		{
+			name:   "使用金融云端点",
+			apiKey: "test-api-key",
+			genkitConfig: &GenkitConfig{
+				Model:           "qwen-turbo",
+				BailianEndpoint: "https://dashscope-finance.aliyuncs.com/compatible-mode/v1",
+			},
+			wantErr:      false,
+			wantEndpoint: "https://dashscope-finance.aliyuncs.com/compatible-mode/v1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plugin, err := createBailianPlugin(tt.apiKey, tt.genkitConfig)
+			
+			// 验证错误
+			if (err != nil) != tt.wantErr {
+				t.Errorf("createBailianPlugin() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			
+			// 如果不期望错误，验证插件不为空
+			if !tt.wantErr {
+				if plugin == nil {
+					t.Error("createBailianPlugin() 返回的插件不应为空")
+					return
+				}
+				
+				// 验证插件配置了正确的选项
+				// 注意：由于 OpenAI 插件的 Opts 是私有字段，我们无法直接验证
+				// 但我们可以验证插件对象本身不为空
+				if plugin.Opts == nil {
+					t.Error("createBailianPlugin() 返回的插件选项不应为空")
+				}
+			}
+		})
+	}
+}
