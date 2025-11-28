@@ -393,14 +393,24 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 在 `model.ChatOptions` 中添加 `ModelName` 字段
-- [ ] 添加字段验证规则
-- [ ] 更新 Swagger 文档注释
-- [ ] 保持向后兼容（字段可选）
+- [x] 在 `model.ChatOptions` 中添加 `ModelName` 字段
+- [x] 添加字段验证规则
+- [x] 更新 Swagger 文档注释
+- [x] 保持向后兼容（字段可选）
 
 **实现文件**:
 
-- `internal/model/chat.go`
+- `internal/model/request.go`
+- `internal/model/ai.go`
+
+**实现总结**:
+
+- 成功在 `ChatOptions` 中添加了 `ModelName` 字段（指针类型，可选）
+- 添加了完整的验证规则：`omitempty,min=1,max=128`
+- 为所有相关结构体添加了详细的 Swagger 注释
+- 重新生成了 Swagger 文档（swagger.json, swagger.yaml, docs.go）
+- 保持了向后兼容性：字段为可选，不指定时使用会话默认模型
+- 详细文档：`internal/model/SWAGGER_UPDATE_SUMMARY.md`
 
 ---
 

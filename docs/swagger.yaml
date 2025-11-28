@@ -305,63 +305,106 @@ definitions:
         type: string
     type: object
   ChatOptions:
+    description: AI模型的高级配置参数，所有字段都是可选的
     properties:
       maxTokens:
-        description: 最大token数
+        description: |-
+          最大token数
+          @Description 生成内容的最大token数量。实际生成的token数可能少于此值。
+          @Example 2048
         example: 2048
         type: integer
+      modelName:
+        description: |-
+          模型名称（可选，用于指定使用的模型）
+          @Description 指定要使用的AI模型名称，如 "gpt-4"、"gemini-pro"、"qwen-turbo" 等。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定，将使用会话的默认模型。
+          @Example gpt-4
+        example: gpt-4
+        maxLength: 128
+        minLength: 1
+        type: string
       temperature:
-        description: 温度值，控制输出的随机性（0-2）
+        description: |-
+          温度值，控制输出的随机性（0-2）
+          @Description 控制生成文本的随机性。值越高，输出越随机；值越低，输出越确定。范围：0.0-2.0
+          @Example 0.7
         example: 0.7
         maximum: 2
         minimum: 0
         type: number
       topK:
-        description: Top-K采样参数
+        description: |-
+          Top-K采样参数
+          @Description 限制每步采样时考虑的token数量。值越小，输出越集中。
+          @Example 40
         example: 40
         type: integer
       topP:
-        description: Top-P采样参数（0-1）
+        description: |-
+          Top-P采样参数（0-1）
+          @Description 核采样参数，控制生成文本的多样性。值越小，输出越集中；值越大，输出越多样。范围：0.0-1.0
+          @Example 0.9
         example: 0.9
         maximum: 1
         minimum: 0
         type: number
     type: object
   ChatRequest:
+    description: 发送对话消息的请求体
     properties:
       message:
-        description: 用户消息内容
+        description: |-
+          用户消息内容
+          @Description 用户发送的消息文本内容
+          @Example 你好，请介绍一下你自己
         example: 你好，请介绍一下你自己
         type: string
       messageId:
-        description: 消息ID（可选，用于继续对话）
+        description: |-
+          消息ID（可选，用于继续对话）
+          @Description 可选的消息ID，用于继续之前的对话
+          @Example 550e8400-e29b-41d4-a716-446655440000
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       options:
         allOf:
         - $ref: '#/definitions/ChatOptions'
-        description: AI高级参数（可选）
+        description: |-
+          AI高级参数（可选）
+          @Description 可选的AI模型配置参数，包括模型名称、温度、最大token数等。如果指定了 modelName，系统会使用该模型；否则使用会话的默认模型。
     required:
     - message
     type: object
   ChatResponse:
+    description: AI对话的响应数据
     properties:
       message:
-        description: AI生成的消息内容
+        description: |-
+          AI生成的消息内容
+          @Description AI生成的回复文本
+          @Example 你好！我是一个 AI 助手...
         example: 你好！我是一个 AI 助手...
         type: string
       model:
-        description: 使用的模型名称
+        description: |-
+          使用的模型名称
+          @Description 实际使用的AI模型名称（可能是会话默认模型或请求中指定的模型）
+          @Example gemini-1.5-flash
         example: gemini-1.5-flash
         type: string
       sessionId:
-        description: 会话ID
+        description: |-
+          会话ID
+          @Description 会话的唯一标识符
+          @Example session-123456
         example: session-123456
         type: string
       usage:
         allOf:
         - $ref: '#/definitions/Usage'
-        description: Token使用情况
+        description: |-
+          Token使用情况
+          @Description 本次对话的token使用统计
     type: object
   ChatResponseData:
     properties:
@@ -413,33 +456,51 @@ definitions:
     - name
     type: object
   CreateSessionRequest:
+    description: 创建新对话会话的请求体
     properties:
       meta:
         additionalProperties: true
-        description: 元数据（可选）
+        description: |-
+          元数据（可选）
+          @Description 可选的自定义元数据
         type: object
       modelName:
-        description: 模型名称
+        description: |-
+          模型名称
+          @Description 会话使用的AI模型名称，如 "gpt-4"、"gemini-pro"、"qwen-turbo" 等。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。
+          @Example gpt-4
         example: gpt-4
         maxLength: 128
         type: string
       systemPrompt:
-        description: 系统提示词（可选）
+        description: |-
+          系统提示词（可选）
+          @Description 可选的系统级提示词，用于设定AI的角色和行为
+          @Example 你是一个有帮助的AI助手
         example: 你是一个有帮助的AI助手
         type: string
       temperature:
-        description: 温度参数（可选，0-2）
+        description: |-
+          温度参数（可选，0-2）
+          @Description 控制生成文本的随机性，范围：0.0-2.0
+          @Example 0.7
         example: 0.7
         maximum: 2
         minimum: 0
         type: number
       title:
-        description: 会话标题
+        description: |-
+          会话标题
+          @Description 会话的显示标题
+          @Example 我的第一个会话
         example: 我的第一个会话
         maxLength: 255
         type: string
       topP:
-        description: TopP参数（可选，0-1）
+        description: |-
+          TopP参数（可选，0-1）
+          @Description 核采样参数，范围：0.0-1.0
+          @Example 0.9
         example: 0.9
         maximum: 1
         minimum: 0
@@ -954,17 +1015,26 @@ definitions:
         type: string
     type: object
   SendMessageRequest:
+    description: 向指定会话发送消息的请求体
     properties:
       message:
-        description: 消息内容
+        description: |-
+          消息内容
+          @Description 用户发送的消息文本内容
+          @Example 你好，请介绍一下你自己
         example: 你好，请介绍一下你自己
         type: string
       options:
         allOf:
         - $ref: '#/definitions/ChatOptions'
-        description: AI高级参数（可选）
+        description: |-
+          AI高级参数（可选）
+          @Description 可选的AI模型配置参数。如果指定了 modelName，系统会根据当前租户ID和模型名称从数据库查询配置并使用该模型；否则使用会话的默认模型。支持动态切换不同的AI提供商（Google AI、Azure OpenAI、阿里云百炼等）。
       sessionId:
-        description: 会话ID
+        description: |-
+          会话ID
+          @Description 目标会话的唯一标识符
+          @Example 550e8400-e29b-41d4-a716-446655440000
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     required:
@@ -1189,29 +1259,45 @@ definitions:
         type: string
     type: object
   UpdateSessionRequest:
+    description: 更新现有会话配置的请求体，所有字段都是可选的
     properties:
       modelName:
-        description: 模型名称（可选）
+        description: |-
+          模型名称（可选）
+          @Description 更新会话使用的AI模型名称。系统会根据当前租户ID和新的模型名称从 model_configurations 表中查询配置。
+          @Example gpt-4-turbo
         example: gpt-4-turbo
         maxLength: 128
         type: string
       systemPrompt:
-        description: 系统提示词（可选）
+        description: |-
+          系统提示词（可选）
+          @Description 更新系统级提示词
+          @Example 你是一个专业的编程助手
         example: 你是一个专业的编程助手
         type: string
       temperature:
-        description: 温度参数（可选，0-2）
+        description: |-
+          温度参数（可选，0-2）
+          @Description 更新温度参数，范围：0.0-2.0
+          @Example 0.8
         example: 0.8
         maximum: 2
         minimum: 0
         type: number
       title:
-        description: 会话标题（可选）
+        description: |-
+          会话标题（可选）
+          @Description 更新会话的显示标题
+          @Example 更新后的标题
         example: 更新后的标题
         maxLength: 255
         type: string
       topP:
-        description: TopP参数（可选，0-1）
+        description: |-
+          TopP参数（可选，0-1）
+          @Description 更新核采样参数，范围：0.0-1.0
+          @Example 0.95
         example: 0.95
         maximum: 1
         minimum: 0
@@ -1228,17 +1314,27 @@ definitions:
     - status
     type: object
   Usage:
+    description: AI模型的token使用统计信息
     properties:
       completionTokens:
-        description: 生成内容token数
+        description: |-
+          生成内容token数
+          @Description AI生成的回复内容消耗的token数量
+          @Example 50
         example: 50
         type: integer
       promptTokens:
-        description: 提示词token数
+        description: |-
+          提示词token数
+          @Description 输入提示词（包括历史消息）消耗的token数量
+          @Example 10
         example: 10
         type: integer
       totalTokens:
-        description: 总token数
+        description: |-
+          总token数
+          @Description 本次对话总共消耗的token数量（promptTokens + completionTokens）
+          @Example 60
         example: 60
         type: integer
     type: object
