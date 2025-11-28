@@ -322,17 +322,25 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 编写集成测试用例
-- [ ] 测试基本的文本生成
-- [ ] 测试中文处理能力
-- [ ] 测试参数传递
-- [ ] 测试 Token 统计
-- [ ] 测试错误处理
+- [x] 编写集成测试用例
+- [x] 测试基本的文本生成
+- [x] 测试中文处理能力
+- [x] 测试参数传递
+- [x] 测试 Token 统计
+- [x] 测试错误处理
 
 **实现文件**:
 
 - `internal/genkit/bailian_integration_test.go`
 - `test/test_bailian.sh`
+
+**实现总结**:
+
+- 创建了完整的集成测试套件，包含 10 个测试用例
+- 测试覆盖：基本生成、中文处理、参数传递、Token统计、错误处理、响应格式、缓存机制、复杂对话
+- 创建了便捷的测试脚本 `test/test_bailian.sh`
+- 编写了详细的测试文档 `internal/genkit/BAILIAN_INTEGRATION_TEST_README.md`
+- 详细文档：`internal/genkit/TASK-4.4-IMPLEMENTATION-SUMMARY.md`
 
 ---
 
