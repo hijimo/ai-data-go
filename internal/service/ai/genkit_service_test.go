@@ -7,34 +7,62 @@ import (
 	"time"
 
 	"github.com/firebase/genkit/go/ai"
+	"github.com/firebase/genkit/go/genkit"
 
-	"genkit-ai-service/internal/genkit"
+	genkitclient "genkit-ai-service/internal/genkit"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
+	authservice "genkit-ai-service/internal/service/auth"
 )
 
 // mockGenkitClient 模拟 Genkit 客户端
 type mockGenkitClient struct {
-	generateFunc func(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error)
+	generateFunc       func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error)
+	generateStreamFunc func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (<-chan genkitclient.StreamChunk, error)
 }
 
-func (m *mockGenkitClient) Initialize(ctx context.Context, config *genkit.Config) error {
+func (m *mockGenkitClient) Initialize(ctx context.Context, config *genkitclient.Config) error {
 	return nil
 }
 
-func (m *mockGenkitClient) Generate(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error) {
+func (m *mockGenkitClient) Generate(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
 	if m.generateFunc != nil {
-		return m.generateFunc(ctx, prompt, options)
+		return m.generateFunc(ctx, tenantID, modelName, prompt, options)
 	}
-	return &genkit.GenerateResult{
+	return &genkitclient.GenerateResult{
 		Text:  "测试响应",
 		Model: "test-model",
-		Usage: &genkit.Usage{
+		Usage: &genkitclient.Usage{
 			PromptTokens:     10,
 			CompletionTokens: 20,
 			TotalTokens:      30,
 		},
 	}, nil
+}
+
+func (m *mockGenkitClient) GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (<-chan genkitclient.StreamChunk, error) {
+	if m.generateStreamFunc != nil {
+		return m.generateStreamFunc(ctx, tenantID, modelName, prompt, options)
+	}
+	// 返回一个简单的流
+	ch := make(chan genkitclient.StreamChunk, 1)
+	go func() {
+		defer close(ch)
+		ch <- genkitclient.StreamChunk{
+			Content: "测试响应",
+			Done:    true,
+			Model:   "test-model",
+		}
+	}()
+	return ch, nil
+}
+
+func (m *mockGenkitClient) InitializeModel(ctx context.Context) error {
+	return nil
+}
+
+func (m *mockGenkitClient) GetGenkit() *genkit.Genkit {
+	return nil
 }
 
 func (m *mockGenkitClient) SetModel(model ai.Model) {}
@@ -65,6 +93,20 @@ func (w *testWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// createTestContext 创建带有 JWT Claims 的测试上下文
+func createTestContext() context.Context {
+	claims := &model.JWTClaims{
+		TenantID:    "test-tenant-id",
+		DisplayName: "测试用户",
+		Roles:       []string{"user"},
+	}
+	claims.Subject = "test-user-id"
+	
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, authservice.JWTClaimsContextKey, claims)
+	return ctx
+}
+
 // TestChat_Success 测试成功的对话
 func TestChat_Success(t *testing.T) {
 	client := &mockGenkitClient{}
@@ -77,7 +119,8 @@ func TestChat_Success(t *testing.T) {
 		Message: "你好",
 	}
 
-	resp, err := service.Chat(context.Background(), req)
+	ctx := createTestContext()
+	resp, err := service.Chat(ctx, req)
 	if err != nil {
 		t.Fatalf("对话失败: %v", err)
 	}
@@ -110,7 +153,7 @@ func TestChat_Success(t *testing.T) {
 // TestChat_WithOptions 测试带选项的对话
 func TestChat_WithOptions(t *testing.T) {
 	client := &mockGenkitClient{
-		generateFunc: func(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error) {
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
 			if options == nil {
 				t.Error("选项为空")
 			} else {
@@ -121,7 +164,7 @@ func TestChat_WithOptions(t *testing.T) {
 					t.Error("最大 token 数不正确")
 				}
 			}
-			return &genkit.GenerateResult{
+			return &genkitclient.GenerateResult{
 				Text:  "测试响应",
 				Model: "test-model",
 			}, nil
@@ -142,7 +185,8 @@ func TestChat_WithOptions(t *testing.T) {
 		},
 	}
 
-	_, err := service.Chat(context.Background(), req)
+	ctx := createTestContext()
+	_, err := service.Chat(ctx, req)
 	if err != nil {
 		t.Fatalf("对话失败: %v", err)
 	}
@@ -161,7 +205,8 @@ func TestChat_WithExistingSession(t *testing.T) {
 		Message: "你好",
 	}
 
-	resp1, err := service.Chat(context.Background(), req1)
+	ctx := createTestContext()
+	resp1, err := service.Chat(ctx, req1)
 	if err != nil {
 		t.Fatalf("第一次对话失败: %v", err)
 	}
@@ -174,7 +219,7 @@ func TestChat_WithExistingSession(t *testing.T) {
 		MessageID: sessionID,
 	}
 
-	resp2, err := service.Chat(context.Background(), req2)
+	resp2, err := service.Chat(ctx, req2)
 	if err != nil {
 		t.Fatalf("第二次对话失败: %v", err)
 	}
@@ -187,7 +232,7 @@ func TestChat_WithExistingSession(t *testing.T) {
 // TestChat_ContextCancelled 测试上下文取消
 func TestChat_ContextCancelled(t *testing.T) {
 	client := &mockGenkitClient{
-		generateFunc: func(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error) {
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
 			// 模拟上下文取消
 			return nil, context.Canceled
 		},
@@ -201,7 +246,8 @@ func TestChat_ContextCancelled(t *testing.T) {
 		Message: "你好",
 	}
 
-	_, err := service.Chat(context.Background(), req)
+	ctx := createTestContext()
+	_, err := service.Chat(ctx, req)
 	if err == nil {
 		t.Fatal("期望返回错误")
 	}
@@ -210,7 +256,7 @@ func TestChat_ContextCancelled(t *testing.T) {
 // TestChat_GenerateError 测试生成错误
 func TestChat_GenerateError(t *testing.T) {
 	client := &mockGenkitClient{
-		generateFunc: func(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error) {
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
 			return nil, errors.New("生成失败")
 		},
 	}
@@ -223,7 +269,8 @@ func TestChat_GenerateError(t *testing.T) {
 		Message: "你好",
 	}
 
-	_, err := service.Chat(context.Background(), req)
+	ctx := createTestContext()
+	_, err := service.Chat(ctx, req)
 	if err == nil {
 		t.Fatal("期望返回错误")
 	}
@@ -232,10 +279,10 @@ func TestChat_GenerateError(t *testing.T) {
 // TestAbortChat_Success 测试成功中止对话
 func TestAbortChat_Success(t *testing.T) {
 	client := &mockGenkitClient{
-		generateFunc: func(ctx context.Context, prompt string, options *genkit.GenerateOptions) (*genkit.GenerateResult, error) {
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
 			// 模拟长时间运行
 			time.Sleep(100 * time.Millisecond)
-			return &genkit.GenerateResult{
+			return &genkitclient.GenerateResult{
 				Text:  "测试响应",
 				Model: "test-model",
 			}, nil
@@ -256,9 +303,10 @@ func TestAbortChat_Success(t *testing.T) {
 
 	// 在 goroutine 中执行对话
 	done := make(chan error, 1)
+	ctx := createTestContext()
 
 	go func() {
-		_, err := service.Chat(context.Background(), req)
+		_, err := service.Chat(ctx, req)
 		done <- err
 	}()
 
@@ -274,6 +322,14 @@ func TestAbortChat_Success(t *testing.T) {
 	err := service.AbortChat(context.Background(), testSessionID)
 	if err != nil {
 		t.Logf("中止对话返回错误（可能是会话已完成）: %v", err)
+	}
+
+	// 等待 goroutine 完成
+	select {
+	case <-done:
+		// goroutine 已完成
+	case <-time.After(200 * time.Millisecond):
+		t.Log("等待 goroutine 完成超时")
 	}
 }
 
@@ -292,8 +348,8 @@ func TestAbortChat_MessageNotFound(t *testing.T) {
 	}
 }
 
-// TestChatStream_NotImplemented 测试流式对话（未实现）
-func TestChatStream_NotImplemented(t *testing.T) {
+// TestChatStream_Success 测试流式对话
+func TestChatStream_Success(t *testing.T) {
 	client := &mockGenkitClient{}
 	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
 	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
@@ -304,8 +360,224 @@ func TestChatStream_NotImplemented(t *testing.T) {
 		Message: "你好",
 	}
 
-	_, err := service.ChatStream(context.Background(), req)
+	ctx := createTestContext()
+	stream, err := service.ChatStream(ctx, req)
+	if err != nil {
+		t.Fatalf("流式对话失败: %v", err)
+	}
+
+	// 读取流式响应
+	var messages []*model.TencentCloudStreamMessage
+	for msg := range stream {
+		messages = append(messages, msg)
+	}
+
+	if len(messages) == 0 {
+		t.Fatal("未收到流式响应")
+	}
+}
+
+// TestChat_MissingJWTClaims 测试缺少 JWT Claims
+func TestChat_MissingJWTClaims(t *testing.T) {
+	client := &mockGenkitClient{}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	req := &model.ChatRequest{
+		Message: "你好",
+	}
+
+	// 使用没有 JWT Claims 的上下文
+	_, err := service.Chat(context.Background(), req)
 	if err == nil {
-		t.Fatal("期望返回未实现错误")
+		t.Fatal("期望返回错误")
+	}
+}
+
+// TestChat_MissingTenantID 测试缺少租户ID
+func TestChat_MissingTenantID(t *testing.T) {
+	client := &mockGenkitClient{}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	req := &model.ChatRequest{
+		Message: "你好",
+	}
+
+	// 创建一个没有租户ID的 JWT Claims
+	claims := &model.JWTClaims{
+		DisplayName: "测试用户",
+		Roles:       []string{"user"},
+	}
+	claims.Subject = "test-user-id"
+	
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, authservice.JWTClaimsContextKey, claims)
+
+	_, err := service.Chat(ctx, req)
+	if err == nil {
+		t.Fatal("期望返回错误")
+	}
+}
+
+// TestChat_WithModelName 测试指定模型名称
+func TestChat_WithModelName(t *testing.T) {
+	expectedModelName := "gpt-4"
+	client := &mockGenkitClient{
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
+			// 验证传递的模型名称
+			if modelName != expectedModelName {
+				t.Errorf("期望模型名称为 '%s'，实际为 '%s'", expectedModelName, modelName)
+			}
+			return &genkitclient.GenerateResult{
+				Text:  "测试响应",
+				Model: modelName,
+			}, nil
+		},
+	}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	modelName := expectedModelName
+	req := &model.ChatRequest{
+		Message: "你好",
+		Options: &model.ChatOptions{
+			ModelName: &modelName,
+		},
+	}
+
+	ctx := createTestContext()
+	resp, err := service.Chat(ctx, req)
+	if err != nil {
+		t.Fatalf("对话失败: %v", err)
+	}
+
+	if resp.Model != expectedModelName {
+		t.Errorf("期望响应模型为 '%s'，实际为 '%s'", expectedModelName, resp.Model)
+	}
+}
+
+// TestChat_WithoutModelName 测试不指定模型名称（使用默认模型）
+func TestChat_WithoutModelName(t *testing.T) {
+	expectedModelName := "gemini-pro" // 默认模型
+	client := &mockGenkitClient{
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
+			// 验证使用默认模型
+			if modelName != expectedModelName {
+				t.Errorf("期望使用默认模型 '%s'，实际为 '%s'", expectedModelName, modelName)
+			}
+			return &genkitclient.GenerateResult{
+				Text:  "测试响应",
+				Model: modelName,
+			}, nil
+		},
+	}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	req := &model.ChatRequest{
+		Message: "你好",
+		// 不指定 Options 或 ModelName
+	}
+
+	ctx := createTestContext()
+	_, err := service.Chat(ctx, req)
+	if err != nil {
+		t.Fatalf("对话失败: %v", err)
+	}
+}
+
+// TestChat_WithEmptyModelName 测试空模型名称（应使用默认模型）
+func TestChat_WithEmptyModelName(t *testing.T) {
+	expectedModelName := "gemini-pro" // 默认模型
+	client := &mockGenkitClient{
+		generateFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (*genkitclient.GenerateResult, error) {
+			// 验证使用默认模型
+			if modelName != expectedModelName {
+				t.Errorf("期望使用默认模型 '%s'，实际为 '%s'", expectedModelName, modelName)
+			}
+			return &genkitclient.GenerateResult{
+				Text:  "测试响应",
+				Model: modelName,
+			}, nil
+		},
+	}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	emptyModelName := ""
+	req := &model.ChatRequest{
+		Message: "你好",
+		Options: &model.ChatOptions{
+			ModelName: &emptyModelName, // 空字符串
+		},
+	}
+
+	ctx := createTestContext()
+	_, err := service.Chat(ctx, req)
+	if err != nil {
+		t.Fatalf("对话失败: %v", err)
+	}
+}
+
+// TestChatStream_WithModelName 测试流式对话指定模型名称
+func TestChatStream_WithModelName(t *testing.T) {
+	expectedModelName := "gpt-4"
+	client := &mockGenkitClient{
+		generateStreamFunc: func(ctx context.Context, tenantID, modelName, prompt string, options *genkitclient.GenerateOptions) (<-chan genkitclient.StreamChunk, error) {
+			// 验证传递的模型名称
+			if modelName != expectedModelName {
+				t.Errorf("期望模型名称为 '%s'，实际为 '%s'", expectedModelName, modelName)
+			}
+			// 返回一个简单的流
+			ch := make(chan genkitclient.StreamChunk, 1)
+			go func() {
+				defer close(ch)
+				ch <- genkitclient.StreamChunk{
+					Content: "测试响应",
+					Done:    true,
+					Model:   modelName,
+				}
+			}()
+			return ch, nil
+		},
+	}
+	contextManager := NewContextManager(30*time.Minute, 5*time.Minute)
+	log := logger.New(logger.InfoLevel, logger.JSONFormat, &testWriter{t: t})
+
+	service := NewGenkitService(client, contextManager, log)
+
+	modelName := expectedModelName
+	req := &model.ChatRequest{
+		Message: "你好",
+		Options: &model.ChatOptions{
+			ModelName: &modelName,
+		},
+	}
+
+	ctx := createTestContext()
+	stream, err := service.ChatStream(ctx, req)
+	if err != nil {
+		t.Fatalf("流式对话失败: %v", err)
+	}
+
+	// 读取流式响应
+	var messages []*model.TencentCloudStreamMessage
+	for msg := range stream {
+		messages = append(messages, msg)
+	}
+
+	if len(messages) == 0 {
+		t.Fatal("未收到流式响应")
 	}
 }

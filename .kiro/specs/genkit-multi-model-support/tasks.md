@@ -425,13 +425,13 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 从上下文获取当前租户ID
-- [ ] 从 `ChatOptions` 中提取 `ModelName` 字段
-- [ ] 修改 `Generate()` 调用，传递 tenantID 和 modelName
-- [ ] 修改 `GenerateStream()` 调用，传递 tenantID 和 modelName
-- [ ] 添加日志记录（包含租户ID和模型名称）
-- [ ] 添加错误处理
-- [ ] 保持向后兼容
+- [x] 从上下文获取当前租户ID
+- [x] 从 `ChatOptions` 中提取 `ModelName` 字段
+- [x] 修改 `Generate()` 调用，传递 tenantID 和 modelName
+- [x] 修改 `GenerateStream()` 调用，传递 tenantID 和 modelName
+- [x] 添加日志记录（包含租户ID和模型名称）
+- [x] 添加错误处理
+- [x] 保持向后兼容
 
 **实现文件**:
 

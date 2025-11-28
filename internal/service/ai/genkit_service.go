@@ -9,6 +9,7 @@ import (
 	"genkit-ai-service/internal/genkit"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
+	authservice "genkit-ai-service/internal/service/auth"
 	"genkit-ai-service/pkg/errors"
 )
 
@@ -65,17 +66,45 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		"message":   req.Message,
 	})
 
-	// TODO: TASK-5.1 - 从请求中获取模型名称
-	// TODO: TASK-5.2 - 从上下文中获取租户ID
-	// 临时使用默认值以保持编译通过
-	tenantID := "default-tenant"
-	modelName := "gemini-pro"
-	
-	// 如果请求中有 Options 且包含模型名称，使用它
-	// 注意：这是临时方案，TASK-5.1 会在 ChatOptions 中添加 ModelName 字段
-	if req.Options != nil {
-		// 暂时使用默认模型
-		// 在 TASK-5.1 完成后，这里会从 req.Options.ModelName 获取
+	// 从上下文中获取租户ID
+	claims, ok := authservice.GetJWTClaimsFromContext(ctx)
+	if !ok || claims == nil {
+		s.logger.ErrorContext(ctx, "无法从上下文获取JWT Claims", logger.Fields{
+			"sessionId": sessionID,
+		})
+		return nil, errors.NewUnauthorizedError("身份认证信息缺失")
+	}
+
+	tenantID := claims.TenantID
+	if tenantID == "" {
+		s.logger.ErrorContext(ctx, "JWT Claims 中缺少租户ID", logger.Fields{
+			"sessionId": sessionID,
+			"userId":    claims.Subject,
+		})
+		return nil, errors.NewUnauthorizedError("租户信息缺失")
+	}
+
+	// 记录租户ID
+	s.logger.DebugContext(ctx, "从上下文获取租户ID", logger.Fields{
+		"sessionId": sessionID,
+		"tenantId":  tenantID,
+		"userId":    claims.Subject,
+	})
+
+	// 从请求中获取模型名称
+	// 如果请求中指定了模型名称，使用它；否则使用默认模型
+	modelName := "gemini-pro" // 默认模型
+	if req.Options != nil && req.Options.ModelName != nil && *req.Options.ModelName != "" {
+		modelName = *req.Options.ModelName
+		s.logger.DebugContext(ctx, "使用请求中指定的模型", logger.Fields{
+			"sessionId": sessionID,
+			"modelName": modelName,
+		})
+	} else {
+		s.logger.DebugContext(ctx, "使用默认模型", logger.Fields{
+			"sessionId": sessionID,
+			"modelName": modelName,
+		})
 	}
 
 	// 构建生成选项
@@ -159,17 +188,45 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 		"message":   req.Message,
 	})
 
-	// TODO: TASK-5.1 - 从请求中获取模型名称
-	// TODO: TASK-5.2 - 从上下文中获取租户ID
-	// 临时使用默认值以保持编译通过
-	tenantID := "default-tenant"
-	modelName := "gemini-pro"
-	
-	// 如果请求中有 Options 且包含模型名称，使用它
-	// 注意：这是临时方案，TASK-5.1 会在 ChatOptions 中添加 ModelName 字段
-	if req.Options != nil {
-		// 暂时使用默认模型
-		// 在 TASK-5.1 完成后，这里会从 req.Options.ModelName 获取
+	// 从上下文中获取租户ID
+	claims, ok := authservice.GetJWTClaimsFromContext(ctx)
+	if !ok || claims == nil {
+		s.logger.ErrorContext(ctx, "无法从上下文获取JWT Claims", logger.Fields{
+			"sessionId": sessionID,
+		})
+		return nil, errors.NewUnauthorizedError("身份认证信息缺失")
+	}
+
+	tenantID := claims.TenantID
+	if tenantID == "" {
+		s.logger.ErrorContext(ctx, "JWT Claims 中缺少租户ID", logger.Fields{
+			"sessionId": sessionID,
+			"userId":    claims.Subject,
+		})
+		return nil, errors.NewUnauthorizedError("租户信息缺失")
+	}
+
+	// 记录租户ID
+	s.logger.DebugContext(ctx, "从上下文获取租户ID", logger.Fields{
+		"sessionId": sessionID,
+		"tenantId":  tenantID,
+		"userId":    claims.Subject,
+	})
+
+	// 从请求中获取模型名称
+	// 如果请求中指定了模型名称，使用它；否则使用默认模型
+	modelName := "gemini-pro" // 默认模型
+	if req.Options != nil && req.Options.ModelName != nil && *req.Options.ModelName != "" {
+		modelName = *req.Options.ModelName
+		s.logger.DebugContext(ctx, "使用请求中指定的模型", logger.Fields{
+			"sessionId": sessionID,
+			"modelName": modelName,
+		})
+	} else {
+		s.logger.DebugContext(ctx, "使用默认模型", logger.Fields{
+			"sessionId": sessionID,
+			"modelName": modelName,
+		})
 	}
 
 	// 构建生成选项
