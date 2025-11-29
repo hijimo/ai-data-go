@@ -1,108 +1,91 @@
 #!/bin/bash
 
-# 提供商切换端到端测试脚本
-# 用于测试在同一租户下切换不同的模型提供商
+# 提供商切换延迟测试脚本
+# 用于测试在同一租户下切换不同提供商时的性能开销
 
 set -e
 
 echo "=========================================="
-echo "提供商切换端到端测试"
+echo "提供商切换延迟测试"
 echo "=========================================="
 echo ""
 
 # 检查环境变量
 echo "检查环境变量..."
 
-# Azure OpenAI 配置
-if [ -n "$AZURE_OPENAI_API_KEY" ] && [ -n "$AZURE_OPENAI_ENDPOINT" ] && [ -n "$AZURE_OPENAI_DEPLOYMENT" ]; then
-    echo "✓ Azure OpenAI 配置已设置"
-    HAS_AZURE=true
+MISSING_VARS=0
+AVAILABLE_PROVIDERS=0
+
+if [ -z "$GOOGLE_API_KEY" ]; then
+    echo "⚠️  GOOGLE_API_KEY 未设置"
+    MISSING_VARS=$((MISSING_VARS + 1))
 else
-    echo "⚠ Azure OpenAI 配置未完整设置"
-    HAS_AZURE=false
+    echo "✓ GOOGLE_API_KEY 已设置"
+    AVAILABLE_PROVIDERS=$((AVAILABLE_PROVIDERS + 1))
 fi
 
-# 百炼配置
-if [ -n "$BAILIAN_API_KEY" ]; then
-    echo "✓ 百炼配置已设置"
-    HAS_BAILIAN=true
+if [ -z "$AZURE_OPENAI_API_KEY" ] || [ -z "$AZURE_OPENAI_ENDPOINT" ] || [ -z "$AZURE_OPENAI_DEPLOYMENT" ]; then
+    echo "⚠️  Azure OpenAI 环境变量未完整设置"
+    MISSING_VARS=$((MISSING_VARS + 1))
 else
-    echo "⚠ 百炼配置未设置"
-    HAS_BAILIAN=false
+    echo "✓ Azure OpenAI 环境变量已设置"
+    AVAILABLE_PROVIDERS=$((AVAILABLE_PROVIDERS + 1))
 fi
 
-# 检查是否至少有两个提供商配置
-if [ "$HAS_AZURE" = false ] && [ "$HAS_BAILIAN" = false ]; then
+if [ -z "$BAILIAN_API_KEY" ]; then
+    echo "⚠️  BAILIAN_API_KEY 未设置"
+    MISSING_VARS=$((MISSING_VARS + 1))
+else
+    echo "✓ BAILIAN_API_KEY 已设置"
+    AVAILABLE_PROVIDERS=$((AVAILABLE_PROVIDERS + 1))
+fi
+
+echo ""
+
+if [ $AVAILABLE_PROVIDERS -lt 2 ]; then
+    echo "❌ 错误：至少需要配置两个提供商才能测试切换延迟"
+    echo "   当前可用提供商数量: $AVAILABLE_PROVIDERS"
     echo ""
-    echo "❌ 错误：至少需要两个提供商的配置才能测试切换"
+    echo "请设置以下环境变量（至少两组）："
     echo ""
-    echo "请设置以下环境变量："
+    echo "Google AI:"
+    echo "  export GOOGLE_API_KEY=your_google_api_key"
     echo ""
     echo "Azure OpenAI:"
-    echo "  export AZURE_OPENAI_API_KEY=\"your-api-key\""
-    echo "  export AZURE_OPENAI_ENDPOINT=\"https://your-resource.openai.azure.com\""
-    echo "  export AZURE_OPENAI_DEPLOYMENT=\"your-deployment-name\""
-    echo "  export AZURE_OPENAI_API_VERSION=\"2024-02-15-preview\"  # 可选"
+    echo "  export AZURE_OPENAI_API_KEY=your_azure_api_key"
+    echo "  export AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com"
+    echo "  export AZURE_OPENAI_DEPLOYMENT=your_deployment_name"
     echo ""
-    echo "百炼:"
-    echo "  export BAILIAN_API_KEY=\"your-api-key\""
-    echo "  export BAILIAN_ENDPOINT=\"https://dashscope.aliyuncs.com/compatible-mode/v1\"  # 可选"
-    echo "  export BAILIAN_MODEL=\"qwen-plus\"  # 可选"
+    echo "阿里云百炼:"
+    echo "  export BAILIAN_API_KEY=your_bailian_api_key"
+    echo "  export BAILIAN_ENDPOINT=https://dashscope.aliyuncs.com/compatible-mode/v1  # 可选"
     echo ""
     exit 1
 fi
 
-if [ "$HAS_AZURE" = false ] || [ "$HAS_BAILIAN" = false ]; then
-    echo ""
-    echo "⚠ 警告：只配置了一个提供商，无法完整测试切换功能"
-    echo "建议配置至少两个提供商以获得完整的测试覆盖"
-    echo ""
-fi
-
-# 数据库配置（可选）
-if [ -z "$DB_HOST" ]; then
-    export DB_HOST="localhost"
-fi
-if [ -z "$DB_PORT" ]; then
-    export DB_PORT="5432"
-fi
-if [ -z "$DB_USER" ]; then
-    export DB_USER="postgres"
-fi
-if [ -z "$DB_PASSWORD" ]; then
-    export DB_PASSWORD="postgres"
-fi
-if [ -z "$DB_NAME" ]; then
-    export DB_NAME="genkit_test"
-fi
-
+echo "✓ 环境变量检查通过（可用提供商: $AVAILABLE_PROVIDERS）"
 echo ""
-echo "数据库配置:"
-echo "  Host: $DB_HOST"
-echo "  Port: $DB_PORT"
-echo "  User: $DB_USER"
-echo "  Database: $DB_NAME"
+
+# 检查数据库连接
+echo "检查数据库连接..."
+if [ -z "$DATABASE_URL" ]; then
+    echo "⚠️  DATABASE_URL 未设置，使用默认值"
+    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/genkit_test?sslmode=disable"
+fi
+echo "✓ 数据库 URL: $DATABASE_URL"
 echo ""
 
 # 运行测试
 echo "=========================================="
-echo "开始运行提供商切换测试..."
+echo "运行提供商切换延迟测试..."
 echo "=========================================="
 echo ""
 
 cd "$(dirname "$0")/.."
 
-go test -v -timeout 10m ./test/e2e -run TestProviderSwitching
-
-TEST_EXIT_CODE=$?
+go test -v -run TestProviderSwitchingLatency ./test/e2e/ -timeout 10m
 
 echo ""
 echo "=========================================="
-if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo "✓ 提供商切换测试通过"
-else
-    echo "✗ 提供商切换测试失败"
-fi
+echo "测试完成"
 echo "=========================================="
-
-exit $TEST_EXIT_CODE
