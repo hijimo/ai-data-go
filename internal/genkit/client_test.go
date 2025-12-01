@@ -253,7 +253,8 @@ func TestCreateBailianPlugin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plugin, err := createBailianPlugin(tt.apiKey, tt.genkitConfig)
+			ctx := context.Background()
+			plugin, err := createBailianPlugin(ctx, tt.apiKey, tt.genkitConfig)
 			
 			// 验证错误
 			if (err != nil) != tt.wantErr {

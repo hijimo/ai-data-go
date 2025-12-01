@@ -527,17 +527,27 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [-] 记录提供商选择日志
-- [ ] 记录 API 调用耗时
-- [ ] 记录 Token 使用统计
-- [ ] 记录错误详情
-- [ ] 添加 TraceID 追踪
-- [ ] 确保敏感信息脱敏
+- [x] 记录提供商选择日志
+- [x] 记录 API 调用耗时
+- [x] 记录 Token 使用统计
+- [x] 记录错误详情
+- [x] 添加 TraceID 追踪
+- [x] 确保敏感信息脱敏
 
 **实现文件**:
 
 - `internal/genkit/client.go`
 - `internal/service/ai/genkit_service.go`
+
+**实现总结**:
+
+- 成功在 Generate 和 GenerateStream 方法中集成 TraceID 追踪
+- 所有日志记录自动包含 TraceID（通过 logger.InfoContext 自动提取）
+- 添加了毫秒级性能指标（durationMs、ttfbMs）
+- TraceID 通过 Context 自动传递，无需手动处理
+- 创建了详细的快速参考文档和实现总结
+- 详细文档：`internal/genkit/TASK-6.4-TRACEID-IMPLEMENTATION-SUMMARY.md`
+- 快速参考：`internal/genkit/TRACEID_TRACKING_QUICK_REF.md`
 
 ---
 

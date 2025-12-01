@@ -2,7 +2,7 @@ package ai
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 	"strings"
 	"time"
 
@@ -117,6 +117,8 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		if sessionCtx.Err() == context.Canceled {
 			s.logger.WarnContext(ctx, "对话请求被取消", logger.Fields{
 				"sessionId": sessionID,
+				"tenantId":  tenantID,
+				"modelName": modelName,
 				"error":     err.Error(),
 			})
 			return nil, errors.NewContextCancelledError()
@@ -124,6 +126,9 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 
 		s.logger.ErrorContext(ctx, "AI 生成失败", logger.Fields{
 			"sessionId": sessionID,
+			"tenantId":  tenantID,
+			"modelName": modelName,
+			"message":   req.Message,
 			"error":     err.Error(),
 		})
 		return nil, errors.NewAIServiceError(err)
@@ -145,14 +150,24 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		}
 	}
 
-	// 记录成功日志
+	// 记录成功日志（包含详细的 Token 使用统计）
 	duration := time.Since(startTime)
-	s.logger.InfoContext(sessionCtx, "对话请求处理完成", logger.Fields{
+	logFields := logger.Fields{
 		"sessionId": sessionID,
+		"tenantId":  tenantID,
+		"modelName": modelName,
 		"model":     result.Model,
 		"duration":  duration.String(),
-		"tokens":    response.Usage,
-	})
+	}
+	
+	// 添加 Token 使用统计
+	if response.Usage != nil {
+		logFields["promptTokens"] = response.Usage.PromptTokens
+		logFields["completionTokens"] = response.Usage.CompletionTokens
+		logFields["totalTokens"] = response.Usage.TotalTokens
+	}
+	
+	s.logger.InfoContext(sessionCtx, "对话请求处理完成", logFields)
 
 	return response, nil
 }
@@ -237,6 +252,9 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 	if err != nil {
 		s.logger.ErrorContext(ctx, "启动流式生成失败", logger.Fields{
 			"sessionId": sessionID,
+			"tenantId":  tenantID,
+			"modelName": modelName,
+			"message":   req.Message,
 			"error":     err.Error(),
 		})
 		return nil, errors.NewAIServiceError(err)
@@ -259,12 +277,19 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 				// 检查是否是上下文取消错误
 				if sessionCtx.Err() == context.Canceled {
 					s.logger.WarnContext(ctx, "流式对话请求被取消", logger.Fields{
-						"sessionId": sessionID,
+						"sessionId":   sessionID,
+						"tenantId":    tenantID,
+						"modelName":   modelName,
+						"chunkCount":  len(fullContent),
 					})
 				} else {
 					s.logger.ErrorContext(ctx, "流式生成出错", logger.Fields{
-						"sessionId": sessionID,
-						"error":     chunk.Error.Error(),
+						"sessionId":   sessionID,
+						"tenantId":    tenantID,
+						"modelName":   modelName,
+						"chunkCount":  len(fullContent),
+						"error":       chunk.Error.Error(),
+						"errorType":   fmt.Sprintf("%T", chunk.Error),
 					})
 				}
 
@@ -337,14 +362,24 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 					Usage:        lastUsage,
 				}
 
-				// 记录完成日志
+				// 记录完成日志（包含详细的 Token 使用统计）
 				duration := time.Since(startTime)
-				s.logger.InfoContext(sessionCtx, "流式对话请求处理完成", logger.Fields{
+				logFields := logger.Fields{
 					"sessionId": sessionID,
+					"tenantId":  tenantID,
+					"modelName": modelName,
 					"model":     lastModel,
 					"duration":  duration.String(),
-					"tokens":    lastUsage,
-				})
+				}
+				
+				// 添加 Token 使用统计
+				if lastUsage != nil {
+					logFields["promptTokens"] = lastUsage.PromptTokens
+					logFields["completionTokens"] = lastUsage.CompletionTokens
+					logFields["totalTokens"] = lastUsage.TotalTokens
+				}
+				
+				s.logger.InfoContext(sessionCtx, "流式对话请求处理完成", logFields)
 				break
 			}
 

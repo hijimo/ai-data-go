@@ -44,14 +44,25 @@ func (m *mockGenkitClient) GenerateStream(ctx context.Context, tenantID, modelNa
 	if m.generateStreamFunc != nil {
 		return m.generateStreamFunc(ctx, tenantID, modelName, prompt, options)
 	}
-	// 返回一个简单的流
-	ch := make(chan genkitclient.StreamChunk, 1)
+	// 返回一个简单的流，包含 Token 使用统计
+	ch := make(chan genkitclient.StreamChunk, 2)
 	go func() {
 		defer close(ch)
+		// 发送内容块
 		ch <- genkitclient.StreamChunk{
 			Content: "测试响应",
+			Done:    false,
+		}
+		// 发送完成标记，包含 Token 使用统计
+		ch <- genkitclient.StreamChunk{
+			Content: "",
 			Done:    true,
 			Model:   "test-model",
+			Usage: &genkitclient.Usage{
+				PromptTokens:     10,
+				CompletionTokens: 20,
+				TotalTokens:      30,
+			},
 		}
 	}()
 	return ch, nil

@@ -1,6 +1,7 @@
 package genkit
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -282,7 +283,8 @@ func TestCreateAzurePlugin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plugin, err := createAzurePlugin(tt.apiKey, tt.config)
+			ctx := context.Background()
+			plugin, err := createAzurePlugin(ctx, tt.apiKey, tt.config)
 
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -149,3 +149,54 @@ type StreamChunk struct {
 	// 错误信息
 	Error error
 }
+
+// MaskAPIKey 脱敏 API 密钥
+// 只保留前4位和后4位，中间用星号替换
+// 如果密钥长度小于等于8位，全部用星号替换
+func MaskAPIKey(apiKey string) string {
+	if apiKey == "" {
+		return ""
+	}
+	
+	length := len(apiKey)
+	if length <= 8 {
+		return "****"
+	}
+	
+	return apiKey[:4] + "****" + apiKey[length-4:]
+}
+
+// MaskSensitiveConfig 脱敏配置中的敏感信息
+// 返回一个可以安全记录到日志的配置副本
+func MaskSensitiveConfig(config interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	
+	// 使用 JSON 序列化/反序列化来转换
+	data, err := json.Marshal(config)
+	if err != nil {
+		return result
+	}
+	
+	var temp map[string]interface{}
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return result
+	}
+	
+	// 脱敏敏感字段
+	for key, value := range temp {
+		switch key {
+		case "apiKey", "APIKey", "api_key":
+			// API 密钥脱敏
+			if strValue, ok := value.(string); ok {
+				result[key] = MaskAPIKey(strValue)
+			} else {
+				result[key] = "****"
+			}
+		default:
+			// 其他字段保持不变
+			result[key] = value
+		}
+	}
+	
+	return result
+}
