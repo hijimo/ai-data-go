@@ -39,7 +39,38 @@ func NewSessionHandler(sessionService session.SessionService, log logger.Logger)
 
 // CreateSession 创建会话
 // @Summary 创建新会话
-// @Description 创建一个新的聊天会话
+// @Description 创建一个新的聊天会话。需要指定会话使用的AI模型名称（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。
+// @Description
+// @Description 使用示例：
+// @Description 1. 创建使用 Azure OpenAI GPT-4 的会话：
+// @Description ```json
+// @Description {
+// @Description   "title": "技术讨论",
+// @Description   "modelName": "gpt-4",
+// @Description   "systemPrompt": "你是一个专业的技术顾问",
+// @Description   "temperature": 0.7
+// @Description }
+// @Description ```
+// @Description
+// @Description 2. 创建使用阿里云百炼 Qwen 的会话：
+// @Description ```json
+// @Description {
+// @Description   "title": "中文写作助手",
+// @Description   "modelName": "qwen-turbo",
+// @Description   "systemPrompt": "你是一个专业的中文写作助手",
+// @Description   "temperature": 0.9
+// @Description }
+// @Description ```
+// @Description
+// @Description 3. 创建使用 Google AI Gemini 的会话：
+// @Description ```json
+// @Description {
+// @Description   "title": "代码分析",
+// @Description   "modelName": "gemini-pro",
+// @Description   "systemPrompt": "你是一个代码审查专家",
+// @Description   "temperature": 0.3
+// @Description }
+// @Description ```
 // @Tags sessions
 // @Accept json
 // @Produce json
@@ -255,7 +286,42 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 
 // UpdateSession 更新会话
 // @Summary 更新会话
-// @Description 更新会话的标题、配置等信息
+// @Description 更新会话的标题、配置等信息。可以通过 modelName 字段切换会话使用的AI模型。系统会根据当前租户ID和新的模型名称从 model_configurations 表中查询配置。
+// @Description
+// @Description 使用示例：
+// @Description 1. 只更新会话标题：
+// @Description ```json
+// @Description {
+// @Description   "title": "新的会话标题"
+// @Description }
+// @Description ```
+// @Description
+// @Description 2. 切换会话使用的模型（从 Gemini 切换到 GPT-4）：
+// @Description ```json
+// @Description {
+// @Description   "modelName": "gpt-4",
+// @Description   "temperature": 0.8
+// @Description }
+// @Description ```
+// @Description
+// @Description 3. 更新系统提示词和模型参数：
+// @Description ```json
+// @Description {
+// @Description   "systemPrompt": "你是一个专业的Python编程助手",
+// @Description   "temperature": 0.5,
+// @Description   "topP": 0.95
+// @Description }
+// @Description ```
+// @Description
+// @Description 4. 同时更新多个字段：
+// @Description ```json
+// @Description {
+// @Description   "title": "Python编程助手",
+// @Description   "modelName": "qwen-turbo",
+// @Description   "systemPrompt": "你是一个专业的Python编程助手",
+// @Description   "temperature": 0.7
+// @Description }
+// @Description ```
 // @Tags sessions
 // @Accept json
 // @Produce json

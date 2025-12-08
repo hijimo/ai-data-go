@@ -928,7 +928,7 @@
                 }
             },
             "post": {
-                "description": "创建一个新的聊天会话",
+                "description": "创建一个新的聊天会话。需要指定会话使用的AI模型名称（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。\n\n使用示例：\n1. 创建使用 Azure OpenAI GPT-4 的会话：\n```json\n{\n\"title\": \"技术讨论\",\n\"modelName\": \"gpt-4\",\n\"systemPrompt\": \"你是一个专业的技术顾问\",\n\"temperature\": 0.7\n}\n```\n\n2. 创建使用阿里云百炼 Qwen 的会话：\n```json\n{\n\"title\": \"中文写作助手\",\n\"modelName\": \"qwen-turbo\",\n\"systemPrompt\": \"你是一个专业的中文写作助手\",\n\"temperature\": 0.9\n}\n```\n\n3. 创建使用 Google AI Gemini 的会话：\n```json\n{\n\"title\": \"代码分析\",\n\"modelName\": \"gemini-pro\",\n\"systemPrompt\": \"你是一个代码审查专家\",\n\"temperature\": 0.3\n}\n```",
                 "consumes": [
                     "application/json"
                 ],
@@ -1157,7 +1157,7 @@
                 }
             },
             "patch": {
-                "description": "更新会话的标题、配置等信息",
+                "description": "更新会话的标题、配置等信息。可以通过 modelName 字段切换会话使用的AI模型。系统会根据当前租户ID和新的模型名称从 model_configurations 表中查询配置。\n\n使用示例：\n1. 只更新会话标题：\n```json\n{\n\"title\": \"新的会话标题\"\n}\n```\n\n2. 切换会话使用的模型（从 Gemini 切换到 GPT-4）：\n```json\n{\n\"modelName\": \"gpt-4\",\n\"temperature\": 0.8\n}\n```\n\n3. 更新系统提示词和模型参数：\n```json\n{\n\"systemPrompt\": \"你是一个专业的Python编程助手\",\n\"temperature\": 0.5,\n\"topP\": 0.95\n}\n```\n\n4. 同时更新多个字段：\n```json\n{\n\"title\": \"Python编程助手\",\n\"modelName\": \"qwen-turbo\",\n\"systemPrompt\": \"你是一个专业的Python编程助手\",\n\"temperature\": 0.7\n}\n```",
                 "consumes": [
                     "application/json"
                 ],
@@ -1370,7 +1370,7 @@
                 }
             },
             "post": {
-                "description": "在指定会话中发送消息并获取AI回复",
+                "description": "在指定会话中发送消息并获取AI回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。\n\n使用示例：\n1. 使用会话默认模型：\n```json\n{\n\"message\": \"你好，请介绍一下你自己\"\n}\n```\n\n2. 指定使用 Azure OpenAI 的 GPT-4 模型：\n```json\n{\n\"message\": \"请用中文解释量子计算\",\n\"options\": {\n\"modelName\": \"gpt-4\",\n\"temperature\": 0.7,\n\"maxTokens\": 2048\n}\n}\n```\n\n3. 指定使用阿里云百炼的 Qwen 模型：\n```json\n{\n\"message\": \"写一首关于春天的诗\",\n\"options\": {\n\"modelName\": \"qwen-turbo\",\n\"temperature\": 0.9\n}\n}\n```\n\n4. 指定使用 Google AI 的 Gemini 模型：\n```json\n{\n\"message\": \"分析这段代码的时间复杂度\",\n\"options\": {\n\"modelName\": \"gemini-pro\",\n\"temperature\": 0.3,\n\"maxTokens\": 1024\n}\n}\n```",
                 "consumes": [
                     "application/json"
                 ],
@@ -1441,7 +1441,7 @@
         },
         "/chat/sessions/{id}/messages/stream": {
             "post": {
-                "description": "在指定会话中发送消息并以 SSE 流式返回 AI 回复",
+                "description": "在指定会话中发送消息并以 SSE 流式返回 AI 回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。\n\n使用示例：\n1. 使用会话默认模型进行流式对话：\n```json\n{\n\"message\": \"请详细介绍人工智能的发展历史\"\n}\n```\n\n2. 指定使用 Azure OpenAI 的 GPT-4 模型进行流式对话：\n```json\n{\n\"message\": \"写一篇关于机器学习的技术文章\",\n\"options\": {\n\"modelName\": \"gpt-4\",\n\"temperature\": 0.8,\n\"maxTokens\": 4096\n}\n}\n```\n\n3. 指定使用阿里云百炼的 Qwen 模型进行流式对话：\n```json\n{\n\"message\": \"用中文写一个Python爬虫示例\",\n\"options\": {\n\"modelName\": \"qwen-turbo\",\n\"temperature\": 0.7\n}\n}\n```\n\n响应格式（SSE）：\n```\ndata: {\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\"你好\"}}],\"usage\":null}\ndata: {\"choices\":[{\"delta\":{\"content\":\"！\"}}],\"usage\":null}\ndata: {\"choices\":[{\"delta\":{\"content\":\"我是\"}}],\"usage\":null}\ndata: {\"choices\":[{\"delta\":{\"content\":\"AI助手\"}}],\"usage\":null}\ndata: {\"choices\":[{\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":50,\"total_tokens\":60}}\ndata: [DONE]\n```",
                 "consumes": [
                     "application/json"
                 ],

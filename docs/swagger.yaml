@@ -2077,7 +2077,39 @@ paths:
     post:
       consumes:
       - application/json
-      description: 创建一个新的聊天会话
+      description: |-
+        创建一个新的聊天会话。需要指定会话使用的AI模型名称（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。
+
+        使用示例：
+        1. 创建使用 Azure OpenAI GPT-4 的会话：
+        ```json
+        {
+        "title": "技术讨论",
+        "modelName": "gpt-4",
+        "systemPrompt": "你是一个专业的技术顾问",
+        "temperature": 0.7
+        }
+        ```
+
+        2. 创建使用阿里云百炼 Qwen 的会话：
+        ```json
+        {
+        "title": "中文写作助手",
+        "modelName": "qwen-turbo",
+        "systemPrompt": "你是一个专业的中文写作助手",
+        "temperature": 0.9
+        }
+        ```
+
+        3. 创建使用 Google AI Gemini 的会话：
+        ```json
+        {
+        "title": "代码分析",
+        "modelName": "gemini-pro",
+        "systemPrompt": "你是一个代码审查专家",
+        "temperature": 0.3
+        }
+        ```
       parameters:
       - description: 创建会话请求
         in: body
@@ -2183,7 +2215,43 @@ paths:
     patch:
       consumes:
       - application/json
-      description: 更新会话的标题、配置等信息
+      description: |-
+        更新会话的标题、配置等信息。可以通过 modelName 字段切换会话使用的AI模型。系统会根据当前租户ID和新的模型名称从 model_configurations 表中查询配置。
+
+        使用示例：
+        1. 只更新会话标题：
+        ```json
+        {
+        "title": "新的会话标题"
+        }
+        ```
+
+        2. 切换会话使用的模型（从 Gemini 切换到 GPT-4）：
+        ```json
+        {
+        "modelName": "gpt-4",
+        "temperature": 0.8
+        }
+        ```
+
+        3. 更新系统提示词和模型参数：
+        ```json
+        {
+        "systemPrompt": "你是一个专业的Python编程助手",
+        "temperature": 0.5,
+        "topP": 0.95
+        }
+        ```
+
+        4. 同时更新多个字段：
+        ```json
+        {
+        "title": "Python编程助手",
+        "modelName": "qwen-turbo",
+        "systemPrompt": "你是一个专业的Python编程助手",
+        "temperature": 0.7
+        }
+        ```
       parameters:
       - description: 会话ID
         in: path
@@ -2327,7 +2395,51 @@ paths:
     post:
       consumes:
       - application/json
-      description: 在指定会话中发送消息并获取AI回复
+      description: |-
+        在指定会话中发送消息并获取AI回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。
+
+        使用示例：
+        1. 使用会话默认模型：
+        ```json
+        {
+        "message": "你好，请介绍一下你自己"
+        }
+        ```
+
+        2. 指定使用 Azure OpenAI 的 GPT-4 模型：
+        ```json
+        {
+        "message": "请用中文解释量子计算",
+        "options": {
+        "modelName": "gpt-4",
+        "temperature": 0.7,
+        "maxTokens": 2048
+        }
+        }
+        ```
+
+        3. 指定使用阿里云百炼的 Qwen 模型：
+        ```json
+        {
+        "message": "写一首关于春天的诗",
+        "options": {
+        "modelName": "qwen-turbo",
+        "temperature": 0.9
+        }
+        }
+        ```
+
+        4. 指定使用 Google AI 的 Gemini 模型：
+        ```json
+        {
+        "message": "分析这段代码的时间复杂度",
+        "options": {
+        "modelName": "gemini-pro",
+        "temperature": 0.3,
+        "maxTokens": 1024
+        }
+        }
+        ```
       parameters:
       - description: 会话ID
         in: path
@@ -2374,7 +2486,49 @@ paths:
     post:
       consumes:
       - application/json
-      description: 在指定会话中发送消息并以 SSE 流式返回 AI 回复
+      description: |-
+        在指定会话中发送消息并以 SSE 流式返回 AI 回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。
+
+        使用示例：
+        1. 使用会话默认模型进行流式对话：
+        ```json
+        {
+        "message": "请详细介绍人工智能的发展历史"
+        }
+        ```
+
+        2. 指定使用 Azure OpenAI 的 GPT-4 模型进行流式对话：
+        ```json
+        {
+        "message": "写一篇关于机器学习的技术文章",
+        "options": {
+        "modelName": "gpt-4",
+        "temperature": 0.8,
+        "maxTokens": 4096
+        }
+        }
+        ```
+
+        3. 指定使用阿里云百炼的 Qwen 模型进行流式对话：
+        ```json
+        {
+        "message": "用中文写一个Python爬虫示例",
+        "options": {
+        "modelName": "qwen-turbo",
+        "temperature": 0.7
+        }
+        }
+        ```
+
+        响应格式（SSE）：
+        ```
+        data: {"choices":[{"delta":{"role":"assistant","content":"你好"}}],"usage":null}
+        data: {"choices":[{"delta":{"content":"！"}}],"usage":null}
+        data: {"choices":[{"delta":{"content":"我是"}}],"usage":null}
+        data: {"choices":[{"delta":{"content":"AI助手"}}],"usage":null}
+        data: {"choices":[{"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":50,"total_tokens":60}}
+        data: [DONE]
+        ```
       parameters:
       - description: 会话ID
         in: path

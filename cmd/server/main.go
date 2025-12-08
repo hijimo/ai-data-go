@@ -162,7 +162,8 @@ func main() {
 	}()
 
 	// 4. 初始化 Genkit 客户端（可选）
-	genkitClient, err := initGenkit(cfg, log)
+	// 注意：Genkit 客户端需要数据库连接来查询模型配置
+	genkitClient, err := initGenkit(db, cfg, log)
 	if err != nil {
 		log.Warn("初始化 Genkit 客户端失败，AI服务将不可用", logger.Fields{"error": err})
 		genkitClient = nil
@@ -541,12 +542,55 @@ func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.
 }
 
 // initGenkit 初始化 Genkit 客户端
-func initGenkit(cfg *config.Config, log logger.Logger) (genkit.Client, error) {
+// 注入 ModelConfigurationRepository 以支持动态模型配置
+func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (genkit.Client, error) {
 	log.Info("初始化 Genkit 客户端...", logger.Fields{
 		"model": cfg.Genkit.Model,
 	})
 
-	client := genkit.NewClient()
+	// 1. 获取 GORM 数据库实例
+	gormDB := db.GetDB()
+	if gormDB == nil {
+		log.Warn("无法获取数据库实例，Genkit 客户端将以传统模式初始化", nil)
+		// 降级到传统模式：不注入 repository
+		client := genkit.NewClient()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		genkitConfig := &genkit.Config{
+			APIKey:             cfg.Genkit.APIKey,
+			Model:              cfg.Genkit.Model,
+			DefaultTemperature: cfg.Genkit.DefaultTemperature,
+			DefaultMaxTokens:   cfg.Genkit.DefaultMaxTokens,
+		}
+
+		if err := client.Initialize(ctx, genkitConfig); err != nil {
+			return nil, fmt.Errorf("初始化 Genkit 客户端失败: %w", err)
+		}
+
+		// 初始化并设置 Genkit 模型
+		if err := client.InitializeModel(ctx); err != nil {
+			return nil, fmt.Errorf("初始化 Genkit 模型失败: %w", err)
+		}
+
+		log.Info("Genkit 客户端初始化成功（传统模式）", logger.Fields{
+			"model": cfg.Genkit.Model,
+		})
+
+		return client, nil
+	}
+
+	// 2. 创建 ModelConfigurationRepository
+	modelConfigRepo := repository.NewModelConfigurationRepository(gormDB)
+	
+	log.Info("创建 Genkit 客户端（注入 ModelConfigurationRepository）", logger.Fields{
+		"mode": "dynamic_configuration",
+	})
+
+	// 3. 创建 Genkit 客户端并注入 repository
+	client := genkit.NewClientWithRepo(modelConfigRepo)
+	
+	// 4. 初始化客户端（传统配置，用于向后兼容）
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -561,15 +605,16 @@ func initGenkit(cfg *config.Config, log logger.Logger) (genkit.Client, error) {
 		return nil, fmt.Errorf("初始化 Genkit 客户端失败: %w", err)
 	}
 
-	// 初始化并设置 Genkit 模型
-	// 注意：这里需要根据实际使用的模型提供者来初始化模型
-	// 例如使用 Google AI 的 Gemini 模型
+	// 5. 初始化并设置 Genkit 模型（用于向后兼容）
+	// 注意：这里初始化的是默认模型，实际使用时会根据租户和模型名称动态选择
 	if err := client.InitializeModel(ctx); err != nil {
 		return nil, fmt.Errorf("初始化 Genkit 模型失败: %w", err)
 	}
 
-	log.Info("Genkit 客户端初始化成功", logger.Fields{
-		"model": cfg.Genkit.Model,
+	log.Info("Genkit 客户端初始化成功（动态配置模式）", logger.Fields{
+		"model":                cfg.Genkit.Model,
+		"repository_injected":  true,
+		"dynamic_config_enabled": true,
 	})
 
 	return client, nil

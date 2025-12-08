@@ -34,7 +34,50 @@ func NewMessageHandler(messageService session.MessageService, log logger.Logger)
 
 // SendMessage 发送消息
 // @Summary 发送消息
-// @Description 在指定会话中发送消息并获取AI回复
+// @Description 在指定会话中发送消息并获取AI回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。
+// @Description
+// @Description 使用示例：
+// @Description 1. 使用会话默认模型：
+// @Description ```json
+// @Description {
+// @Description   "message": "你好，请介绍一下你自己"
+// @Description }
+// @Description ```
+// @Description
+// @Description 2. 指定使用 Azure OpenAI 的 GPT-4 模型：
+// @Description ```json
+// @Description {
+// @Description   "message": "请用中文解释量子计算",
+// @Description   "options": {
+// @Description     "modelName": "gpt-4",
+// @Description     "temperature": 0.7,
+// @Description     "maxTokens": 2048
+// @Description   }
+// @Description }
+// @Description ```
+// @Description
+// @Description 3. 指定使用阿里云百炼的 Qwen 模型：
+// @Description ```json
+// @Description {
+// @Description   "message": "写一首关于春天的诗",
+// @Description   "options": {
+// @Description     "modelName": "qwen-turbo",
+// @Description     "temperature": 0.9
+// @Description   }
+// @Description }
+// @Description ```
+// @Description
+// @Description 4. 指定使用 Google AI 的 Gemini 模型：
+// @Description ```json
+// @Description {
+// @Description   "message": "分析这段代码的时间复杂度",
+// @Description   "options": {
+// @Description     "modelName": "gemini-pro",
+// @Description     "temperature": 0.3,
+// @Description     "maxTokens": 1024
+// @Description   }
+// @Description }
+// @Description ```
 // @Tags messages
 // @Accept json
 // @Produce json
@@ -285,7 +328,48 @@ func (h *MessageHandler) GetMessageByID(w http.ResponseWriter, r *http.Request) 
 
 // SendMessageStream 流式发送消息
 // @Summary 流式发送消息
-// @Description 在指定会话中发送消息并以 SSE 流式返回 AI 回复
+// @Description 在指定会话中发送消息并以 SSE 流式返回 AI 回复。支持通过 options.modelName 参数动态指定使用的AI模型（如 gpt-4、gemini-pro、qwen-turbo 等）。系统会根据当前租户ID和模型名称从 model_configurations 表中查询配置。如果不指定 modelName，将使用会话的默认模型。
+// @Description
+// @Description 使用示例：
+// @Description 1. 使用会话默认模型进行流式对话：
+// @Description ```json
+// @Description {
+// @Description   "message": "请详细介绍人工智能的发展历史"
+// @Description }
+// @Description ```
+// @Description
+// @Description 2. 指定使用 Azure OpenAI 的 GPT-4 模型进行流式对话：
+// @Description ```json
+// @Description {
+// @Description   "message": "写一篇关于机器学习的技术文章",
+// @Description   "options": {
+// @Description     "modelName": "gpt-4",
+// @Description     "temperature": 0.8,
+// @Description     "maxTokens": 4096
+// @Description   }
+// @Description }
+// @Description ```
+// @Description
+// @Description 3. 指定使用阿里云百炼的 Qwen 模型进行流式对话：
+// @Description ```json
+// @Description {
+// @Description   "message": "用中文写一个Python爬虫示例",
+// @Description   "options": {
+// @Description     "modelName": "qwen-turbo",
+// @Description     "temperature": 0.7
+// @Description   }
+// @Description }
+// @Description ```
+// @Description
+// @Description 响应格式（SSE）：
+// @Description ```
+// @Description data: {"choices":[{"delta":{"role":"assistant","content":"你好"}}],"usage":null}
+// @Description data: {"choices":[{"delta":{"content":"！"}}],"usage":null}
+// @Description data: {"choices":[{"delta":{"content":"我是"}}],"usage":null}
+// @Description data: {"choices":[{"delta":{"content":"AI助手"}}],"usage":null}
+// @Description data: {"choices":[{"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":50,"total_tokens":60}}
+// @Description data: [DONE]
+// @Description ```
 // @Tags messages
 // @Accept json
 // @Produce text/event-stream

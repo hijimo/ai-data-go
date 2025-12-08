@@ -613,11 +613,11 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 更新 ChatOptions 定义
-- [ ] 添加 provider 字段说明
-- [ ] 添加使用示例
-- [ ] 重新生成 Swagger 文档
-- [ ] 验证文档正确性
+- [x] 更新 ChatOptions 定义
+- [x] 添加 provider 字段说明
+- [x] 添加使用示例
+- [x] 重新生成 Swagger 文档
+- [x] 验证文档正确性
 
 **实现文件**:
 
@@ -637,7 +637,7 @@ plugin := &oai.OpenAI{
 
 **验收标准**:
 
-- [ ] 准备测试环境配置
+- [x] 准备测试环境配置
 - [ ] 配置所有 API 密钥
 - [ ] 部署应用
 - [ ] 验证所有提供商可用
@@ -691,10 +691,10 @@ TASK-1.2 ──┘                            ├──> TASK-5.3 ──┐
 
 **验收标准**:
 
-- [ ] 修改 Genkit Client 初始化，注入 ModelConfigurationRepository
-- [ ] 更新依赖注入配置
-- [ ] 添加启动日志
-- [ ] 处理初始化失败情况
+- [x] 修改 Genkit Client 初始化，注入 ModelConfigurationRepository
+- [x] 更新依赖注入配置
+- [x] 添加启动日志
+- [x] 处理初始化失败情况
 
 **实现文件**:
 
