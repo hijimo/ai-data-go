@@ -231,7 +231,7 @@ func main() {
 	// 模型配置路由需要 JWT 认证中间件和 RBAC 中间件
 	var rbacMW func(...string) func(http.Handler) http.Handler
 	if db != nil && jwtAuthMW != nil {
-		modelConfigHandler, rbacMiddleware := initModelConfigurationHandler(db, cfg, log)
+		modelConfigHandler, rbacMiddleware := initModelConfigurationHandler(db, genkitClient, cfg, log)
 		rbacMW = rbacMiddleware
 
 		routes.RegisterModelConfigurationRoutes(serveMux, modelConfigHandler, jwtAuthMW, rbacMW)
@@ -984,7 +984,7 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 }
 
 // initModelConfigurationHandler 初始化模型配置管理处理器
-func initModelConfigurationHandler(db database.Database, cfg *config.Config, log logger.Logger) (
+func initModelConfigurationHandler(db database.Database, genkitClient genkit.Client, cfg *config.Config, log logger.Logger) (
 	*handler.ModelConfigurationHandler,
 	func(...string) func(http.Handler) http.Handler,
 ) {
@@ -1021,10 +1021,11 @@ func initModelConfigurationHandler(db database.Database, cfg *config.Config, log
 		}
 	}
 
-	// 4. 创建 ModelConfigurationService
+	// 4. 创建 ModelConfigurationService（注入 genkit client）
 	modelConfigService := service.NewModelConfigurationService(
 		modelConfigRepo,
 		encryptionService,
+		genkitClient,
 	)
 
 	// 5. 创建 Handler 层实例
@@ -1047,7 +1048,7 @@ func initModelConfigurationHandler(db database.Database, cfg *config.Config, log
 
 	log.Info("模型配置管理服务初始化成功", logger.Fields{
 		"repositories": []string{"ModelConfigurationRepository"},
-		"services":     []string{"EncryptionService", "ModelConfigurationService"},
+		"services":     []string{"EncryptionService", "ModelConfigurationService", "GenkitClient"},
 		"handlers":     []string{"ModelConfigurationHandler"},
 	})
 

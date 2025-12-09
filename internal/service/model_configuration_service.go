@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"genkit-ai-service/internal/genkit"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/model"
 	"genkit-ai-service/internal/repository"
@@ -49,16 +50,19 @@ type ModelConfigurationService interface {
 type modelConfigurationService struct {
 	repo              repository.ModelConfigurationRepository
 	encryptionService EncryptionService
+	genkitClient      genkit.Client // Genkit 客户端，用于验证模型配置
 }
 
 // NewModelConfigurationService 创建新的模型配置服务实例
 func NewModelConfigurationService(
 	repo repository.ModelConfigurationRepository,
 	encryptionService EncryptionService,
+	genkitClient genkit.Client,
 ) ModelConfigurationService {
 	return &modelConfigurationService{
 		repo:              repo,
 		encryptionService: encryptionService,
+		genkitClient:      genkitClient,
 	}
 }
 
@@ -796,7 +800,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 		baseURL = baseURL[:len(baseURL)-1]
 	}
 	url := fmt.Sprintf("%s/openai/responses", baseURL)
-	
+
 	// 附加queryParams（通常包含api-version）
 	if config.QueryParams != nil && *config.QueryParams != "" {
 		// QueryParams 是 JSON 字符串，需要解析
@@ -889,6 +893,7 @@ func (s *modelConfigurationService) validateAzureOpenAI(ctx context.Context, con
 }
 
 // validateBianlian 验证Bianlian配置
+// 使用与chat相同的核心代码模式，通过genkit client进行验证
 func (s *modelConfigurationService) validateBianlian(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	if config.BaseURL == nil || *config.BaseURL == "" {
 		return &model.ValidationResult{
@@ -897,6 +902,74 @@ func (s *modelConfigurationService) validateBianlian(ctx context.Context, config
 		}
 	}
 
+	// 检查 genkit client 是否可用
+	if s.genkitClient == nil {
+		logger.WarnContext(ctx, "Genkit客户端未初始化，降级使用HTTP验证", logger.Fields{
+			"provider": config.ModelProvider,
+			"model":    config.Model,
+		})
+		return s.validateBianlianHTTP(ctx, config, apiKey)
+	}
+
+	// 使用与 chat 相同的核心代码模式进行验证
+	// 构建验证提示词
+	prompt := "你是谁？请用不超过10个字回答。"
+
+	// 构建生成选项
+	options := &genkit.GenerateOptions{
+		Temperature: func() *float64 { t := 0.7; return &t }(),
+		MaxTokens:   func() *int { m := 50; return &m }(),
+	}
+
+	logger.InfoContext(ctx, "开始验证Bianlian配置", logger.Fields{
+		"provider": config.ModelProvider,
+		"model":    config.Model,
+		"baseURL":  *config.BaseURL,
+	})
+
+	// 调用 genkit client 的 Generate 方法
+	// 注意：这里使用临时租户ID进行验证，实际验证时不需要真实的租户ID
+	// 因为验证是在配置创建/更新时进行的，此时配置还未与租户关联
+	result, err := s.genkitClient.Generate(ctx, config.TenantID.String(), config.Model, prompt, options)
+	if err != nil {
+		logger.ErrorContext(ctx, "Bianlian配置验证失败", logger.Fields{
+			"provider": config.ModelProvider,
+			"model":    config.Model,
+			"error":    err.Error(),
+		})
+
+		// 检查是否是超时错误
+		if ctx.Err() == context.DeadlineExceeded {
+			return &model.ValidationResult{
+				Valid:   false,
+				Message: "验证超时",
+				Details: "连接超过30秒",
+			}
+		}
+
+		return &model.ValidationResult{
+			Valid:   false,
+			Message: "验证失败",
+			Details: err.Error(),
+		}
+	}
+
+	// 验证成功
+	logger.InfoContext(ctx, "Bianlian配置验证成功", logger.Fields{
+		"provider":    config.ModelProvider,
+		"model":       config.Model,
+		"responseLen": len(result.Text),
+	})
+
+	return &model.ValidationResult{
+		Valid:   true,
+		Message: "验证成功",
+		Details: fmt.Sprintf("模型响应正常，返回内容长度: %d", len(result.Text)),
+	}
+}
+
+// validateBianlianHTTP 使用HTTP方式验证Bianlian配置（降级方案）
+func (s *modelConfigurationService) validateBianlianHTTP(ctx context.Context, config *model.ModelConfiguration, apiKey string) *model.ValidationResult {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	// 构建请求体
