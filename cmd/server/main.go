@@ -27,6 +27,7 @@ import (
 	"genkit-ai-service/internal/storage"
 
 	_ "genkit-ai-service/docs" // Swagger 文档
+
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -59,7 +60,6 @@ import (
 // @tag.name User Management
 // @tag.description 用户管理接口（需要租户管理员权限）
 
-
 // @tag.name Audit
 // @tag.description 审计日志接口
 
@@ -84,7 +84,7 @@ import (
 const (
 	// Version 服务版本
 	Version = "1.0.0"
-	
+
 	// ShutdownTimeout 优雅关闭超时时间
 	ShutdownTimeout = 30 * time.Second
 )
@@ -103,7 +103,7 @@ func main() {
 	if cfg.Log.Format == "text" {
 		logFormat = logger.TextFormat
 	}
-	
+
 	// 初始化带文件持久化的日志记录器
 	// 日志文件按天存储在 logs 目录下，格式为 app-YYYY-MM-DD.log
 	// enableConsole 设置为 true 表示同时输出到控制台和文件
@@ -113,7 +113,7 @@ func main() {
 		if logDir == "" {
 			logDir = "logs" // 默认日志目录
 		}
-		
+
 		var err error
 		log, err = logger.NewWithFile(logLevel, logFormat, logDir, cfg.Log.EnableConsole)
 		if err != nil {
@@ -132,7 +132,7 @@ func main() {
 	} else {
 		log = logger.New(logLevel, logFormat, os.Stdout)
 	}
-	
+
 	log.Info("服务启动中...", logger.Fields{
 		"version": Version,
 		"port":    cfg.Server.Port,
@@ -154,7 +154,7 @@ func main() {
 		})
 		os.Exit(1)
 	}
-	
+
 	defer func() {
 		if err := db.Close(); err != nil {
 			log.Error("关闭数据库连接失败", logger.Fields{"error": err})
@@ -169,12 +169,10 @@ func main() {
 		genkitClient = nil
 	}
 
-
-
 	// 6. 初始化服务
 	var aiService ai.AIService
 	var healthService health.Service
-	
+
 	// AI 服务只需要 Genkit 客户端
 	if genkitClient != nil {
 		aiService = initAIService(genkitClient, cfg, log)
@@ -182,7 +180,7 @@ func main() {
 	} else {
 		log.Warn("AI服务未启用（Genkit 客户端初始化失败）", nil)
 	}
-	
+
 	// 健康检查服务需要 Genkit 客户端和数据库
 	if genkitClient != nil && db != nil {
 		healthService = health.NewService(genkitClient, db, Version)
@@ -193,8 +191,6 @@ func main() {
 
 	// 7. 创建基础 ServeMux 并注册所有路由
 	serveMux := http.NewServeMux()
-	
-
 
 	// 8.1 注册认证路由（如果数据库可用）
 	var cleanupSvc cleanup.CleanupService
@@ -202,7 +198,7 @@ func main() {
 	if db != nil {
 		authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMiddleware, rbacMW := initAuthHandlers(db, cfg, log)
 		jwtAuthMW = jwtAuthMiddleware // 保存 JWT 认证中间件供其他路由使用
-		
+
 		routes.RegisterAuthRoutes(serveMux, authHandler, tenantHandler, userHandler, auditHandler, tenantMW, jwtAuthMW, rbacMW)
 		log.Info("认证和管理路由已注册", logger.Fields{
 			"routes": []string{
@@ -221,7 +217,7 @@ func main() {
 				"/api/v1/audit/auth",
 			},
 		})
-		
+
 		// 启动数据库清理服务
 		cleanupSvc = initCleanupService(db, cfg, log)
 		ctx := context.Background()
@@ -237,7 +233,7 @@ func main() {
 	if db != nil && jwtAuthMW != nil {
 		modelConfigHandler, rbacMiddleware := initModelConfigurationHandler(db, cfg, log)
 		rbacMW = rbacMiddleware
-		
+
 		routes.RegisterModelConfigurationRoutes(serveMux, modelConfigHandler, jwtAuthMW, rbacMW)
 		log.Info("模型配置管理路由已注册", logger.Fields{
 			"routes": []string{
@@ -261,18 +257,18 @@ func main() {
 		if rbacMW == nil {
 			rbacMW = rbacMiddleware
 		}
-		
+
 		// 执行启动时缓存预热
 		if cacheWarmer != nil {
 			ctx := context.Background()
 			if err := cacheWarmer.WarmupOnStartup(ctx); err != nil {
 				log.Warn("启动时缓存预热失败", logger.Fields{"error": err})
 			}
-			
+
 			// 启动定期预热
 			cacheWarmer.StartPeriodicWarmup(ctx)
 		}
-		
+
 		routes.RegisterSessionRoutes(serveMux, sessionHandler, messageHandler, jwtAuthMW)
 		log.Info("会话管理路由已注册", logger.Fields{
 			"routes": []string{
@@ -282,7 +278,7 @@ func main() {
 				"/api/v1/chat/messages/{id}",
 			},
 		})
-		
+
 		// 注册上下文管理路由
 		routes.RegisterContextRoutes(serveMux, contextHandler, jwtAuthMW, rbacMW)
 		log.Info("上下文管理路由已注册", logger.Fields{
@@ -291,7 +287,7 @@ func main() {
 				"/api/v1/contexts/{sessionId}",
 			},
 		})
-		
+
 		// 注册记忆管理路由
 		routes.RegisterMemoryRoutes(serveMux, memoryHandler, jwtAuthMW, rbacMW)
 		log.Info("记忆管理路由已注册", logger.Fields{
@@ -302,7 +298,7 @@ func main() {
 				"/api/v1/memories/{id}",
 			},
 		})
-		
+
 		// 注册摘要管理路由
 		routes.RegisterSummaryRoutes(serveMux, summaryHandler, jwtAuthMW, rbacMW)
 		log.Info("摘要管理路由已注册", logger.Fields{
@@ -322,19 +318,19 @@ func main() {
 		chatHandler := handler.NewChatHandler(aiService, log)
 		chatStreamHandler := handler.NewChatStreamHandler(aiService, log)
 		abortHandler := handler.NewAbortHandler(aiService, log)
-		
+
 		// 注意：必须先注册更具体的路径，再注册通用路径
 		serveMux.HandleFunc("POST /api/v1/chat/stream", chatStreamHandler.HandleChatStream)
 		serveMux.HandleFunc("POST /api/v1/chat/abort", abortHandler.HandleAbort)
 		serveMux.HandleFunc("POST /api/v1/chat", chatHandler.HandleChat)
-		
+
 		log.Info("AI对话路由已注册", logger.Fields{
 			"routes": []string{"/api/v1/chat", "/api/v1/chat/stream", "/api/v1/chat/abort"},
 		})
 	} else {
 		log.Warn("AI对话路由未注册（AI服务不可用）", nil)
 	}
-	
+
 	// 10. 注册健康检查路由（如果可用）
 	if healthService != nil {
 		healthHandler := handler.NewHealthHandler(healthService, log)
@@ -348,19 +344,19 @@ func main() {
 
 	// 11. 注册 Swagger UI 路由
 	serveMux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
-	
+
 	// 11.1 提供 swagger.yaml 静态文件访问
 	serveMux.HandleFunc("GET /swagger/doc.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/x-yaml")
 		http.ServeFile(w, r, "docs/swagger.yaml")
 	})
-	
+
 	log.Info("Swagger UI 已启用", logger.Fields{
-		"swagger_ui": fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
+		"swagger_ui":   fmt.Sprintf("http://%s:%s/swagger/index.html", cfg.Server.Host, cfg.Server.Port),
 		"swagger_json": fmt.Sprintf("http://%s:%s/swagger/doc.json", cfg.Server.Host, cfg.Server.Port),
 		"swagger_yaml": fmt.Sprintf("http://%s:%s/swagger/doc.yaml", cfg.Server.Host, cfg.Server.Port),
 	})
-	
+
 	// 12. 应用中间件（按顺序：Recovery -> Logger -> CORS）
 	var mux http.Handler = serveMux
 	corsConfig := middleware.DefaultCORS()
@@ -501,7 +497,7 @@ func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.
 		log.Error("数据库迁移失败", logger.Fields{
 			"error": err,
 		})
-		
+
 		// 提供详细的错误信息和解决建议
 		return fmt.Errorf("数据库迁移失败: %w\n\n可能的原因和解决方案:\n"+
 			"1. 数据库权限不足 - 确保数据库用户具有 CREATE TABLE、CREATE INDEX、ALTER TABLE 等权限\n"+
@@ -542,7 +538,7 @@ func runDatabaseMigrations(db database.Database, cfg *config.Config, log logger.
 }
 
 // initGenkit 初始化 Genkit 客户端
-// 注入 ModelConfigurationRepository 以支持动态模型配置
+// 注入 ModelConfigurationRepository 和 EncryptionService 以支持动态模型配置
 func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (genkit.Client, error) {
 	log.Info("初始化 Genkit 客户端...", logger.Fields{
 		"model": cfg.Genkit.Model,
@@ -582,14 +578,39 @@ func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (ge
 
 	// 2. 创建 ModelConfigurationRepository
 	modelConfigRepo := repository.NewModelConfigurationRepository(gormDB)
-	
-	log.Info("创建 Genkit 客户端（注入 ModelConfigurationRepository）", logger.Fields{
+
+	// 3. 创建 EncryptionService
+	// 将字符串密钥转换为32字节数组
+	secretKeyBytes := []byte(cfg.Encryption.SecretKey)
+	// 确保密钥长度为32字节
+	if len(secretKeyBytes) < 32 {
+		// 如果密钥不足32字节，填充到32字节
+		paddedKey := make([]byte, 32)
+		copy(paddedKey, secretKeyBytes)
+		secretKeyBytes = paddedKey
+	} else if len(secretKeyBytes) > 32 {
+		// 如果密钥超过32字节，截取前32字节
+		secretKeyBytes = secretKeyBytes[:32]
+	}
+
+	encryptionService, err := service.NewEncryptionService(secretKeyBytes)
+	if err != nil {
+		log.Error("创建加密服务失败", logger.Fields{"error": err})
+		// 如果加密服务创建失败，使用环境变量方式
+		encryptionService, err = service.NewEncryptionServiceFromEnv()
+		if err != nil {
+			log.Error("从环境变量创建加密服务失败", logger.Fields{"error": err})
+			return nil, fmt.Errorf("无法创建加密服务: %w", err)
+		}
+	}
+
+	log.Info("创建 Genkit 客户端（注入 ModelConfigurationRepository 和 EncryptionService）", logger.Fields{
 		"mode": "dynamic_configuration",
 	})
 
-	// 3. 创建 Genkit 客户端并注入 repository
-	client := genkit.NewClientWithRepo(modelConfigRepo)
-	
+	// 4. 创建 Genkit 客户端并注入 repository 和 encryptionService
+	client := genkit.NewClientWithServices(modelConfigRepo, encryptionService)
+
 	// 4. 初始化客户端（传统配置，用于向后兼容）
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -612,8 +633,8 @@ func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (ge
 	}
 
 	log.Info("Genkit 客户端初始化成功（动态配置模式）", logger.Fields{
-		"model":                cfg.Genkit.Model,
-		"repository_injected":  true,
+		"model":                  cfg.Genkit.Model,
+		"repository_injected":    true,
 		"dynamic_config_enabled": true,
 	})
 
@@ -623,7 +644,7 @@ func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (ge
 // initAIService 初始化 AI 服务
 func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Logger) ai.AIService {
 	log.Info("初始化 AI 服务...", logger.Fields{
-		"sessionTimeout":        cfg.Session.Timeout,
+		"sessionTimeout":         cfg.Session.Timeout,
 		"sessionCleanupInterval": cfg.Session.CleanupInterval,
 	})
 
@@ -632,7 +653,7 @@ func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Lo
 		cfg.Session.Timeout,
 		cfg.Session.CleanupInterval,
 	)
-	
+
 	// 启动上下文管理器的自动清理
 	contextManager.Start()
 
@@ -644,12 +665,10 @@ func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Lo
 	return aiService
 }
 
-
-
 // initSessionHandlers 初始化会话管理相关的处理器
 func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *config.Config, log logger.Logger) (
-	*handler.SessionHandler, 
-	*handler.MessageHandler, 
+	*handler.SessionHandler,
+	*handler.MessageHandler,
 	*handler.ContextHandler,
 	*handler.MemoryHandler,
 	*handler.SummaryHandler,
@@ -672,12 +691,12 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	// 3. 创建依赖服务
 	// 3.1 创建 TokenManager
 	tokenManager := service.NewTokenManager(log)
-	
+
 	// 3.2 创建 Genkit Client（如果需要）
 	genkitClient := genkit.NewClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	// 初始化 Genkit 客户端
 	if err := genkitClient.Initialize(ctx, &genkit.Config{
 		APIKey: cfg.Genkit.APIKey,
@@ -693,7 +712,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	// 3.3 初始化 Redis 客户端和缓存服务（如果启用）
 	var cacheService storage.CacheService
 	var cacheWarmer *storage.CacheWarmer
-	
+
 	if cfg.Redis.Enabled {
 		redisClient, err := database.NewRedisClient(cfg.Redis, log)
 		if err != nil {
@@ -702,7 +721,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 			// 创建缓存服务
 			cacheService = storage.NewCacheService(redisClient, log)
 			log.Info("缓存服务已启用", nil)
-			
+
 			// 创建缓存预热器
 			cacheWarmerConfig := &storage.CacheWarmerConfig{
 				WarmupInterval:    30 * time.Minute, // 30分钟预热一次
@@ -733,7 +752,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	if cfg.Redis.Enabled { // 临时使用 Redis 配置作为判断条件
 		log.Info("Qdrant 客户端未配置，向量检索功能将不可用", nil)
 	}
-	
+
 	// 3.5 初始化向量服务（如果配置可用）
 	var vectorService ai.VectorService
 	// TODO: 从配置文件读取向量服务配置
@@ -749,7 +768,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	// 4. 创建 Service 层实例
 	// 4.1 创建 SessionService
 	sessionService := session.NewSessionService(sessionRepo, messageRepo)
-	
+
 	// 4.2 创建 SummaryService
 	summaryService := session.NewSummaryService(
 		summaryRepo,
@@ -760,10 +779,10 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		tokenManager,
 		log,
 	)
-	
+
 	// 4.3 创建 MessageService
 	messageService := session.NewMessageService(gormDB, sessionRepo, messageRepo, aiService, log)
-	
+
 	// 4.4 创建 ContextService
 	contextService := service.NewContextService(
 		sessionRepo,
@@ -775,7 +794,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 		vectorService,
 		tokenManager,
 	)
-	
+
 	// 4.5 创建 MemoryService
 	memoryService := service.NewMemoryService(
 		memoryRepo,
@@ -789,19 +808,19 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	// 4.6 注册 Genkit Flows（在Service创建之后）
 	if genkitClient != nil {
 		genkitInstance := genkitClient.GetGenkit()
-		
+
 		// 注册上下文管理Flow
 		flows.RegisterContextFlows(genkitInstance, contextService)
 		log.Info("上下文管理Flow已注册", logger.Fields{
 			"flows": []string{"contextBuildFlow"},
 		})
-		
+
 		// 注册记忆管理Flow
 		flows.RegisterMemoryFlows(genkitInstance, memoryService)
 		log.Info("记忆管理Flow已注册", logger.Fields{
 			"flows": []string{"memorySearchFlow", "memoryStoreFlow", "memoryCleanupFlow"},
 		})
-		
+
 		// 注册摘要管理Flow
 		flows.RegisterSummaryFlows(genkitInstance, summaryService)
 		log.Info("摘要管理Flow已注册", logger.Fields{
@@ -817,7 +836,7 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	contextHandler := handler.NewContextHandler(contextService, log)
 	memoryHandler := handler.NewMemoryHandler(memoryService, log)
 	summaryHandler := handler.NewSummaryHandler(summaryService, log)
-	
+
 	// 6. 创建 RBAC 中间件工厂函数
 	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
 		// 根据角色返回相应的中间件
@@ -834,9 +853,9 @@ func initSessionHandlers(db database.Database, aiService ai.AIService, cfg *conf
 	}
 
 	log.Info("会话管理服务初始化成功", logger.Fields{
-		"repositories": []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository", "MemoryRepository"},
-		"services":     []string{"SessionService", "MessageService", "SummaryService", "ContextService", "MemoryService", "CacheService"},
-		"handlers":     []string{"SessionHandler", "MessageHandler", "ContextHandler", "MemoryHandler", "SummaryHandler"},
+		"repositories":  []string{"SessionRepository", "MessageRepository", "SummaryRepository", "ContextRepository", "MemoryRepository"},
+		"services":      []string{"SessionService", "MessageService", "SummaryService", "ContextService", "MemoryService", "CacheService"},
+		"handlers":      []string{"SessionHandler", "MessageHandler", "ContextHandler", "MemoryHandler", "SummaryHandler"},
 		"cache_enabled": cacheService != nil,
 	})
 
@@ -912,8 +931,8 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 	authService := auth.NewAuthService(
 		userRepo,
 		tenantRepo,
-		tokenService, 
-		auditRepo, 
+		tokenService,
+		auditRepo,
 		refreshTokenRepo,
 		blacklistService, // 传入黑名单服务
 		cfg.Auth.AccessTokenTTL,
@@ -935,10 +954,10 @@ func initAuthHandlers(db database.Database, cfg *config.Config, log logger.Logge
 		BaseDomain: "",
 	}
 	tenantMiddleware := middleware.TenantIdentifier(tenantConfig)
-	
+
 	// 创建 JWT 认证中间件（传入黑名单服务）
 	jwtAuthMiddleware := middleware.JWTAuth(tokenService, blacklistService)
-	
+
 	// 创建 RBAC 授权中间件工厂函数
 	rbacMiddleware := func(roles ...string) func(http.Handler) http.Handler {
 		// 根据角色返回相应的中间件
@@ -990,7 +1009,7 @@ func initModelConfigurationHandler(db database.Database, cfg *config.Config, log
 		// 如果密钥超过32字节，截取前32字节
 		secretKeyBytes = secretKeyBytes[:32]
 	}
-	
+
 	encryptionService, err := service.NewEncryptionService(secretKeyBytes)
 	if err != nil {
 		log.Error("创建加密服务失败", logger.Fields{"error": err})
@@ -1090,10 +1109,10 @@ func runSystemBootstrap(db database.Database, cfg *config.Config, log logger.Log
 	// 5. 记录初始化结果
 	if result.Initialized {
 		log.Info("系统初始化成功", logger.Fields{
-			"平台租户ID":   result.TenantID,
-			"管理员邮箱":    result.AdminEmail,
+			"平台租户ID":  result.TenantID,
+			"管理员邮箱":   result.AdminEmail,
 			"管理员初始密码": result.AdminPassword,
-			"重要提示":     "请妥善保管管理员初始密码，建议首次登录后立即修改",
+			"重要提示":    "请妥善保管管理员初始密码，建议首次登录后立即修改",
 		})
 	} else {
 		log.Info("系统已初始化，跳过初始化流程", nil)
@@ -1101,5 +1120,3 @@ func runSystemBootstrap(db database.Database, cfg *config.Config, log logger.Log
 
 	return nil
 }
-
-

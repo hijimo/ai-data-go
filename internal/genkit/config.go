@@ -21,18 +21,21 @@ type Config struct {
 // 这个结构体包含了所有提供商可能需要的配置字段
 type GenkitConfig struct {
 	// Azure OpenAI 特定配置
-	AzureEndpoint   string `json:"azureEndpoint,omitempty"`
-	AzureDeployment string `json:"azureDeployment,omitempty"`
-	AzureAPIVersion string `json:"azureApiVersion,omitempty"`
+	AzureEndpoint     string `json:"azureEndpoint,omitempty"`
+	AzureDeployment   string `json:"azureDeployment,omitempty"`
+	AzureAPIVersion   string `json:"azureApiVersion,omitempty"`
+	AzureOrganization string `json:"azureOrganization,omitempty"` // Azure 组织 ID
 
 	// 百炼特定配置
 	BailianEndpoint  string `json:"bailianEndpoint,omitempty"`
 	BailianWorkspace string `json:"bailianWorkspace,omitempty"`
+	BailianRegion    string `json:"bailianRegion,omitempty"` // 百炼地域（beijing, singapore, finance）
 
 	// 通用配置
-	Model              string  `json:"model"`
-	DefaultTemperature float64 `json:"defaultTemperature,omitempty"`
-	DefaultMaxTokens   int     `json:"defaultMaxTokens,omitempty"`
+	Model              string            `json:"model"`
+	DefaultTemperature float64           `json:"defaultTemperature,omitempty"`
+	DefaultMaxTokens   int               `json:"defaultMaxTokens,omitempty"`
+	CustomHeaders      map[string]string `json:"customHeaders,omitempty"` // 自定义请求头
 }
 
 // ParseGenkitConfig 从 JSON 字符串解析 GenkitConfig
@@ -71,27 +74,24 @@ func (c *GenkitConfig) Validate(providerType string) error {
 }
 
 // validateAzureConfig 验证 Azure OpenAI 特定配置
+// 注意：这里只做基本验证，详细的配置验证已在 ModelConfigurationService 层完成
+// Service 层通过实际 HTTP 请求验证配置的有效性，更加可靠
 func (c *GenkitConfig) validateAzureConfig() error {
-	if c.AzureEndpoint == "" {
-		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint")
-	}
-	if c.AzureDeployment == "" {
-		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureDeployment")
-	}
-	if c.AzureAPIVersion == "" {
-		return fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureApiVersion")
-	}
+	// Azure OpenAI 的配置验证已在 Service 层完成
+	// 这里只需要确保模型名称存在即可
+	// azureEndpoint、azureDeployment、azureAPIVersion 等字段是可选的
+	// 因为它们可能通过 BaseURL 和 QueryParams 的方式提供
 	return nil
 }
 
 // validateBailianConfig 验证百炼特定配置
+// 注意：这里只做基本验证，详细的配置验证已在 ModelConfigurationService 层完成
+// Service 层通过实际 HTTP 请求验证配置的有效性，更加可靠
 func (c *GenkitConfig) validateBailianConfig() error {
-	if c.BailianEndpoint == "" {
-		return fmt.Errorf("百炼配置缺少必需字段: bailianEndpoint")
-	}
-	if c.BailianWorkspace == "" {
-		return fmt.Errorf("百炼配置缺少必需字段: bailianWorkspace")
-	}
+	// 百炼的配置验证已在 Service 层完成
+	// 这里只需要确保模型名称存在即可
+	// bailianEndpoint、bailianWorkspace 等字段是可选的
+	// 因为它们可能通过 BaseURL 的方式提供
 	return nil
 }
 
@@ -157,12 +157,12 @@ func MaskAPIKey(apiKey string) string {
 	if apiKey == "" {
 		return ""
 	}
-	
+
 	length := len(apiKey)
 	if length <= 8 {
 		return "****"
 	}
-	
+
 	return apiKey[:4] + "****" + apiKey[length-4:]
 }
 
@@ -170,18 +170,18 @@ func MaskAPIKey(apiKey string) string {
 // 返回一个可以安全记录到日志的配置副本
 func MaskSensitiveConfig(config interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
-	
+
 	// 使用 JSON 序列化/反序列化来转换
 	data, err := json.Marshal(config)
 	if err != nil {
 		return result
 	}
-	
+
 	var temp map[string]interface{}
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return result
 	}
-	
+
 	// 脱敏敏感字段
 	for key, value := range temp {
 		switch key {
@@ -197,6 +197,6 @@ func MaskSensitiveConfig(config interface{}) map[string]interface{} {
 			result[key] = value
 		}
 	}
-	
+
 	return result
 }

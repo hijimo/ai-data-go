@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
+	"genkit-ai-service/internal/genkit/plugins/bailian"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/repository"
 
@@ -18,6 +20,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/openai/openai-go/option"
 )
+
+// EncryptionService API密钥加密服务接口
+// 定义在这里以避免循环依赖
+type EncryptionService interface {
+	// DecryptAPIKey 解密API密钥
+	DecryptAPIKey(encrypted string) (string, error)
+
+	// MaskAPIKey 脱敏API密钥
+	MaskAPIKey(apiKey string) string
+}
 
 // Client Genkit 客户端接口
 type Client interface {
@@ -42,11 +54,12 @@ type Client interface {
 
 // client Genkit 客户端实现
 type client struct {
-	config     *Config
-	g          *genkit.Genkit
-	configRepo repository.ModelConfigurationRepository // 模型配置仓储
-	instances  map[string]*genkit.Genkit                // Genkit 实例缓存，key: tenantID_modelName
-	mu         sync.RWMutex                             // 读写锁，保护 instances
+	config            *Config
+	g                 *genkit.Genkit
+	configRepo        repository.ModelConfigurationRepository // 模型配置仓储
+	encryptionService EncryptionService                       // 加密服务，用于解密 API Key
+	instances         map[string]*genkit.Genkit               // Genkit 实例缓存，key: tenantID_modelName
+	mu                sync.RWMutex                            // 读写锁，保护 instances
 }
 
 // NewClient 创建新的 Genkit 客户端
@@ -61,6 +74,15 @@ func NewClientWithRepo(configRepo repository.ModelConfigurationRepository) Clien
 	return &client{
 		configRepo: configRepo,
 		instances:  make(map[string]*genkit.Genkit),
+	}
+}
+
+// NewClientWithServices 创建新的 Genkit 客户端（注入所有依赖服务）
+func NewClientWithServices(configRepo repository.ModelConfigurationRepository, encryptionService EncryptionService) Client {
+	return &client{
+		configRepo:        configRepo,
+		encryptionService: encryptionService,
+		instances:         make(map[string]*genkit.Genkit),
 	}
 }
 
@@ -119,7 +141,7 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 
 	// 生成缓存键
 	cacheKey := fmt.Sprintf("%s_%s", tenantID, modelName)
-	
+
 	// 记录提供商选择开始
 	logger.DebugContext(ctx, "开始获取或初始化 Genkit 实例", logger.Fields{
 		"tenantId":  tenantID,
@@ -138,7 +160,7 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 			"modelName": modelName,
 			"cacheHit":  true,
 		})
-		
+
 		// 从数据库获取配置（用于返回配置信息）
 		tenantUUID, err := parseUUID(tenantID)
 		if err != nil {
@@ -179,7 +201,7 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 		"modelName": modelName,
 		"cacheHit":  false,
 	})
-	
+
 	// 使用写锁保护初始化过程
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -191,7 +213,7 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 			"tenantId":  tenantID,
 			"modelName": modelName,
 		})
-		
+
 		// 另一个 goroutine 已经初始化了实例
 		// 从数据库获取配置
 		tenantUUID, err := parseUUID(tenantID)
@@ -232,7 +254,7 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 		"tenantId":  tenantID,
 		"modelName": modelName,
 	})
-	
+
 	tenantUUID, err := parseUUID(tenantID)
 	if err != nil {
 		logger.ErrorContext(ctx, "解析租户ID失败", logger.Fields{
@@ -275,42 +297,42 @@ func (c *client) getOrInitGenkit(ctx context.Context, tenantID, modelName string
 	// 验证配置
 	if err := genkitConfig.Validate(modelConfig.ModelProvider); err != nil {
 		logger.ErrorContext(ctx, "配置验证失败", logger.Fields{
-			"tenantId":       tenantID,
-			"modelName":      modelName,
-			"modelProvider":  modelConfig.ModelProvider,
-			"error":          err.Error(),
+			"tenantId":      tenantID,
+			"modelName":     modelName,
+			"modelProvider": modelConfig.ModelProvider,
+			"error":         err.Error(),
 		})
 		return nil, nil, fmt.Errorf("配置验证失败: %w", err)
 	}
 
 	// 记录提供商选择（不记录敏感信息）
 	logger.InfoContext(ctx, "选择模型提供商", logger.Fields{
-		"tenantId":      tenantID,
-		"modelName":     modelName,
-		"provider":      modelConfig.ModelProvider,
-		"model":         genkitConfig.Model,
+		"tenantId":  tenantID,
+		"modelName": modelName,
+		"provider":  modelConfig.ModelProvider,
+		"model":     genkitConfig.Model,
 	})
 
 	// 根据提供商类型创建插件并初始化 Genkit 实例
 	g, err = c.initializeProvider(ctx, modelConfig, genkitConfig)
 	if err != nil {
 		logger.ErrorContext(ctx, "初始化提供商失败", logger.Fields{
-			"tenantId":      tenantID,
-			"modelName":     modelName,
-			"provider":      modelConfig.ModelProvider,
-			"error":         err.Error(),
+			"tenantId":  tenantID,
+			"modelName": modelName,
+			"provider":  modelConfig.ModelProvider,
+			"error":     err.Error(),
 		})
 		return nil, nil, fmt.Errorf("初始化提供商失败: %w", err)
 	}
 
 	// 缓存实例（已经持有写锁，无需再次加锁）
 	c.instances[cacheKey] = g
-	
+
 	logger.InfoContext(ctx, "成功初始化并缓存 Genkit 实例", logger.Fields{
-		"tenantId":      tenantID,
-		"modelName":     modelName,
-		"provider":      modelConfig.ModelProvider,
-		"cacheKey":      cacheKey,
+		"tenantId":  tenantID,
+		"modelName": modelName,
+		"provider":  modelConfig.ModelProvider,
+		"cacheKey":  cacheKey,
 	})
 
 	return g, genkitConfig, nil
@@ -324,19 +346,13 @@ func parseUUID(uuidStr string) (uuid.UUID, error) {
 // parseModelConfiguration 解析模型配置
 // 从 ModelConfiguration 中提取并解析 GenkitConfig
 func (c *client) parseModelConfiguration(ctx context.Context, modelConfig interface{}) (*GenkitConfig, error) {
-	// 使用类型断言获取实际的配置对象
-	type ModelConfig interface {
-		GetModel() string
-		GetQueryParams() *string
-	}
-
 	// 创建基础配置
 	genkitConfig := &GenkitConfig{}
 
 	// 使用反射或类型断言来获取字段
 	// 这里我们假设传入的是 repository 返回的模型配置对象
 	// 需要根据实际的 repository 接口来调整
-	
+
 	// 临时方案：使用 JSON 序列化/反序列化来转换
 	configJSON, err := json.Marshal(modelConfig)
 	if err != nil {
@@ -370,7 +386,7 @@ func (c *client) parseModelConfiguration(ctx context.Context, modelConfig interf
 			})
 			return nil, fmt.Errorf("解析 QueryParams 失败: %w", err)
 		}
-		
+
 		// 确保 Model 字段不被 QueryParams 覆盖（除非 QueryParams 中明确指定）
 		if genkitConfig.Model == "" {
 			genkitConfig.Model = tempConfig.Model
@@ -381,67 +397,124 @@ func (c *client) parseModelConfiguration(ctx context.Context, modelConfig interf
 }
 
 // createAzurePlugin 创建 Azure OpenAI 插件
-// 使用 OpenAI 插件 + 自定义 BaseURL 的方式集成 Azure OpenAI
-// BaseURL 格式: https://{endpoint}/openai/deployments/{deployment}
-func createAzurePlugin(ctx context.Context, apiKey string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
-	// 验证必需的配置字段
-	if genkitConfig.AzureEndpoint == "" {
-		logger.ErrorContext(ctx, "Azure OpenAI 配置缺少必需字段", logger.Fields{
-			"missingField": "azureEndpoint",
+// 使用 OpenAI 插件 + option.RequestOption 的方式集成 Azure OpenAI
+// 支持最新的 Azure OpenAI API 版本（包括 5.1 模型）
+// 参考 Google Genkit 官方文档：
+// https://firebase.google.com/docs/genkit/plugins/openai#custom-base-url
+func createAzurePlugin(ctx context.Context, apiKey string, baseURL *string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
+	// 验证 BaseURL 是否存在
+	if baseURL == nil || *baseURL == "" {
+		logger.ErrorContext(ctx, "Azure OpenAI 配置缺少 BaseURL", logger.Fields{
+			"error": "BaseURL is required for Azure OpenAI",
 		})
-		return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureEndpoint")
-	}
-	if genkitConfig.AzureDeployment == "" {
-		logger.ErrorContext(ctx, "Azure OpenAI 配置缺少必需字段", logger.Fields{
-			"missingField": "azureDeployment",
-		})
-		return nil, fmt.Errorf("Azure OpenAI 配置缺少必需字段: azureDeployment")
+		return nil, fmt.Errorf("azure OpenAI 需要配置 BaseURL")
 	}
 
-	// 构建 Azure OpenAI 的 BaseURL
-	// 格式: https://{endpoint}/openai/deployments/{deployment}
-	baseURL := fmt.Sprintf("%s/openai/deployments/%s",
-		genkitConfig.AzureEndpoint,
-		genkitConfig.AzureDeployment,
-	)
+	// 构建完整的 BaseURL
+	// 移除末尾的斜杠（如果有）
+	azureBaseURL := *baseURL
+	if len(azureBaseURL) > 0 && azureBaseURL[len(azureBaseURL)-1] == '/' {
+		azureBaseURL = azureBaseURL[:len(azureBaseURL)-1]
+	}
 
-	// 创建 OpenAI 插件，配置 Azure 特定的 BaseURL
+	// Azure OpenAI 的 BaseURL 格式：
+	// https://{resource-name}.openai.azure.com/openai/deployments/{deployment-name}
+	//
+	// 根据官方文档，使用 option.RequestOption 配置：
+	// 1. option.WithAPIKey - 设置 API 密钥
+	// 2. option.WithBaseURL - 设置自定义端点
+	// 3. option.WithHeader - 添加自定义请求头（如果需要）
+	// 4. option.WithQuery - 添加查询参数（如 api-version）
+
+	// 确定 API 版本
+	apiVersion := "2024-12-01-preview" // 支持最新的 5.1 模型
+	if genkitConfig.AzureAPIVersion != "" {
+		apiVersion = genkitConfig.AzureAPIVersion
+	}
+
+	logger.InfoContext(ctx, "创建 Azure OpenAI 插件", logger.Fields{
+		"baseURL":    azureBaseURL,
+		"model":      genkitConfig.Model,
+		"apiVersion": apiVersion,
+	})
+
+	// 构建 RequestOption 列表
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
+		option.WithBaseURL(azureBaseURL),
+	}
+
+	// 添加 API 版本查询参数
+	// Azure OpenAI 要求在所有请求中包含 api-version 参数
+	opts = append(opts, option.WithQuery("api-version", apiVersion))
+
+	// 如果配置了组织 ID，添加到请求头
+	if genkitConfig.AzureOrganization != "" {
+		opts = append(opts, option.WithHeader("OpenAI-Organization", genkitConfig.AzureOrganization))
+		logger.DebugContext(ctx, "添加组织 ID", logger.Fields{
+			"organization": genkitConfig.AzureOrganization,
+		})
+	}
+
+	// 如果配置了自定义请求头，添加到选项中
+	if len(genkitConfig.CustomHeaders) > 0 {
+		for key, value := range genkitConfig.CustomHeaders {
+			opts = append(opts, option.WithHeader(key, value))
+			logger.DebugContext(ctx, "添加自定义请求头", logger.Fields{
+				"header": key,
+				"value":  value,
+			})
+		}
+	}
+
+	// 创建 OpenAI 插件，使用 option.RequestOption 配置
 	plugin := &oai.OpenAI{
-		Opts: []option.RequestOption{
-			option.WithAPIKey(apiKey),
-			option.WithBaseURL(baseURL),
-		},
+		Opts: opts,
 	}
+
+	logger.InfoContext(ctx, "Azure OpenAI 插件创建成功", logger.Fields{
+		"baseURL":    azureBaseURL,
+		"model":      genkitConfig.Model,
+		"apiVersion": apiVersion,
+		"optCount":   len(opts),
+	})
 
 	return plugin, nil
 }
 
 // createBailianPlugin 创建阿里云百炼插件
-// 百炼完全兼容 OpenAI API 规范，使用自定义的 BailianPlugin 封装
-// 支持根据地域自动选择合适的 API 端点
-func createBailianPlugin(ctx context.Context, apiKey string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
-	// 导入百炼插件包
-	// 注意：这里我们直接使用 OpenAI 插件，因为百炼完全兼容 OpenAI API
-	// BailianPlugin 主要用于配置验证和端点选择
-	
-	// 确定 Endpoint
-	endpoint := genkitConfig.BailianEndpoint
-	if endpoint == "" {
-		// 使用默认的北京地域端点
-		endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-		logger.InfoContext(ctx, "使用默认百炼端点", logger.Fields{
-			"endpoint": endpoint,
-		})
+// 百炼完全兼容 OpenAI API 规范，使用 Bailian 插件封装
+// 支持通过环境变量或配置指定 API Key 和 Base URL
+func createBailianPlugin(ctx context.Context, apiKey string, baseURL *string) (*bailian.Bailian, error) {
+	// 构建 RequestOption 列表
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
 	}
-	
-	// 创建 OpenAI 插件，配置百炼特定的 BaseURL
-	plugin := &oai.OpenAI{
-		Opts: []option.RequestOption{
-			option.WithAPIKey(apiKey),
-			option.WithBaseURL(endpoint),
-		},
+
+	// 设置 Base URL
+	// 如果配置中提供了 BaseURL，使用配置的值
+	// 否则使用百炼默认的兼容模式端点
+	bailianBaseURL := "https://dashscope.aliyuncs.com/compatible-mode/v1"
+	if baseURL != nil && *baseURL != "" {
+		bailianBaseURL = *baseURL
 	}
-	
+	opts = append(opts, option.WithBaseURL(bailianBaseURL))
+
+	logger.InfoContext(ctx, "创建百炼插件", logger.Fields{
+		"baseURL": bailianBaseURL,
+	})
+
+	// 创建 Bailian 插件实例
+	plugin := &bailian.Bailian{
+		Opts: opts,
+		// EnableDebugLog: true, // 启用调试日志，打印 HTTP 请求详情
+	}
+
+	logger.InfoContext(ctx, "百炼插件创建成功", logger.Fields{
+		"baseURL":        bailianBaseURL,
+		"enableDebugLog": true,
+	})
+
 	return plugin, nil
 }
 
@@ -454,7 +527,17 @@ func createBailianPlugin(ctx context.Context, apiKey string, genkitConfig *Genki
 // - anthropic: Anthropic (Claude)
 // - custom_openai: 自定义 OpenAI 兼容服务
 func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}, genkitConfig *GenkitConfig) (*genkit.Genkit, error) {
-	// 提取模型配置的基本信息
+	// 直接从 modelConfig 中提取字段（避免 JSON 序列化丢失 APIKey）
+	// 由于 APIKey 字段有 json:"-" 标签，不能使用 JSON 序列化
+
+	// 临时结构体用于提取字段
+	var tempConfig struct {
+		ModelProvider string
+		APIKey        string
+		BaseURL       *string
+	}
+
+	// 先通过 JSON 解析基本字段
 	configJSON, err := json.Marshal(modelConfig)
 	if err != nil {
 		logger.ErrorContext(ctx, "序列化模型配置失败", logger.Fields{
@@ -463,22 +546,81 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 		return nil, fmt.Errorf("序列化模型配置失败: %w", err)
 	}
 
-	var tempConfig struct {
+	var basicConfig struct {
 		ModelProvider string  `json:"modelProvider"`
-		APIKey        string  `json:"apiKey"`
 		BaseURL       *string `json:"baseUrl"`
 	}
-
-	if err := json.Unmarshal(configJSON, &tempConfig); err != nil {
+	if err := json.Unmarshal(configJSON, &basicConfig); err != nil {
 		logger.ErrorContext(ctx, "反序列化模型配置失败", logger.Fields{
 			"error": err.Error(),
 		})
 		return nil, fmt.Errorf("反序列化模型配置失败: %w", err)
 	}
 
+	tempConfig.ModelProvider = basicConfig.ModelProvider
+	tempConfig.BaseURL = basicConfig.BaseURL
+
+	// 使用反射获取 APIKey 字段（因为它有 json:"-" 标签）
+	var encryptedAPIKey string
+	configValue := reflect.ValueOf(modelConfig)
+	if configValue.Kind() == reflect.Ptr {
+		configValue = configValue.Elem()
+	}
+	if configValue.Kind() == reflect.Struct {
+		apiKeyField := configValue.FieldByName("APIKey")
+		if apiKeyField.IsValid() && apiKeyField.Kind() == reflect.String {
+			encryptedAPIKey = apiKeyField.String()
+		}
+	}
+
+	// 验证 APIKey 是否成功提取
+	if encryptedAPIKey == "" {
+		logger.ErrorContext(ctx, "APIKey 提取失败", logger.Fields{
+			"provider": tempConfig.ModelProvider,
+		})
+		return nil, fmt.Errorf("APIKey 不能为空")
+	}
+
+	// 解密 API Key
+	if c.encryptionService != nil {
+		decryptedAPIKey, err := c.encryptionService.DecryptAPIKey(encryptedAPIKey)
+		if err != nil {
+			logger.ErrorContext(ctx, "解密 API Key 失败", logger.Fields{
+				"provider":         tempConfig.ModelProvider,
+				"encryptedKeyLen":  len(encryptedAPIKey),
+				"encryptedKeyMask": MaskAPIKey(encryptedAPIKey),
+				"error":            err.Error(),
+			})
+			return nil, fmt.Errorf("解密 API Key 失败: %w", err)
+		}
+		tempConfig.APIKey = decryptedAPIKey
+
+		logger.InfoContext(ctx, "API Key 解密成功", logger.Fields{
+			"provider":         tempConfig.ModelProvider,
+			"encryptedKeyLen":  len(encryptedAPIKey),
+			"decryptedKeyLen":  len(decryptedAPIKey),
+			"decryptedKeyMask": MaskAPIKey(decryptedAPIKey),
+			"decryptedKeyPrefix": func() string {
+				if len(decryptedAPIKey) >= 10 {
+					return decryptedAPIKey[:10]
+				}
+				return "***"
+			}(),
+		})
+	} else {
+		// 如果没有加密服务，直接使用（向后兼容）
+		logger.WarnContext(ctx, "未配置加密服务，直接使用 API Key（可能是加密的）", logger.Fields{
+			"provider": tempConfig.ModelProvider,
+		})
+		tempConfig.APIKey = encryptedAPIKey
+	}
+
 	logger.InfoContext(ctx, "开始初始化提供商", logger.Fields{
-		"provider": tempConfig.ModelProvider,
-		"model":    genkitConfig.Model,
+		"provider":   tempConfig.ModelProvider,
+		"model":      genkitConfig.Model,
+		"hasAPIKey":  tempConfig.APIKey != "",
+		"apiKeyLen":  len(tempConfig.APIKey),
+		"apiKeyMask": MaskAPIKey(tempConfig.APIKey),
 	})
 
 	var fullModelName string
@@ -491,18 +633,18 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			"provider": "googlegenai",
 			"model":    genkitConfig.Model,
 		})
-		
+
 		plugin := &googlegenai.GoogleAI{
 			APIKey: tempConfig.APIKey,
 		}
 		fullModelName = "googleai/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "Google AI 提供商初始化成功", logger.Fields{
 			"provider":      "googlegenai",
 			"fullModelName": fullModelName,
@@ -511,15 +653,15 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 	case "openai":
 		// OpenAI 插件
 		logger.InfoContext(ctx, "初始化 OpenAI 提供商", logger.Fields{
-			"provider": "openai",
-			"model":    genkitConfig.Model,
+			"provider":         "openai",
+			"model":            genkitConfig.Model,
 			"hasCustomBaseURL": tempConfig.BaseURL != nil && *tempConfig.BaseURL != "",
 		})
-		
+
 		opts := []option.RequestOption{
 			option.WithAPIKey(tempConfig.APIKey),
 		}
-		
+
 		// 如果配置了自定义 BaseURL，添加到选项中
 		if tempConfig.BaseURL != nil && *tempConfig.BaseURL != "" {
 			opts = append(opts, option.WithBaseURL(*tempConfig.BaseURL))
@@ -527,18 +669,18 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 				"baseURL": *tempConfig.BaseURL,
 			})
 		}
-		
+
 		plugin := &oai.OpenAI{
 			Opts: opts,
 		}
 		fullModelName = "openai/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "OpenAI 提供商初始化成功", logger.Fields{
 			"provider":      "openai",
 			"fullModelName": fullModelName,
@@ -547,13 +689,12 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 	case "azureopenai":
 		// Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
 		logger.InfoContext(ctx, "初始化 Azure OpenAI 提供商", logger.Fields{
-			"provider":        "azureopenai",
-			"model":           genkitConfig.Model,
-			"azureEndpoint":   genkitConfig.AzureEndpoint,
-			"azureDeployment": genkitConfig.AzureDeployment,
+			"provider": "azureopenai",
+			"model":    genkitConfig.Model,
+			"baseURL":  tempConfig.BaseURL,
 		})
-		
-		plugin, err := createAzurePlugin(ctx, tempConfig.APIKey, genkitConfig)
+
+		plugin, err := createAzurePlugin(ctx, tempConfig.APIKey, tempConfig.BaseURL, genkitConfig)
 		if err != nil {
 			logger.ErrorContext(ctx, "创建 Azure OpenAI 插件失败", logger.Fields{
 				"provider": "azureopenai",
@@ -561,30 +702,30 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			})
 			return nil, fmt.Errorf("创建 Azure OpenAI 插件失败: %w", err)
 		}
-		
+
 		fullModelName = "openai/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "Azure OpenAI 提供商初始化成功", logger.Fields{
 			"provider":      "azureopenai",
 			"fullModelName": fullModelName,
 		})
 
 	case "bianlian":
-		// 阿里云百炼 (使用 OpenAI 插件 + 百炼兼容模式 BaseURL)
+		// 阿里云百炼 (使用 Bailian 插件)
 		// 百炼提供 OpenAI 兼容接口
 		logger.InfoContext(ctx, "初始化阿里云百炼提供商", logger.Fields{
-			"provider":        "bianlian",
-			"model":           genkitConfig.Model,
-			"bailianEndpoint": genkitConfig.BailianEndpoint,
+			"provider": "bianlian",
+			"model":    genkitConfig.Model,
+			"baseURL":  tempConfig.BaseURL,
 		})
-		
-		plugin, err := createBailianPlugin(ctx, tempConfig.APIKey, genkitConfig)
+
+		plugin, err := createBailianPlugin(ctx, tempConfig.APIKey, tempConfig.BaseURL)
 		if err != nil {
 			logger.ErrorContext(ctx, "创建百炼插件失败", logger.Fields{
 				"provider": "bianlian",
@@ -592,15 +733,16 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			})
 			return nil, fmt.Errorf("创建百炼插件失败: %w", err)
 		}
-		
-		fullModelName = "openai/" + genkitConfig.Model
-		
+
+		// 百炼插件使用 "bailian" 作为提供商前缀
+		fullModelName = "bailian/" + genkitConfig.Model
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "阿里云百炼提供商初始化成功", logger.Fields{
 			"provider":      "bianlian",
 			"fullModelName": fullModelName,
@@ -613,20 +755,20 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			"provider": "anthropic",
 			"model":    genkitConfig.Model,
 		})
-		
+
 		plugin := &anthropic.Anthropic{
 			Opts: []option.RequestOption{
 				option.WithAPIKey(tempConfig.APIKey),
 			},
 		}
 		fullModelName = "anthropic/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "Anthropic 提供商初始化成功", logger.Fields{
 			"provider":      "anthropic",
 			"fullModelName": fullModelName,
@@ -639,7 +781,7 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			"provider": "custom_openai",
 			"model":    genkitConfig.Model,
 		})
-		
+
 		if tempConfig.BaseURL == nil || *tempConfig.BaseURL == "" {
 			logger.ErrorContext(ctx, "自定义 OpenAI 提供商缺少 BaseURL", logger.Fields{
 				"provider": "custom_openai",
@@ -658,13 +800,13 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			},
 		}
 		fullModelName = "openai/" + genkitConfig.Model
-		
+
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
 			genkit.WithPlugins(plugin),
 			genkit.WithDefaultModel(fullModelName),
 		)
-		
+
 		logger.InfoContext(ctx, "自定义 OpenAI 提供商初始化成功", logger.Fields{
 			"provider":      "custom_openai",
 			"fullModelName": fullModelName,
@@ -683,7 +825,7 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 // Generate 生成内容（根据租户ID和模型名称）
 func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (*GenerateResult, error) {
 	startTime := time.Now()
-	
+
 	// 参数验证
 	if tenantID == "" {
 		logger.ErrorContext(ctx, "租户ID不能为空", logger.Fields{})
@@ -707,9 +849,9 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 
 	// TraceID 会自动从 context 中提取并记录到日志中
 	logger.InfoContext(ctx, "开始生成内容", logger.Fields{
-		"tenantId":   tenantID,
-		"modelName":  modelName,
-		"promptLen":  len(prompt),
+		"tenantId":  tenantID,
+		"modelName": modelName,
+		"promptLen": len(prompt),
 	})
 
 	// 获取或初始化 Genkit 实例
@@ -775,7 +917,7 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 // GenerateStream 流式生成内容（根据租户ID和模型名称）
 func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
 	startTime := time.Now()
-	
+
 	// 参数验证
 	if tenantID == "" {
 		logger.ErrorContext(ctx, "租户ID不能为空", logger.Fields{})
@@ -799,9 +941,9 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 
 	// TraceID 会自动从 context 中提取并记录到日志中
 	logger.InfoContext(ctx, "开始流式生成内容", logger.Fields{
-		"tenantId":   tenantID,
-		"modelName":  modelName,
-		"promptLen":  len(prompt),
+		"tenantId":  tenantID,
+		"modelName": modelName,
+		"promptLen": len(prompt),
 	})
 
 	// 获取或初始化 Genkit 实例
@@ -848,10 +990,10 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 						"ttfb":      ttfb.String(),
 					})
 				}
-				
+
 				chunkCount++
 				totalContent += chunk.Text()
-				
+
 				// 发送流式数据块
 				select {
 				case streamChan <- StreamChunk{
@@ -880,7 +1022,7 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 				"chunkCount": chunkCount,
 				"error":      err.Error(),
 			})
-			
+
 			// 发送错误
 			streamChan <- StreamChunk{
 				Content: "",
@@ -912,7 +1054,7 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 		if !firstChunkTime.IsZero() {
 			ttfb = firstChunkTime.Sub(startTime)
 		}
-		
+
 		// TraceID 会自动从 context 中提取并记录到日志中
 		logger.InfoContext(ctx, "流式生成完成", logger.Fields{
 			"tenantId":         tenantID,
@@ -943,10 +1085,10 @@ func (c *client) Close() error {
 	// 清理所有缓存的实例
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// 清空缓存
 	c.instances = make(map[string]*genkit.Genkit)
-	
+
 	return nil
 }
 
@@ -954,10 +1096,10 @@ func (c *client) Close() error {
 // 用于配置更新后强制重新初始化
 func (c *client) ClearCache(tenantID, modelName string) {
 	cacheKey := fmt.Sprintf("%s_%s", tenantID, modelName)
-	
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	delete(c.instances, cacheKey)
 }
 
@@ -965,7 +1107,7 @@ func (c *client) ClearCache(tenantID, modelName string) {
 func (c *client) ClearAllCache() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.instances = make(map[string]*genkit.Genkit)
 }
 
@@ -973,6 +1115,6 @@ func (c *client) ClearAllCache() {
 func (c *client) GetCacheSize() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	return len(c.instances)
 }
