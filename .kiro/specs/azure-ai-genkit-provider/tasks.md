@@ -70,7 +70,7 @@
   - **属性 19: 工具调用响应关联**
   - **验证需求: 6.4**
 
-- [ ] 5. 实现 ModelGenerator 请求构建
+- [x] 5. 实现 ModelGenerator 请求构建
   - 实现 ModelGenerator 结构体
   - 实现 WithMessages() 方法
   - 实现 WithTools() 方法
