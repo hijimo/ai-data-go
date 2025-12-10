@@ -27,11 +27,12 @@ import (
 
 // ModelGenerator 处理 Azure OpenAI 生成请求
 type ModelGenerator struct {
-	client     *http.Client
-	baseURL    string
-	apiKey     string
-	apiVersion string
-	modelName  string
+	client          *http.Client
+	retryableClient *RetryableHTTPClient
+	baseURL         string
+	apiKey          string
+	apiVersion      string
+	modelName       string
 
 	// 请求构建
 	messages   []Message
@@ -51,6 +52,17 @@ func NewModelGenerator(client *http.Client, baseURL, apiKey, apiVersion, modelNa
 		apiKey:     apiKey,
 		apiVersion: apiVersion,
 		modelName:  modelName,
+	}
+}
+
+// NewModelGeneratorWithRetry 创建一个支持重试的 ModelGenerator 实例
+func NewModelGeneratorWithRetry(retryableClient *RetryableHTTPClient, baseURL, apiKey, apiVersion, modelName string) *ModelGenerator {
+	return &ModelGenerator{
+		retryableClient: retryableClient,
+		baseURL:         baseURL,
+		apiKey:          apiKey,
+		apiVersion:      apiVersion,
+		modelName:       modelName,
 	}
 }
 
@@ -188,8 +200,13 @@ func (g *ModelGenerator) generateNonStreaming(ctx context.Context) (*ai.ModelRes
 	// 设置请求头
 	g.setRequestHeaders(httpReq)
 
-	// 发送请求
-	httpResp, err := g.client.Do(httpReq)
+	// 发送请求（使用支持重试的客户端）
+	var httpResp *http.Response
+	if g.retryableClient != nil {
+		httpResp, err = g.retryableClient.Do(httpReq)
+	} else {
+		httpResp, err = g.client.Do(httpReq)
+	}
 	if err != nil {
 		return nil, NewNetworkError("发送 HTTP 请求失败", err)
 	}
@@ -469,8 +486,13 @@ func (g *ModelGenerator) generateStreaming(ctx context.Context, cb func(context.
 	// 设置请求头
 	g.setRequestHeaders(httpReq)
 
-	// 发送请求
-	httpResp, err := g.client.Do(httpReq)
+	// 发送请求（使用支持重试的客户端）
+	var httpResp *http.Response
+	if g.retryableClient != nil {
+		httpResp, err = g.retryableClient.Do(httpReq)
+	} else {
+		httpResp, err = g.client.Do(httpReq)
+	}
 	if err != nil {
 		return nil, NewNetworkError("发送 HTTP 请求失败", err)
 	}

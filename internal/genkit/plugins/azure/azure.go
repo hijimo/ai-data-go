@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/core/api"
@@ -57,6 +56,9 @@ type AzureAI struct {
 	// httpClient 用于发送 HTTP 请求的客户端
 	httpClient *http.Client
 
+	// retryableClient 支持重试的 HTTP 客户端
+	retryableClient *RetryableHTTPClient
+
 	// APIKey Azure OpenAI API 密钥
 	// 必需：用于认证
 	APIKey string
@@ -73,6 +75,14 @@ type AzureAI struct {
 	// 用作模型名称的前缀（例如 "azure/gpt-4"）
 	// 应为小写并与 Name() 方法匹配
 	Provider string
+
+	// RetryConfig 重试配置
+	// 可选：默认使用 DefaultRetryConfig()
+	RetryConfig *RetryConfig
+
+	// TimeoutConfig 超时配置
+	// 可选：默认使用 DefaultTimeoutConfig()
+	TimeoutConfig *TimeoutConfig
 }
 
 // Init 实现 genkit.Plugin 接口
@@ -103,16 +113,21 @@ func (a *AzureAI) Init(ctx context.Context) []api.Action {
 		a.Provider = "azure"
 	}
 
-	// 创建 HTTP 客户端
-	a.httpClient = &http.Client{
-		Timeout: 30 * time.Second,
-		Transport: &http.Transport{
-			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 10,
-			IdleConnTimeout:     90 * time.Second,
-			TLSHandshakeTimeout: 10 * time.Second,
-		},
+	// 设置默认超时配置
+	if a.TimeoutConfig == nil {
+		a.TimeoutConfig = DefaultTimeoutConfig()
 	}
+
+	// 设置默认重试配置
+	if a.RetryConfig == nil {
+		a.RetryConfig = DefaultRetryConfig()
+	}
+
+	// 创建 HTTP 客户端（配置超时）
+	a.httpClient = NewHTTPClientWithTimeout(a.TimeoutConfig)
+
+	// 创建支持重试的 HTTP 客户端
+	a.retryableClient = NewRetryableHTTPClient(a.httpClient, a.RetryConfig)
 
 	a.initted = true
 	return []api.Action{}
@@ -138,8 +153,8 @@ func (a *AzureAI) DefineModel(provider, id string, opts ai.ModelOptions) ai.Mode
 		input *ai.ModelRequest,
 		cb func(context.Context, *ai.ModelResponseChunk) error,
 	) (*ai.ModelResponse, error) {
-		// 使用输入配置响应生成器
-		generator := NewModelGenerator(a.httpClient, a.BaseURL, a.APIKey, a.APIVersion, id).
+		// 使用输入配置响应生成器（使用支持重试的客户端）
+		generator := NewModelGeneratorWithRetry(a.retryableClient, a.BaseURL, a.APIKey, a.APIVersion, id).
 			WithMessages(input.Messages).
 			WithConfig(input.Config).
 			WithTools(input.Tools)
@@ -164,7 +179,7 @@ func (a *AzureAI) DefineEmbedder(provider, name string, embedOpts *ai.EmbedderOp
 	}
 
 	return ai.NewEmbedder(api.NewName(provider, name), embedOpts, func(ctx context.Context, req *ai.EmbedRequest) (*ai.EmbedResponse, error) {
-		return generateEmbeddings(ctx, a.httpClient, a.BaseURL, a.APIKey, a.APIVersion, name, req)
+		return generateEmbeddings(ctx, a.retryableClient, a.BaseURL, a.APIKey, a.APIVersion, name, req)
 	})
 }
 

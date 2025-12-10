@@ -28,7 +28,7 @@ import (
 
 // generateEmbeddings 生成文本嵌入
 // 使用 Azure OpenAI 的 /openai/embeddings 端点
-func generateEmbeddings(ctx context.Context, client *http.Client, baseURL, apiKey, apiVersion, modelName string, req *ai.EmbedRequest) (*ai.EmbedResponse, error) {
+func generateEmbeddings(ctx context.Context, client interface{}, baseURL, apiKey, apiVersion, modelName string, req *ai.EmbedRequest) (*ai.EmbedResponse, error) {
 	// 验证输入
 	if len(req.Input) == 0 {
 		return nil, NewRequestError("至少需要一个文档进行嵌入", nil)
@@ -65,8 +65,16 @@ func generateEmbeddings(ctx context.Context, client *http.Client, baseURL, apiKe
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("api-key", apiKey) // Azure OpenAI 使用 api-key 认证头
 
-	// 发送请求
-	httpResp, err := client.Do(httpReq)
+	// 发送请求（支持重试）
+	var httpResp *http.Response
+	switch c := client.(type) {
+	case *RetryableHTTPClient:
+		httpResp, err = c.Do(httpReq)
+	case *http.Client:
+		httpResp, err = c.Do(httpReq)
+	default:
+		return nil, NewRequestError("无效的 HTTP 客户端类型", nil)
+	}
 	if err != nil {
 		return nil, NewNetworkError("发送嵌入请求失败", err)
 	}
