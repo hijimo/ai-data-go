@@ -52,13 +52,28 @@ func NewModelGenerator(client *http.Client, baseURL, apiKey, apiVersion, modelNa
 
 // WithMessages 添加消息到请求
 func (g *ModelGenerator) WithMessages(messages []*ai.Message) *ModelGenerator {
-	// TODO: 实现消息转换逻辑
+	if g.err != nil {
+		return g
+	}
+
+	azMessages, err := convertMessages(messages)
+	if err != nil {
+		g.err = err
+		return g
+	}
+
+	g.messages = azMessages
 	return g
 }
 
 // WithTools 添加工具到请求
 func (g *ModelGenerator) WithTools(tools []*ai.ToolDefinition) *ModelGenerator {
-	// TODO: 实现工具转换逻辑
+	if g.err != nil {
+		return g
+	}
+
+	azTools := convertTools(tools)
+	g.tools = azTools
 	return g
 }
 
