@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"genkit-ai-service/internal/genkit/plugins/azure"
 	"genkit-ai-service/internal/genkit/plugins/bailian"
 	"genkit-ai-service/internal/logger"
 	"genkit-ai-service/internal/repository"
@@ -522,7 +523,8 @@ func createBailianPlugin(ctx context.Context, apiKey string, baseURL *string) (*
 // 支持的提供商：
 // - googlegenai: Google AI (Gemini)
 // - openai: OpenAI
-// - azureopenai: Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
+// - azure: Azure OpenAI (使用原生 Azure 插件，支持 Responses API)
+// - azureopenai: Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL，向后兼容)
 // - bianlian: 阿里云百炼 (使用 OpenAI 插件 + 百炼兼容模式 BaseURL)
 // - anthropic: Anthropic (Claude)
 // - custom_openai: 自定义 OpenAI 兼容服务
@@ -686,9 +688,52 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			"fullModelName": fullModelName,
 		})
 
+	case "azure":
+		// Azure OpenAI (使用原生 Azure 插件)
+		// 使用 Azure OpenAI Responses API (/openai/responses)
+		logger.InfoContext(ctx, "初始化 Azure AI 提供商（原生插件）", logger.Fields{
+			"provider": "azure",
+			"model":    genkitConfig.Model,
+			"baseURL":  tempConfig.BaseURL,
+		})
+
+		// 验证 BaseURL
+		if tempConfig.BaseURL == nil || *tempConfig.BaseURL == "" {
+			logger.ErrorContext(ctx, "Azure AI 提供商缺少 BaseURL", logger.Fields{
+				"provider": "azure",
+			})
+			return nil, fmt.Errorf("Azure AI 提供商必须指定 baseUrl")
+		}
+
+		// 创建 Azure AI 插件
+		plugin := &azure.AzureAI{
+			APIKey:     tempConfig.APIKey,
+			BaseURL:    *tempConfig.BaseURL,
+			APIVersion: genkitConfig.AzureAPIVersion,
+			Provider:   "azure",
+		}
+
+		// 初始化插件
+		plugin.Init(ctx)
+
+		fullModelName = "azure/" + genkitConfig.Model
+
+		// 初始化 Genkit 实例
+		g = genkit.Init(ctx,
+			genkit.WithPlugins(plugin),
+			genkit.WithDefaultModel(fullModelName),
+		)
+
+		logger.InfoContext(ctx, "Azure AI 提供商初始化成功（原生插件）", logger.Fields{
+			"provider":      "azure",
+			"fullModelName": fullModelName,
+			"apiVersion":    plugin.APIVersion,
+		})
+
 	case "azureopenai":
 		// Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
-		logger.InfoContext(ctx, "初始化 Azure OpenAI 提供商", logger.Fields{
+		// 使用传统的 chat/completions 端点（向后兼容）
+		logger.InfoContext(ctx, "初始化 Azure OpenAI 提供商（兼容模式）", logger.Fields{
 			"provider": "azureopenai",
 			"model":    genkitConfig.Model,
 			"baseURL":  tempConfig.BaseURL,
@@ -711,7 +756,7 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			genkit.WithDefaultModel(fullModelName),
 		)
 
-		logger.InfoContext(ctx, "Azure OpenAI 提供商初始化成功", logger.Fields{
+		logger.InfoContext(ctx, "Azure OpenAI 提供商初始化成功（兼容模式）", logger.Fields{
 			"provider":      "azureopenai",
 			"fullModelName": fullModelName,
 		})
