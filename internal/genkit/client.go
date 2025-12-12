@@ -398,17 +398,15 @@ func (c *client) parseModelConfiguration(ctx context.Context, modelConfig interf
 }
 
 // createAzurePlugin 创建 Azure OpenAI 插件
-// 使用 OpenAI 插件 + option.RequestOption 的方式集成 Azure OpenAI
-// 支持最新的 Azure OpenAI API 版本（包括 5.1 模型）
-// 参考 Google Genkit 官方文档：
-// https://firebase.google.com/docs/genkit/plugins/openai#custom-base-url
-func createAzurePlugin(ctx context.Context, apiKey string, baseURL *string, genkitConfig *GenkitConfig) (*oai.OpenAI, error) {
+// 使用原生 Azure 插件，支持 Azure OpenAI Responses API
+// 参考 bailian 插件的实现模式
+func createAzurePlugin(ctx context.Context, apiKey string, baseURL *string, genkitConfig *GenkitConfig) (*azure.AzureAI, error) {
 	// 验证 BaseURL 是否存在
 	if baseURL == nil || *baseURL == "" {
 		logger.ErrorContext(ctx, "Azure OpenAI 配置缺少 BaseURL", logger.Fields{
-			"error": "BaseURL is required for Azure OpenAI",
+			"error": "baseURL is required for Azure OpenAI",
 		})
-		return nil, fmt.Errorf("azure OpenAI 需要配置 BaseURL")
+		return nil, fmt.Errorf("azure OpenAI 需要配置 baseURL")
 	}
 
 	// 构建完整的 BaseURL
@@ -418,17 +416,8 @@ func createAzurePlugin(ctx context.Context, apiKey string, baseURL *string, genk
 		azureBaseURL = azureBaseURL[:len(azureBaseURL)-1]
 	}
 
-	// Azure OpenAI 的 BaseURL 格式：
-	// https://{resource-name}.openai.azure.com/openai/deployments/{deployment-name}
-	//
-	// 根据官方文档，使用 option.RequestOption 配置：
-	// 1. option.WithAPIKey - 设置 API 密钥
-	// 2. option.WithBaseURL - 设置自定义端点
-	// 3. option.WithHeader - 添加自定义请求头（如果需要）
-	// 4. option.WithQuery - 添加查询参数（如 api-version）
-
 	// 确定 API 版本
-	apiVersion := "2024-12-01-preview" // 支持最新的 5.1 模型
+	apiVersion := "2025-04-01-preview" // 默认使用最新版本
 	if genkitConfig.AzureAPIVersion != "" {
 		apiVersion = genkitConfig.AzureAPIVersion
 	}
@@ -439,45 +428,20 @@ func createAzurePlugin(ctx context.Context, apiKey string, baseURL *string, genk
 		"apiVersion": apiVersion,
 	})
 
-	// 构建 RequestOption 列表
-	opts := []option.RequestOption{
-		option.WithAPIKey(apiKey),
-		option.WithBaseURL(azureBaseURL),
-	}
-
-	// 添加 API 版本查询参数
-	// Azure OpenAI 要求在所有请求中包含 api-version 参数
-	opts = append(opts, option.WithQuery("api-version", apiVersion))
-
-	// 如果配置了组织 ID，添加到请求头
-	if genkitConfig.AzureOrganization != "" {
-		opts = append(opts, option.WithHeader("OpenAI-Organization", genkitConfig.AzureOrganization))
-		logger.DebugContext(ctx, "添加组织 ID", logger.Fields{
-			"organization": genkitConfig.AzureOrganization,
-		})
-	}
-
-	// 如果配置了自定义请求头，添加到选项中
-	if len(genkitConfig.CustomHeaders) > 0 {
-		for key, value := range genkitConfig.CustomHeaders {
-			opts = append(opts, option.WithHeader(key, value))
-			logger.DebugContext(ctx, "添加自定义请求头", logger.Fields{
-				"header": key,
-				"value":  value,
-			})
-		}
-	}
-
-	// 创建 OpenAI 插件，使用 option.RequestOption 配置
-	plugin := &oai.OpenAI{
-		Opts: opts,
+	// 创建 Azure AI 插件实例
+	plugin := &azure.AzureAI{
+		APIKey:         apiKey,
+		BaseURL:        azureBaseURL,
+		APIVersion:     apiVersion,
+		Provider:       "azure",
+		EnableDebugLog: true, // 启用调试日志，打印 HTTP 请求详情
 	}
 
 	logger.InfoContext(ctx, "Azure OpenAI 插件创建成功", logger.Fields{
-		"baseURL":    azureBaseURL,
-		"model":      genkitConfig.Model,
-		"apiVersion": apiVersion,
-		"optCount":   len(opts),
+		"baseURL":        azureBaseURL,
+		"model":          genkitConfig.Model,
+		"apiVersion":     apiVersion,
+		"enableDebugLog": true,
 	})
 
 	return plugin, nil
@@ -707,10 +671,11 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 
 		// 创建 Azure AI 插件
 		plugin := &azure.AzureAI{
-			APIKey:     tempConfig.APIKey,
-			BaseURL:    *tempConfig.BaseURL,
-			APIVersion: genkitConfig.AzureAPIVersion,
-			Provider:   "azure",
+			APIKey:         tempConfig.APIKey,
+			BaseURL:        *tempConfig.BaseURL,
+			APIVersion:     genkitConfig.AzureAPIVersion,
+			Provider:       "azure",
+			EnableDebugLog: true, // 启用调试日志，打印 HTTP 请求详情
 		}
 
 		// 初始化插件
@@ -731,9 +696,9 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 		})
 
 	case "azureopenai":
-		// Azure OpenAI (使用 OpenAI 插件 + Azure BaseURL)
-		// 使用传统的 chat/completions 端点（向后兼容）
-		logger.InfoContext(ctx, "初始化 Azure OpenAI 提供商（兼容模式）", logger.Fields{
+		// Azure OpenAI (使用原生 Azure 插件)
+		// 使用 Azure OpenAI Responses API
+		logger.InfoContext(ctx, "初始化 Azure OpenAI 提供商", logger.Fields{
 			"provider": "azureopenai",
 			"model":    genkitConfig.Model,
 			"baseURL":  tempConfig.BaseURL,
@@ -748,7 +713,7 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			return nil, fmt.Errorf("创建 Azure OpenAI 插件失败: %w", err)
 		}
 
-		fullModelName = "openai/" + genkitConfig.Model
+		fullModelName = "azure/" + genkitConfig.Model
 
 		// 初始化 Genkit 实例
 		g = genkit.Init(ctx,
@@ -756,9 +721,10 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 			genkit.WithDefaultModel(fullModelName),
 		)
 
-		logger.InfoContext(ctx, "Azure OpenAI 提供商初始化成功（兼容模式）", logger.Fields{
+		logger.InfoContext(ctx, "Azure OpenAI 提供商初始化成功", logger.Fields{
 			"provider":      "azureopenai",
 			"fullModelName": fullModelName,
+			"apiVersion":    plugin.APIVersion,
 		})
 
 	case "bianlian":
@@ -1037,14 +1003,30 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 				}
 
 				chunkCount++
-				totalContent += chunk.Text()
+				chunkText := chunk.Text()
+				totalContent += chunkText
+
+				// 详细日志：记录每个 chunk 的内容
+				logger.DebugContext(ctx, "流式回调被调用", logger.Fields{
+					"tenantId":     tenantID,
+					"modelName":    modelName,
+					"chunkNumber":  chunkCount,
+					"chunkTextLen": len(chunkText),
+					"chunkText":    chunkText,
+					"contentParts": len(chunk.Content),
+				})
 
 				// 发送流式数据块
 				select {
 				case streamChan <- StreamChunk{
-					Content: chunk.Text(),
+					Content: chunkText,
 					Done:    false,
 				}:
+					logger.DebugContext(ctx, "流式数据块已发送到通道", logger.Fields{
+						"tenantId":    tenantID,
+						"chunkNumber": chunkCount,
+						"textLen":     len(chunkText),
+					})
 				case <-ctx.Done():
 					logger.WarnContext(ctx, "流式生成被取消", logger.Fields{
 						"tenantId":   tenantID,

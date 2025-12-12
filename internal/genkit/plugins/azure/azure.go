@@ -83,6 +83,10 @@ type AzureAI struct {
 	// TimeoutConfig 超时配置
 	// 可选：默认使用 DefaultTimeoutConfig()
 	TimeoutConfig *TimeoutConfig
+
+	// EnableDebugLog 是否启用调试日志（打印 HTTP 请求详情）
+	// 可选：默认为 false
+	EnableDebugLog bool
 }
 
 // Init 实现 genkit.Plugin 接口
@@ -157,7 +161,8 @@ func (a *AzureAI) DefineModel(provider, id string, opts ai.ModelOptions) ai.Mode
 		generator := NewModelGeneratorWithRetry(a.retryableClient, a.BaseURL, a.APIKey, a.APIVersion, id).
 			WithMessages(input.Messages).
 			WithConfig(input.Config).
-			WithTools(input.Tools)
+			WithTools(input.Tools).
+			WithDebugLog(a.EnableDebugLog)
 
 		// 生成响应
 		resp, err := generator.Generate(ctx, input, cb)

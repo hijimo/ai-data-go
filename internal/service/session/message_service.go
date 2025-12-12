@@ -721,7 +721,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 						errorMessage = detail.Error.Message
 					}
 				}
-				
+
 				s.logError(dbCtx, "流式响应出错", logger.Fields{
 					"sessionId": req.SessionID,
 					"messageId": aiMessage.ID.String(),
@@ -753,7 +753,7 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 		if lastUsage != nil {
 			aiMessage.Tokens = lastUsage.CompletionTokens
 		}
-		
+
 		// 如果有错误，保存错误信息
 		if hasError {
 			aiMessage.Error = errorMessage

@@ -95,10 +95,10 @@ func (r *messageRepository) GetBySessionID(ctx context.Context, sessionID string
 		return nil, 0, fmt.Errorf("统计消息总数失败: %w", err)
 	}
 
-	// 分页查询，按序列号正序排列
+	// 分页查询，按创建时间倒序排列（最新的消息在前面）
 	offset := (page - 1) * pageSize
 	err := query.
-		Order("sequence ASC").
+		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
 		Find(&messages).Error

@@ -14,7 +14,10 @@
 
 package azure
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // DefaultAPIVersion 是 Azure OpenAI API 的默认版本
 const DefaultAPIVersion = "2025-04-01-preview"
@@ -218,7 +221,7 @@ type TokenDetails struct {
 	RejectedPredictionTokens int `json:"rejected_prediction_tokens,omitempty"`
 }
 
-// StreamChunk 表示流式响应的数据块
+// StreamChunk 表示流式响应的数据块（传统 OpenAI 格式，已废弃）
 type StreamChunk struct {
 	// ID 响应的唯一标识符
 	ID string `json:"id"`
@@ -261,6 +264,137 @@ type DeltaMessage struct {
 
 	// ToolCalls 工具调用列表
 	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+}
+
+// ResponsesStreamEvent 表示 Azure Responses API 的 SSE 事件
+// 支持的事件类型：
+// - response.created
+// - response.output_item.added
+// - response.content_part.added
+// - response.content_part.delta
+// - response.content_part.done
+// - response.output_item.done
+// - response.done
+type ResponsesStreamEvent struct {
+	// Type 事件类型
+	Type string `json:"type"`
+
+	// SequenceNumber 序列号
+	SequenceNumber int `json:"sequence_number,omitempty"`
+
+	// ItemID 项目 ID
+	ItemID string `json:"item_id,omitempty"`
+
+	// OutputIndex 输出索引
+	OutputIndex int `json:"output_index,omitempty"`
+
+	// ContentIndex 内容索引
+	ContentIndex int `json:"content_index,omitempty"`
+
+	// Part 内容部分
+	Part *ResponsePart `json:"part,omitempty"`
+
+	// Delta 增量内容（可能是字符串或结构体）
+	Delta json.RawMessage `json:"delta,omitempty"`
+
+	// Response 完整响应（仅在 response.done 事件中）
+	Response *ResponsesStreamResponse `json:"response,omitempty"`
+}
+
+// ResponsePart 表示响应内容部分
+type ResponsePart struct {
+	// Type 内容类型：output_text, function_call 等
+	Type string `json:"type"`
+
+	// Text 文本内容（当 type 为 output_text 时）
+	Text string `json:"text,omitempty"`
+
+	// Annotations 注释列表
+	Annotations []any `json:"annotations,omitempty"`
+
+	// Logprobs 对数概率
+	Logprobs []any `json:"logprobs,omitempty"`
+
+	// FunctionCall 函数调用（当 type 为 function_call 时）
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
+}
+
+// ResponseDelta 表示增量内容
+type ResponseDelta struct {
+	// Text 文本增量
+	Text string `json:"text,omitempty"`
+
+	// Arguments 参数增量（用于函数调用）
+	Arguments string `json:"arguments,omitempty"`
+}
+
+// ResponsesStreamResponse 表示完整的流式响应
+type ResponsesStreamResponse struct {
+	// ID 响应 ID
+	ID string `json:"id"`
+
+	// Object 对象类型
+	Object string `json:"object"`
+
+	// Created 创建时间戳
+	Created int64 `json:"created_at"`
+
+	// Model 模型名称
+	Model string `json:"model"`
+
+	// Status 响应状态：in_progress, completed, failed, incomplete
+	Status string `json:"status"`
+
+	// Output 输出项列表
+	Output []ResponseOutputItem `json:"output,omitempty"`
+
+	// Usage token 使用统计
+	Usage *Usage `json:"usage,omitempty"`
+
+	// Error 错误信息（当 status 为 failed 时）
+	Error *ErrorDetail `json:"error,omitempty"`
+
+	// IncompleteDetails 不完整详情（当 status 为 incomplete 时）
+	IncompleteDetails *IncompleteDetails `json:"incomplete_details,omitempty"`
+}
+
+// IncompleteDetails 表示响应不完整的详情
+type IncompleteDetails struct {
+	// Reason 不完整的原因：max_tokens, content_filter 等
+	Reason string `json:"reason"`
+}
+
+// ResponseOutputItem 表示响应输出项
+type ResponseOutputItem struct {
+	// ID 项目 ID
+	ID string `json:"id"`
+
+	// Type 项目类型：message, function_call 等
+	Type string `json:"type"`
+
+	// Role 角色（当 type 为 message 时）
+	Role string `json:"role,omitempty"`
+
+	// Content 内容列表
+	Content []ResponseContentItem `json:"content,omitempty"`
+}
+
+// ResponseContentItem 表示响应内容项
+type ResponseContentItem struct {
+	// Type 内容类型：output_text, function_call 等
+	Type string `json:"type"`
+
+	// Text 文本内容
+	Text string `json:"text,omitempty"`
+
+	// Annotations 注释列表
+	Annotations []any `json:"annotations,omitempty"`
+
+	// Logprobs 对数概率
+	Logprobs []any `json:"logprobs,omitempty"`
+
+	// FunctionCall 函数调用
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 }
 
 // EmbeddingRequest 表示嵌入请求
