@@ -812,6 +812,47 @@ func (g *ModelGenerator) parseStreamingResponse(ctx context.Context, body io.Rea
 					}
 				}
 
+			case "response.output_text.delta":
+				// 文本增量事件 - 实时发送增量文本
+				if g.enableDebugLog {
+					fmt.Printf("收到 response.output_text.delta 事件: item_id=%s, output_index=%d\n",
+						event.ItemID, event.OutputIndex)
+				}
+
+				// 解析 delta 字段
+				if len(event.Delta) > 0 {
+					var deltaText string
+					if err := json.Unmarshal(event.Delta, &deltaText); err == nil && deltaText != "" {
+						// 聚合文本
+						aggregatedContent += deltaText
+
+						if g.enableDebugLog {
+							fmt.Printf("  Delta文本=%s, 聚合总长度=%d\n", deltaText, len(aggregatedContent))
+							fmt.Printf("  准备调用回调函数，cb是否为nil: %v\n", cb == nil)
+						}
+
+						// 实时调用回调函数发送增量文本
+						if cb != nil {
+							chunkResp := &ai.ModelResponseChunk{
+								Content: []*ai.Part{ai.NewTextPart(deltaText)},
+							}
+							if g.enableDebugLog {
+								fmt.Printf("  [Azure插件] 调用回调函数，文本长度=%d\n", len(deltaText))
+							}
+							if err := cb(ctx, chunkResp); err != nil {
+								return nil, fmt.Errorf("回调函数执行失败: %w", err)
+							}
+							if g.enableDebugLog {
+								fmt.Printf("  [Azure插件] 回调函数执行成功\n")
+							}
+						} else {
+							if g.enableDebugLog {
+								fmt.Printf("  [警告] 回调函数为 nil，无法发送增量文本\n")
+							}
+						}
+					}
+				}
+
 			case "response.output_text.done":
 				// 输出文本完成事件（可选的额外事件）
 				// 通常 content_part.done 已经包含了文本，这里可以跳过

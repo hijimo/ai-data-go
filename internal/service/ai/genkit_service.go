@@ -22,11 +22,14 @@ type genkitService struct {
 
 // NewGenkitService 创建新的 Genkit AI 服务
 // 参数:
-//   client: Genkit 客户端
-//   contextManager: 上下文管理器
-//   log: 日志记录器
+//
+//	client: Genkit 客户端
+//	contextManager: 上下文管理器
+//	log: 日志记录器
+//
 // 返回:
-//   AIService: AI 服务实例
+//
+//	AIService: AI 服务实例
 func NewGenkitService(client genkit.Client, contextManager ContextManager, log logger.Logger) AIService {
 	return &genkitService{
 		client:         client,
@@ -159,14 +162,14 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		"model":     result.Model,
 		"duration":  duration.String(),
 	}
-	
+
 	// 添加 Token 使用统计
 	if response.Usage != nil {
 		logFields["promptTokens"] = response.Usage.PromptTokens
 		logFields["completionTokens"] = response.Usage.CompletionTokens
 		logFields["totalTokens"] = response.Usage.TotalTokens
 	}
-	
+
 	s.logger.InfoContext(sessionCtx, "对话请求处理完成", logFields)
 
 	return response, nil
@@ -277,26 +280,26 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 				// 检查是否是上下文取消错误
 				if sessionCtx.Err() == context.Canceled {
 					s.logger.WarnContext(ctx, "流式对话请求被取消", logger.Fields{
-						"sessionId":   sessionID,
-						"tenantId":    tenantID,
-						"modelName":   modelName,
-						"chunkCount":  len(fullContent),
+						"sessionId":  sessionID,
+						"tenantId":   tenantID,
+						"modelName":  modelName,
+						"chunkCount": len(fullContent),
 					})
 				} else {
 					s.logger.ErrorContext(ctx, "流式生成出错", logger.Fields{
-						"sessionId":   sessionID,
-						"tenantId":    tenantID,
-						"modelName":   modelName,
-						"chunkCount":  len(fullContent),
-						"error":       chunk.Error.Error(),
-						"errorType":   fmt.Sprintf("%T", chunk.Error),
+						"sessionId":  sessionID,
+						"tenantId":   tenantID,
+						"modelName":  modelName,
+						"chunkCount": len(fullContent),
+						"error":      chunk.Error.Error(),
+						"errorType":  fmt.Sprintf("%T", chunk.Error),
 					})
 				}
 
 				// 解析错误信息，提取错误代码和消息
 				errorMsg := chunk.Error.Error()
 				errorCode := "AI_SERVICE_ERROR"
-				
+
 				// 尝试识别常见错误类型
 				if sessionCtx.Err() == context.Canceled {
 					errorCode = "REQUEST_CANCELLED"
@@ -371,14 +374,14 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 					"model":     lastModel,
 					"duration":  duration.String(),
 				}
-				
+
 				// 添加 Token 使用统计
 				if lastUsage != nil {
 					logFields["promptTokens"] = lastUsage.PromptTokens
 					logFields["completionTokens"] = lastUsage.CompletionTokens
 					logFields["totalTokens"] = lastUsage.TotalTokens
 				}
-				
+
 				s.logger.InfoContext(sessionCtx, "流式对话请求处理完成", logFields)
 				break
 			}
@@ -396,8 +399,9 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 				CompletionID: sessionID,
 				SessionID:    sessionID,
 				Processes: model.ProcessInfo{
-					Stage:   model.StreamStageOutput,
-					Message: "",
+					Stage:        model.StreamStageOutput,
+					Message:      "",
+					DeltaContent: chunk.Content, // 同时填充 processes.delta_content 字段
 				},
 				DeltaContent: chunk.Content,
 				IsStop:       false,
