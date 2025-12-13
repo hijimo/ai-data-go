@@ -365,12 +365,14 @@ func main() {
 	mux = middleware.Recovery(mux)
 
 	// 13. 创建 HTTP 服务器
+	// 注意：WriteTimeout 设置为 10 分钟以支持长时间的流式输出
+	// AI 流式响应可能需要较长时间生成内容，避免连接过早超时
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
 		Handler:      mux,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  15 * time.Second, // 读取请求超时：15秒
+		WriteTimeout: 10 * time.Minute, // 写入响应超时：10分钟（支持流式输出）
+		IdleTimeout:  60 * time.Second, // 空闲连接超时：60秒
 	}
 
 	// 14. 启动服务器（在 goroutine 中）
