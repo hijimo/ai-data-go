@@ -11,9 +11,25 @@ type ChatRequest struct {
 	// @Description 可选的消息ID，用于继续之前的对话
 	// @Example 550e8400-e29b-41d4-a716-446655440000
 	MessageID string `json:"messageId,omitempty" example:"550e8400-e29b-41d4-a716-446655440000"`
+	// 历史消息（可选，用于多轮对话）
+	// @Description 历史对话消息列表，按时间顺序排列
+	History []*ChatHistoryMessage `json:"history,omitempty"`
 	// AI高级参数（可选）
 	// @Description 可选的AI模型配置参数，包括模型名称、温度、最大token数等。如果指定了 modelName，系统会使用该模型；否则使用会话的默认模型。
 	Options *ChatOptions `json:"options,omitempty"`
+}
+
+// ChatHistoryMessage 历史对话消息
+// @Description 历史对话中的单条消息
+type ChatHistoryMessage struct {
+	// 角色：user（用户）或 assistant（AI助手）
+	// @Description 消息发送者的角色
+	// @Example user
+	Role string `json:"role" validate:"required,oneof=user assistant system" example:"user"`
+	// 消息内容
+	// @Description 消息的文本内容
+	// @Example 你好
+	Content string `json:"content" validate:"required" example:"你好"`
 }
 
 // ChatOptions AI高级参数

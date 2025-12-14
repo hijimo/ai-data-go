@@ -834,6 +834,7 @@ func (c *client) initializeProvider(ctx context.Context, modelConfig interface{}
 }
 
 // Generate 生成内容（根据租户ID和模型名称）
+// 支持多轮对话：如果 options.History 不为空，会将历史消息作为上下文传递给 AI
 func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (*GenerateResult, error) {
 	startTime := time.Now()
 
@@ -858,11 +859,18 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 		return nil, fmt.Errorf("提示词不能为空")
 	}
 
+	// 计算历史消息数量
+	historyCount := 0
+	if options != nil && options.History != nil {
+		historyCount = len(options.History)
+	}
+
 	// TraceID 会自动从 context 中提取并记录到日志中
 	logger.InfoContext(ctx, "开始生成内容", logger.Fields{
-		"tenantId":  tenantID,
-		"modelName": modelName,
-		"promptLen": len(prompt),
+		"tenantId":     tenantID,
+		"modelName":    modelName,
+		"promptLen":    len(prompt),
+		"historyCount": historyCount,
 	})
 
 	// 获取或初始化 Genkit 实例
@@ -877,18 +885,36 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 		return nil, fmt.Errorf("获取模型实例失败: %w", err)
 	}
 
+	// 构建生成选项
+	var generateOpts []ai.GenerateOption
+
+	// 如果有历史消息，使用 WithMessages 构建多轮对话
+	if historyCount > 0 {
+		messages := buildMessages(options.History, prompt)
+		generateOpts = append(generateOpts, ai.WithMessages(messages...))
+
+		logger.DebugContext(ctx, "使用多轮对话模式", logger.Fields{
+			"tenantId":      tenantID,
+			"modelName":     modelName,
+			"historyCount":  historyCount,
+			"totalMessages": len(messages),
+		})
+	} else {
+		// 没有历史消息，使用简单的 prompt 模式
+		generateOpts = append(generateOpts, ai.WithPrompt(prompt))
+	}
+
 	// 调用 Genkit 生成
-	// 注意：当前简化实现，暂不支持自定义 temperature、maxTokens 等参数
-	// 这些参数可以通过 genkit.WithDefaultModel 在初始化时设置
-	resp, err := genkit.Generate(ctx, g, ai.WithPrompt(prompt))
+	resp, err := genkit.Generate(ctx, g, generateOpts...)
 	if err != nil {
 		duration := time.Since(startTime)
 		logger.ErrorContext(ctx, "生成内容失败", logger.Fields{
-			"tenantId":  tenantID,
-			"modelName": modelName,
-			"model":     genkitConfig.Model,
-			"duration":  duration.String(),
-			"error":     err.Error(),
+			"tenantId":     tenantID,
+			"modelName":    modelName,
+			"model":        genkitConfig.Model,
+			"duration":     duration.String(),
+			"historyCount": historyCount,
+			"error":        err.Error(),
 		})
 		return nil, fmt.Errorf("生成内容失败: %w", err)
 	}
@@ -916,6 +942,7 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 		"model":            genkitConfig.Model,
 		"duration":         duration.String(),
 		"durationMs":       duration.Milliseconds(),
+		"historyCount":     historyCount,
 		"promptTokens":     result.Usage.PromptTokens,
 		"completionTokens": result.Usage.CompletionTokens,
 		"totalTokens":      result.Usage.TotalTokens,
@@ -925,7 +952,41 @@ func (c *client) Generate(ctx context.Context, tenantID, modelName, prompt strin
 	return result, nil
 }
 
+// buildMessages 构建消息列表（包含历史消息和当前用户消息）
+func buildMessages(history []*HistoryMessage, currentPrompt string) []*ai.Message {
+	messages := make([]*ai.Message, 0, len(history)+1)
+
+	// 添加历史消息
+	for _, h := range history {
+		var role ai.Role
+		switch h.Role {
+		case "user":
+			role = ai.RoleUser
+		case "assistant":
+			role = ai.RoleModel
+		case "system":
+			role = ai.RoleSystem
+		default:
+			role = ai.RoleUser
+		}
+
+		messages = append(messages, &ai.Message{
+			Role:    role,
+			Content: []*ai.Part{ai.NewTextPart(h.Content)},
+		})
+	}
+
+	// 添加当前用户消息
+	messages = append(messages, &ai.Message{
+		Role:    ai.RoleUser,
+		Content: []*ai.Part{ai.NewTextPart(currentPrompt)},
+	})
+
+	return messages
+}
+
 // GenerateStream 流式生成内容（根据租户ID和模型名称）
+// 支持多轮对话：如果 options.History 不为空，会将历史消息作为上下文传递给 AI
 func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt string, options *GenerateOptions) (<-chan StreamChunk, error) {
 	startTime := time.Now()
 
@@ -950,11 +1011,18 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 		return nil, fmt.Errorf("提示词不能为空")
 	}
 
+	// 计算历史消息数量
+	historyCount := 0
+	if options != nil && options.History != nil {
+		historyCount = len(options.History)
+	}
+
 	// TraceID 会自动从 context 中提取并记录到日志中
 	logger.InfoContext(ctx, "开始流式生成内容", logger.Fields{
-		"tenantId":  tenantID,
-		"modelName": modelName,
-		"promptLen": len(prompt),
+		"tenantId":     tenantID,
+		"modelName":    modelName,
+		"promptLen":    len(prompt),
+		"historyCount": historyCount,
 	})
 
 	// 获取或初始化 Genkit 实例
@@ -970,9 +1038,10 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 	}
 
 	logger.InfoContext(ctx, "开始流式调用", logger.Fields{
-		"tenantId":  tenantID,
-		"modelName": modelName,
-		"model":     genkitConfig.Model,
+		"tenantId":     tenantID,
+		"modelName":    modelName,
+		"model":        genkitConfig.Model,
+		"historyCount": historyCount,
 	})
 
 	// 创建流式响应通道
@@ -986,58 +1055,77 @@ func (c *client) GenerateStream(ctx context.Context, tenantID, modelName, prompt
 		var totalContent string
 		firstChunkTime := time.Time{}
 
-		// 调用 Genkit 流式生成，使用 WithStreaming 回调处理每个 chunk
-		resp, err := genkit.Generate(ctx, g,
-			ai.WithPrompt(prompt),
-			ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
-				// 记录首字节时间
-				if chunkCount == 0 {
-					firstChunkTime = time.Now()
-					ttfb := firstChunkTime.Sub(startTime)
-					logger.InfoContext(ctx, "收到首个响应块", logger.Fields{
-						"tenantId":  tenantID,
-						"modelName": modelName,
-						"model":     genkitConfig.Model,
-						"ttfb":      ttfb.String(),
-					})
-				}
+		// 构建生成选项
+		var generateOpts []ai.GenerateOption
 
-				chunkCount++
-				chunkText := chunk.Text()
-				totalContent += chunkText
+		// 如果有历史消息，使用 WithMessages 构建多轮对话
+		if historyCount > 0 {
+			messages := buildMessages(options.History, prompt)
+			generateOpts = append(generateOpts, ai.WithMessages(messages...))
 
-				// 详细日志：记录每个 chunk 的内容
-				logger.DebugContext(ctx, "流式回调被调用", logger.Fields{
-					"tenantId":     tenantID,
-					"modelName":    modelName,
-					"chunkNumber":  chunkCount,
-					"chunkTextLen": len(chunkText),
-					"chunkText":    chunkText,
-					"contentParts": len(chunk.Content),
+			logger.DebugContext(ctx, "流式生成使用多轮对话模式", logger.Fields{
+				"tenantId":      tenantID,
+				"modelName":     modelName,
+				"historyCount":  historyCount,
+				"totalMessages": len(messages),
+			})
+		} else {
+			// 没有历史消息，使用简单的 prompt 模式
+			generateOpts = append(generateOpts, ai.WithPrompt(prompt))
+		}
+
+		// 添加流式回调
+		generateOpts = append(generateOpts, ai.WithStreaming(func(ctx context.Context, chunk *ai.ModelResponseChunk) error {
+			// 记录首字节时间
+			if chunkCount == 0 {
+				firstChunkTime = time.Now()
+				ttfb := firstChunkTime.Sub(startTime)
+				logger.InfoContext(ctx, "收到首个响应块", logger.Fields{
+					"tenantId":  tenantID,
+					"modelName": modelName,
+					"model":     genkitConfig.Model,
+					"ttfb":      ttfb.String(),
 				})
+			}
 
-				// 发送流式数据块
-				select {
-				case streamChan <- StreamChunk{
-					Content: chunkText,
-					Done:    false,
-				}:
-					logger.DebugContext(ctx, "流式数据块已发送到通道", logger.Fields{
-						"tenantId":    tenantID,
-						"chunkNumber": chunkCount,
-						"textLen":     len(chunkText),
-					})
-				case <-ctx.Done():
-					logger.WarnContext(ctx, "流式生成被取消", logger.Fields{
-						"tenantId":   tenantID,
-						"modelName":  modelName,
-						"chunkCount": chunkCount,
-					})
-					return ctx.Err()
-				}
-				return nil
-			}),
-		)
+			chunkCount++
+			chunkText := chunk.Text()
+			totalContent += chunkText
+
+			// 详细日志：记录每个 chunk 的内容
+			logger.DebugContext(ctx, "流式回调被调用", logger.Fields{
+				"tenantId":     tenantID,
+				"modelName":    modelName,
+				"chunkNumber":  chunkCount,
+				"chunkTextLen": len(chunkText),
+				"chunkText":    chunkText,
+				"contentParts": len(chunk.Content),
+			})
+
+			// 发送流式数据块
+			select {
+			case streamChan <- StreamChunk{
+				Content: chunkText,
+				Done:    false,
+			}:
+				logger.DebugContext(ctx, "流式数据块已发送到通道", logger.Fields{
+					"tenantId":    tenantID,
+					"chunkNumber": chunkCount,
+					"textLen":     len(chunkText),
+				})
+			case <-ctx.Done():
+				logger.WarnContext(ctx, "流式生成被取消", logger.Fields{
+					"tenantId":   tenantID,
+					"modelName":  modelName,
+					"chunkCount": chunkCount,
+				})
+				return ctx.Err()
+			}
+			return nil
+		}))
+
+		// 调用 Genkit 流式生成
+		resp, err := genkit.Generate(ctx, g, generateOpts...)
 
 		if err != nil {
 			duration := time.Since(startTime)

@@ -6,6 +6,22 @@ import (
 	"genkit-ai-service/internal/model"
 )
 
+// ConversationContextService 会话上下文服务接口
+// 用于构建包含历史消息的对话上下文，实现"记忆"功能
+// 这个接口定义在 ai 包中以避免循环依赖
+type ConversationContextService interface {
+	// BuildConversationHistory 构建对话历史
+	// 根据会话ID获取历史消息，用于多轮对话
+	// 参数:
+	//   ctx: 上下文
+	//   sessionID: 会话ID
+	//   maxMessages: 最大消息数量（0 表示使用默认值）
+	// 返回:
+	//   []*model.ChatHistoryMessage: 历史消息列表
+	//   error: 错误信息
+	BuildConversationHistory(ctx context.Context, sessionID string, maxMessages int) ([]*model.ChatHistoryMessage, error)
+}
+
 // AIService AI 服务接口
 // 定义了 AI 对话服务的核心功能
 type AIService interface {

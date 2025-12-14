@@ -114,6 +114,16 @@ type GenerateOptions struct {
 	TopP *float64
 	// Top-k 采样参数
 	TopK *int
+	// 历史消息（用于多轮对话）
+	History []*HistoryMessage
+}
+
+// HistoryMessage 历史对话消息
+type HistoryMessage struct {
+	// 角色：user（用户）或 assistant（AI助手）或 system（系统）
+	Role string
+	// 消息内容
+	Content string
 }
 
 // GenerateResult 生成结果

@@ -173,9 +173,9 @@ func main() {
 	var aiService ai.AIService
 	var healthService health.Service
 
-	// AI 服务只需要 Genkit 客户端
+	// AI 服务需要 Genkit 客户端和数据库（用于历史消息记忆）
 	if genkitClient != nil {
-		aiService = initAIService(genkitClient, cfg, log)
+		aiService = initAIService(genkitClient, db, cfg, log)
 		log.Info("AI服务已启用", nil)
 	} else {
 		log.Warn("AI服务未启用（Genkit 客户端初始化失败）", nil)
@@ -644,7 +644,12 @@ func initGenkit(db database.Database, cfg *config.Config, log logger.Logger) (ge
 }
 
 // initAIService 初始化 AI 服务
-func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Logger) ai.AIService {
+// 参数:
+//   - genkitClient: Genkit 客户端
+//   - db: 数据库连接（用于获取历史消息，实现"记忆"功能）
+//   - cfg: 配置
+//   - log: 日志记录器
+func initAIService(genkitClient genkit.Client, db database.Database, cfg *config.Config, log logger.Logger) ai.AIService {
 	log.Info("初始化 AI 服务...", logger.Fields{
 		"sessionTimeout":         cfg.Session.Timeout,
 		"sessionCleanupInterval": cfg.Session.CleanupInterval,
@@ -659,8 +664,29 @@ func initAIService(genkitClient genkit.Client, cfg *config.Config, log logger.Lo
 	// 启动上下文管理器的自动清理
 	contextManager.Start()
 
+	// 创建会话上下文服务（用于获取历史消息，实现"记忆"功能）
+	var conversationContextService ai.ConversationContextService
+	if db != nil {
+		gormDB := db.GetDB()
+		if gormDB != nil {
+			messageRepo := repository.NewMessageRepository(gormDB)
+			sessionRepo := repository.NewSessionRepository(gormDB)
+			userRepo := repository.NewUserRepository(gormDB)
+			conversationContextService = service.NewConversationContextService(messageRepo, sessionRepo, userRepo)
+			log.Info("会话上下文服务已启用（支持历史消息记忆）", nil)
+		}
+	}
+
 	// 创建 AI 服务
-	aiService := ai.NewGenkitService(genkitClient, contextManager, log)
+	var aiService ai.AIService
+	if conversationContextService != nil {
+		// 使用带上下文服务的构造函数（支持历史消息记忆）
+		aiService = ai.NewGenkitServiceWithContext(genkitClient, contextManager, conversationContextService, log)
+	} else {
+		// 使用基础构造函数（不支持历史消息记忆）
+		aiService = ai.NewGenkitService(genkitClient, contextManager, log)
+		log.Warn("会话上下文服务未启用，AI 对话将不支持历史消息记忆", nil)
+	}
 
 	log.Info("AI 服务初始化成功", nil)
 

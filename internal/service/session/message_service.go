@@ -218,11 +218,57 @@ func (s *messageService) SendMessage(ctx context.Context, req *SendMessageReques
 			"sequence":  userMessage.Sequence,
 		})
 
-		// 2.3 调用 AI 服务生成回复
+		// 2.3 加载历史消息（用于多轮对话上下文）
+		// 获取最近的历史消息（不包括刚保存的用户消息）
+		const maxHistoryMessages = 20 // 最多加载20条历史消息
+		historyMessages, err := s.messageRepo.GetLatestMessages(ctx, req.SessionID, maxHistoryMessages)
+		if err != nil {
+			s.logWarn(ctx, "获取历史消息失败，将不使用历史上下文", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			// 不中断流程，继续发送消息（只是没有历史上下文）
+			historyMessages = nil
+		}
+
+		// 转换历史消息为 ChatHistoryMessage 格式
+		// 注意：历史消息按时间倒序返回，需要反转为正序
+		var history []*model.ChatHistoryMessage
+		var skippedEmptyAssistant int
+		if len(historyMessages) > 0 {
+			history = make([]*model.ChatHistoryMessage, 0, len(historyMessages))
+			// 反转顺序（从最旧到最新）
+			for i := len(historyMessages) - 1; i >= 0; i-- {
+				msg := historyMessages[i]
+				// 跳过刚保存的用户消息（避免重复）
+				if msg.ID == userMessage.ID {
+					continue
+				}
+				// 跳过空内容的 assistant 消息
+				// Azure AI 要求 assistant 消息必须包含文本内容或工具调用
+				if msg.Role == "assistant" && msg.Content == "" {
+					skippedEmptyAssistant++
+					continue
+				}
+				history = append(history, &model.ChatHistoryMessage{
+					Role:    msg.Role,
+					Content: msg.Content,
+				})
+			}
+		}
+
+		s.logInfo(ctx, "加载历史消息完成", logger.Fields{
+			"sessionId":             req.SessionID,
+			"historyCount":          len(history),
+			"skippedEmptyAssistant": skippedEmptyAssistant,
+		})
+
+		// 2.4 调用 AI 服务生成回复
 		chatReq := &model.ChatRequest{
 			Message:   req.Message,
 			MessageID: req.SessionID, // 使用会话ID作为消息ID传递给AI服务
 			Options:   req.Options,
+			History:   history, // 传递历史消息
 		}
 
 		aiResponse, err = s.aiService.Chat(ctx, chatReq)
@@ -645,7 +691,54 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			"sequence":  userMessage.Sequence,
 		})
 
-		// 3.3 创建 AI 消息记录（初始为空内容，使用独立的context）
+		// 3.3 加载历史消息（用于多轮对话上下文）
+		// 注意：必须在创建 AI 消息之前加载历史消息，否则空内容的 AI 消息会被包含在历史中
+		// 这会导致 Azure AI 报错："助手消息必须包含文本内容或工具调用"
+		const maxHistoryMessages = 20 // 最多加载20条历史消息
+		historyMessages, err := s.messageRepo.GetLatestMessages(dbCtx, req.SessionID, maxHistoryMessages)
+		if err != nil {
+			s.logWarn(dbCtx, "获取历史消息失败，将不使用历史上下文", logger.Fields{
+				"sessionId": req.SessionID,
+				"error":     err.Error(),
+			})
+			// 不中断流程，继续发送消息（只是没有历史上下文）
+			historyMessages = nil
+		}
+
+		// 转换历史消息为 ChatHistoryMessage 格式
+		// 注意：历史消息按时间倒序返回，需要反转为正序
+		var history []*model.ChatHistoryMessage
+		var skippedEmptyAssistant int
+		if len(historyMessages) > 0 {
+			history = make([]*model.ChatHistoryMessage, 0, len(historyMessages))
+			// 反转顺序（从最旧到最新）
+			for i := len(historyMessages) - 1; i >= 0; i-- {
+				msg := historyMessages[i]
+				// 跳过刚保存的用户消息（避免重复）
+				if msg.ID == userMessage.ID {
+					continue
+				}
+				// 跳过空内容的 assistant 消息
+				// Azure AI 要求 assistant 消息必须包含文本内容或工具调用
+				if msg.Role == "assistant" && msg.Content == "" {
+					skippedEmptyAssistant++
+					continue
+				}
+				history = append(history, &model.ChatHistoryMessage{
+					Role:    msg.Role,
+					Content: msg.Content,
+				})
+			}
+		}
+
+		s.logInfo(dbCtx, "加载历史消息完成", logger.Fields{
+			"sessionId":             req.SessionID,
+			"historyCount":          len(history),
+			"skippedEmptyAssistant": skippedEmptyAssistant,
+		})
+
+		// 3.4 创建 AI 消息记录（初始为空内容，使用独立的context）
+		// 注意：必须在加载历史消息之后创建，避免空内容消息被包含在历史中
 		aiMessage := &model.ChatMessage{
 			SessionID: session.ID,
 			Role:      "assistant",
@@ -671,11 +764,12 @@ func (s *messageService) SendMessageStream(ctx context.Context, req *SendMessage
 			return
 		}
 
-		// 3.4 调用 AI 服务获取流式响应
+		// 3.5 调用 AI 服务获取流式响应
 		chatReq := &model.ChatRequest{
 			Message:   req.Message,
 			MessageID: req.SessionID,
 			Options:   req.Options,
+			History:   history, // 传递历史消息
 		}
 
 		// 使用原始ctx调用AI服务，这样可以响应客户端取消请求

@@ -15,9 +15,10 @@ import (
 
 // genkitService 基于 Genkit 的 AI 服务实现
 type genkitService struct {
-	client         genkit.Client
-	contextManager ContextManager
-	logger         logger.Logger
+	client                     genkit.Client
+	contextManager             ContextManager
+	conversationContextService ConversationContextService // 会话上下文服务，用于获取历史消息
+	logger                     logger.Logger
 }
 
 // NewGenkitService 创建新的 Genkit AI 服务
@@ -35,6 +36,26 @@ func NewGenkitService(client genkit.Client, contextManager ContextManager, log l
 		client:         client,
 		contextManager: contextManager,
 		logger:         log,
+	}
+}
+
+// NewGenkitServiceWithContext 创建新的 Genkit AI 服务（带会话上下文服务）
+// 参数:
+//
+//	client: Genkit 客户端
+//	contextManager: 上下文管理器
+//	conversationContextService: 会话上下文服务，用于获取历史消息实现"记忆"功能
+//	log: 日志记录器
+//
+// 返回:
+//
+//	AIService: AI 服务实例
+func NewGenkitServiceWithContext(client genkit.Client, contextManager ContextManager, conversationContextService ConversationContextService, log logger.Logger) AIService {
+	return &genkitService{
+		client:                     client,
+		contextManager:             contextManager,
+		conversationContextService: conversationContextService,
+		logger:                     log,
 	}
 }
 
@@ -110,8 +131,43 @@ func (s *genkitService) Chat(ctx context.Context, req *model.ChatRequest) (*mode
 		})
 	}
 
-	// 构建生成选项
-	options := s.buildGenerateOptions(req.Options)
+	// 获取历史消息（实现"记忆"功能）
+	// 优先使用请求中传入的历史消息，如果没有则从数据库获取
+	history := req.History
+	if len(history) == 0 && s.conversationContextService != nil && sessionID != "" {
+		// 从数据库获取历史消息
+		s.logger.DebugContext(ctx, "从数据库获取历史消息", logger.Fields{
+			"sessionId": sessionID,
+		})
+
+		dbHistory, err := s.conversationContextService.BuildConversationHistory(ctx, sessionID, 0)
+		if err != nil {
+			// 获取历史消息失败不应该阻止对话，只记录警告
+			s.logger.WarnContext(ctx, "获取历史消息失败，将使用无历史模式", logger.Fields{
+				"sessionId": sessionID,
+				"error":     err.Error(),
+			})
+		} else {
+			history = dbHistory
+			s.logger.InfoContext(ctx, "成功获取历史消息", logger.Fields{
+				"sessionId":    sessionID,
+				"historyCount": len(history),
+			})
+		}
+	}
+
+	// 构建生成选项（包含历史消息）
+	options := s.buildGenerateOptions(req.Options, history)
+
+	// 记录历史消息数量
+	historyCount := 0
+	if history != nil {
+		historyCount = len(history)
+	}
+	s.logger.DebugContext(ctx, "构建生成选项", logger.Fields{
+		"sessionId":    sessionID,
+		"historyCount": historyCount,
+	})
 
 	// 调用 Genkit 生成响应
 	result, err := s.client.Generate(sessionCtx, tenantID, modelName, req.Message, options)
@@ -247,8 +303,43 @@ func (s *genkitService) ChatStream(ctx context.Context, req *model.ChatRequest) 
 		})
 	}
 
-	// 构建生成选项
-	options := s.buildGenerateOptions(req.Options)
+	// 获取历史消息（实现"记忆"功能）
+	// 优先使用请求中传入的历史消息，如果没有则从数据库获取
+	history := req.History
+	if len(history) == 0 && s.conversationContextService != nil && sessionID != "" {
+		// 从数据库获取历史消息
+		s.logger.DebugContext(ctx, "流式对话：从数据库获取历史消息", logger.Fields{
+			"sessionId": sessionID,
+		})
+
+		dbHistory, err := s.conversationContextService.BuildConversationHistory(ctx, sessionID, 0)
+		if err != nil {
+			// 获取历史消息失败不应该阻止对话，只记录警告
+			s.logger.WarnContext(ctx, "流式对话：获取历史消息失败，将使用无历史模式", logger.Fields{
+				"sessionId": sessionID,
+				"error":     err.Error(),
+			})
+		} else {
+			history = dbHistory
+			s.logger.InfoContext(ctx, "流式对话：成功获取历史消息", logger.Fields{
+				"sessionId":    sessionID,
+				"historyCount": len(history),
+			})
+		}
+	}
+
+	// 构建生成选项（包含历史消息）
+	options := s.buildGenerateOptions(req.Options, history)
+
+	// 记录历史消息数量
+	historyCount := 0
+	if req.History != nil {
+		historyCount = len(req.History)
+	}
+	s.logger.DebugContext(ctx, "构建流式生成选项", logger.Fields{
+		"sessionId":    sessionID,
+		"historyCount": historyCount,
+	})
 
 	// 调用 Genkit 流式生成
 	genkitStream, err := s.client.GenerateStream(sessionCtx, tenantID, modelName, req.Message, options)
@@ -455,17 +546,32 @@ func (s *genkitService) AbortChat(ctx context.Context, messageID string) error {
 }
 
 // buildGenerateOptions 构建生成选项
-func (s *genkitService) buildGenerateOptions(options *model.ChatOptions) *genkit.GenerateOptions {
-	if options == nil {
-		return nil
+// 参数:
+//   - options: AI 高级参数（温度、最大token数等）
+//   - history: 历史消息列表（用于多轮对话）
+func (s *genkitService) buildGenerateOptions(options *model.ChatOptions, history []*model.ChatHistoryMessage) *genkit.GenerateOptions {
+	result := &genkit.GenerateOptions{}
+
+	// 设置 AI 参数
+	if options != nil {
+		result.Temperature = options.Temperature
+		result.MaxTokens = options.MaxTokens
+		result.TopP = options.TopP
+		result.TopK = options.TopK
 	}
 
-	return &genkit.GenerateOptions{
-		Temperature: options.Temperature,
-		MaxTokens:   options.MaxTokens,
-		TopP:        options.TopP,
-		TopK:        options.TopK,
+	// 转换历史消息
+	if len(history) > 0 {
+		result.History = make([]*genkit.HistoryMessage, 0, len(history))
+		for _, msg := range history {
+			result.History = append(result.History, &genkit.HistoryMessage{
+				Role:    msg.Role,
+				Content: msg.Content,
+			})
+		}
 	}
+
+	return result
 }
 
 // contains 检查字符串是否包含子串（不区分大小写）
