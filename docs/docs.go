@@ -1668,6 +1668,1180 @@ const docTemplate = `{
                 }
             }
         },
+        "/lexiang/entries": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定知识库或父节点下的知识节点列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "获取知识节点列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "知识库ID",
+                        "name": "spaceId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "父节点ID（空表示根目录）",
+                        "name": "parentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页游标",
+                        "name": "pageToken",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangEntryListDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/entries/file": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "使用上传的 state 创建文件类型的知识节点",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "创建文件节点",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建文件节点请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateFileEntryRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangEntryDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/entries/folder": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "在指定父节点下创建文件夹",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "创建文件夹",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建文件夹请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateFolderRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangEntryDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/entries/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据节点ID获取详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "获取知识节点详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "节点ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangEntryDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "节点不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除指定的知识节点",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "删除知识节点",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "节点ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/AnyDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "节点不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/entries/{id}/content": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取线上文档的 HTML 内容（仅支持 entry_type=page 的节点）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "获取线上文档内容",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "节点ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangEntryContentDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "节点不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/entries/{id}/reupload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新指定节点的文件内容",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Entries"
+                ],
+                "summary": "重新上传文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "节点ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "重新上传请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ReuploadFileRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "上传成功",
+                        "schema": {
+                            "$ref": "#/definitions/AnyDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "节点不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/feedbacks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定知识库的用户反馈列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Feedback"
+                ],
+                "summary": "获取知识反馈列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "知识库ID",
+                        "name": "spaceId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页游标",
+                        "name": "pageToken",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangFeedbackListDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/files/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取附件的详情信息，包含下载链接",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Download"
+                ],
+                "summary": "获取附件详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "附件ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangDocFileDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "附件不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/files/{id}/download": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "下载附件内容",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Lexiang Download"
+                ],
+                "summary": "下载附件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "附件ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "文件内容",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "附件不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/spaces": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定团队下的知识库列表，支持分页",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Knowledge Base"
+                ],
+                "summary": "获取知识库列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "团队ID",
+                        "name": "teamId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "分页游标",
+                        "name": "pageToken",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangSpaceListDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "在指定团队下创建新的知识库",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Knowledge Base"
+                ],
+                "summary": "创建知识库",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建知识库请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateSpaceRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangSpaceDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/spaces/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据知识库ID获取详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Knowledge Base"
+                ],
+                "summary": "获取知识库详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "知识库ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangSpaceDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "知识库不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新知识库名称",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Knowledge Base"
+                ],
+                "summary": "更新知识库",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "知识库ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangSpaceDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "知识库不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除指定的知识库",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Knowledge Base"
+                ],
+                "summary": "删除知识库",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "知识库ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/AnyDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "知识库不存在",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "完整的文件上传流程：获取签名 -\u003e 上传到 COS -\u003e 返回 state",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Upload"
+                ],
+                "summary": "上传文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "要上传的文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "file",
+                            "video",
+                            "audio"
+                        ],
+                        "type": "string",
+                        "description": "媒体类型",
+                        "name": "mediaType",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "上传成功，返回 state 用于创建知识节点",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangUploadStateDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/upload/sign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取文件上传到腾讯云 COS 的签名信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang Upload"
+                ],
+                "summary": "获取上传签名",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "乐享成员帐号",
+                        "name": "X-Staff-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "获取上传签名请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UploadSignRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangUploadSignDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/model-configurations": {
             "get": {
                 "security": [
@@ -3243,6 +4417,75 @@ const docTemplate = `{
                 }
             }
         },
+        "CreateFileEntryRequestSwagger": {
+            "type": "object",
+            "required": [
+                "entryType",
+                "parentId",
+                "state"
+            ],
+            "properties": {
+                "entryType": {
+                    "type": "string",
+                    "enum": [
+                        "file",
+                        "video",
+                        "audio"
+                    ],
+                    "example": "file"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "文档.pdf"
+                },
+                "parentId": {
+                    "type": "string",
+                    "example": "entry_123"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "upload_state_xxx"
+                }
+            }
+        },
+        "CreateFolderRequestSwagger": {
+            "type": "object",
+            "required": [
+                "name",
+                "parentId"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "example": "新文件夹"
+                },
+                "parentId": {
+                    "type": "string",
+                    "example": "entry_123"
+                }
+            }
+        },
+        "CreateSpaceRequestSwagger": {
+            "type": "object",
+            "required": [
+                "name",
+                "teamId"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "example": "我的知识库"
+                },
+                "teamId": {
+                    "type": "string",
+                    "example": "team_123"
+                }
+            }
+        },
         "CreateTenantRequestSwagger": {
             "type": "object",
             "required": [
@@ -3416,6 +4659,18 @@ const docTemplate = `{
                 }
             }
         },
+        "ReuploadFileRequestSwagger": {
+            "type": "object",
+            "required": [
+                "state"
+            ],
+            "properties": {
+                "state": {
+                    "type": "string",
+                    "example": "upload_state_xxx"
+                }
+            }
+        },
         "UnlockAccountRequest": {
             "type": "object",
             "required": [
@@ -3515,6 +4770,28 @@ const docTemplate = `{
                 "isActive": {
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "UploadSignRequestSwagger": {
+            "type": "object",
+            "required": [
+                "fileName",
+                "mediaType"
+            ],
+            "properties": {
+                "fileName": {
+                    "type": "string",
+                    "example": "document.pdf"
+                },
+                "mediaType": {
+                    "type": "string",
+                    "enum": [
+                        "file",
+                        "video",
+                        "audio"
+                    ],
+                    "example": "file"
                 }
             }
         },
@@ -3913,6 +5190,468 @@ const docTemplate = `{
         },
         "HealthDataResponse": {
             "type": "object"
+        },
+        "LexiangDocFileDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangDocFileResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangDocFileResponse": {
+            "type": "object",
+            "properties": {
+                "downloadUrl": {
+                    "type": "string",
+                    "example": "https://example.com/download"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "file_123"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "附件.pdf"
+                }
+            }
+        },
+        "LexiangEntryContentDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangEntryContentResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangEntryContentResponse": {
+            "type": "object",
+            "properties": {
+                "htmlContent": {
+                    "type": "string",
+                    "example": "\u003cp\u003e文档内容\u003c/p\u003e"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "在线文档"
+                }
+            }
+        },
+        "LexiangEntryDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangEntryResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangEntryItem": {
+            "type": "object",
+            "properties": {
+                "entryType": {
+                    "type": "string",
+                    "example": "file"
+                },
+                "hasChildren": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "id": {
+                    "type": "string",
+                    "example": "entry_123"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "文档.pdf"
+                }
+            }
+        },
+        "LexiangEntryListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangEntryItem"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangEntryResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "downloadUrl": {
+                    "type": "string"
+                },
+                "entryType": {
+                    "type": "string",
+                    "example": "file"
+                },
+                "hasChildren": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "id": {
+                    "type": "string",
+                    "example": "entry_123"
+                },
+                "memberInheritType": {
+                    "type": "string",
+                    "example": "viewer"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "文档.pdf"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "LexiangFeedbackItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "内容有误"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "entryId": {
+                    "type": "string",
+                    "example": "entry_123"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "feedback_123"
+                },
+                "ownerId": {
+                    "type": "string",
+                    "example": "user_123"
+                },
+                "reviewedAt": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "unprocessed"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "kb_content_mistake"
+                }
+            }
+        },
+        "LexiangFeedbackListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangFeedbackItem"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangSpaceDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangSpaceResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangSpaceItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "space_123"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "我的知识库"
+                },
+                "rootEntryId": {
+                    "type": "string",
+                    "example": "entry_root_123"
+                }
+            }
+        },
+        "LexiangSpaceListDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangSpaceItem"
+                    }
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangSpaceResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "space_123"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "managerInheritType": {
+                    "type": "string",
+                    "example": "manager"
+                },
+                "memberInheritType": {
+                    "type": "string",
+                    "example": "viewer"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "我的知识库"
+                },
+                "rootEntryId": {
+                    "type": "string",
+                    "example": "entry_root_123"
+                },
+                "teamId": {
+                    "type": "string",
+                    "example": "team_123"
+                },
+                "visibleType": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "LexiangUploadSignDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangUploadSignResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangUploadSignResponse": {
+            "type": "object",
+            "properties": {
+                "bucket": {
+                    "type": "string",
+                    "example": "bucket-name"
+                },
+                "key": {
+                    "type": "string",
+                    "example": "path/to/file"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-guangzhou"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "upload_state_xxx"
+                },
+                "uploadUrl": {
+                    "type": "string",
+                    "example": "https://bucket.cos.region.myqcloud.com/path/to/file"
+                }
+            }
+        },
+        "LexiangUploadStateDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangUploadStateResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangUploadStateResponse": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "string",
+                    "example": "upload_state_xxx"
+                }
+            }
         },
         "LoginDataResponse": {
             "type": "object",
@@ -5207,6 +6946,26 @@ const docTemplate = `{
         {
             "description": "健康检查接口",
             "name": "health"
+        },
+        {
+            "description": "乐享知识库管理接口",
+            "name": "Lexiang Knowledge Base"
+        },
+        {
+            "description": "乐享知识节点管理接口",
+            "name": "Lexiang Entries"
+        },
+        {
+            "description": "乐享文件上传接口",
+            "name": "Lexiang Upload"
+        },
+        {
+            "description": "乐享附件下载接口",
+            "name": "Lexiang Download"
+        },
+        {
+            "description": "乐享知识反馈接口",
+            "name": "Lexiang Feedback"
         }
     ]
 }`

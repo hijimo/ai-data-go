@@ -25,6 +25,7 @@ import (
 	"genkit-ai-service/internal/service/health"
 	"genkit-ai-service/internal/service/session"
 	"genkit-ai-service/internal/storage"
+	"genkit-ai-service/pkg/lexiang"
 
 	_ "genkit-ai-service/docs" // Swagger 文档
 
@@ -80,6 +81,21 @@ import (
 
 // @tag.name health
 // @tag.description 健康检查接口
+
+// @tag.name Lexiang Knowledge Base
+// @tag.description 乐享知识库管理接口
+
+// @tag.name Lexiang Entries
+// @tag.description 乐享知识节点管理接口
+
+// @tag.name Lexiang Upload
+// @tag.description 乐享文件上传接口
+
+// @tag.name Lexiang Download
+// @tag.description 乐享附件下载接口
+
+// @tag.name Lexiang Feedback
+// @tag.description 乐享知识反馈接口
 
 const (
 	// Version 服务版本
@@ -246,6 +262,25 @@ func main() {
 		})
 	} else {
 		log.Warn("模型配置管理路由未注册（数据库不可用）", nil)
+	}
+
+	// 8.2.1 注册乐享知识库路由（如果配置可用）
+	lexiangHandler := initLexiangHandler(cfg, log)
+	if lexiangHandler != nil && jwtAuthMW != nil && rbacMW != nil {
+		routes.RegisterLexiangRoutes(serveMux, lexiangHandler, jwtAuthMW, rbacMW)
+		log.Info("乐享知识库路由已注册", logger.Fields{
+			"routes": []string{
+				"/api/v1/lexiang/spaces",
+				"/api/v1/lexiang/spaces/{id}",
+				"/api/v1/lexiang/entries",
+				"/api/v1/lexiang/entries/{id}",
+				"/api/v1/lexiang/upload",
+				"/api/v1/lexiang/files/{id}",
+				"/api/v1/lexiang/feedbacks",
+			},
+		})
+	} else {
+		log.Info("乐享知识库路由未注册（未配置或认证中间件不可用）", nil)
 	}
 
 	// 8.3 注册会话管理路由（如果数据库可用）
@@ -1148,4 +1183,21 @@ func runSystemBootstrap(db database.Database, cfg *config.Config, log logger.Log
 	}
 
 	return nil
+}
+
+// initLexiangHandler 初始化乐享知识库处理器
+// 从环境变量读取 LEXIANG_APP_KEY 和 LEXIANG_APP_SECRET
+func initLexiangHandler(cfg *config.Config, log logger.Logger) *handler.LexiangHandler {
+	// 尝试从环境变量创建乐享客户端
+	client, err := lexiang.NewClientFromEnv()
+	if err != nil {
+		log.Info("乐享客户端未配置，跳过初始化", logger.Fields{
+			"reason": err.Error(),
+			"hint":   "设置 LEXIANG_APP_KEY 和 LEXIANG_APP_SECRET 环境变量以启用乐享知识库功能",
+		})
+		return nil
+	}
+
+	log.Info("乐享客户端初始化成功", nil)
+	return handler.NewLexiangHandler(client, log)
 }

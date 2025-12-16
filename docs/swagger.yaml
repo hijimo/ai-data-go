@@ -13,6 +13,57 @@ definitions:
     - newPassword
     - oldPassword
     type: object
+  CreateFileEntryRequestSwagger:
+    properties:
+      entryType:
+        enum:
+        - file
+        - video
+        - audio
+        example: file
+        type: string
+      name:
+        example: 文档.pdf
+        type: string
+      parentId:
+        example: entry_123
+        type: string
+      state:
+        example: upload_state_xxx
+        type: string
+    required:
+    - entryType
+    - parentId
+    - state
+    type: object
+  CreateFolderRequestSwagger:
+    properties:
+      name:
+        example: 新文件夹
+        maxLength: 255
+        minLength: 1
+        type: string
+      parentId:
+        example: entry_123
+        type: string
+    required:
+    - name
+    - parentId
+    type: object
+  CreateSpaceRequestSwagger:
+    properties:
+      name:
+        example: 我的知识库
+        maxLength: 255
+        minLength: 1
+        type: string
+      teamId:
+        example: team_123
+        type: string
+    required:
+    - name
+    - teamId
+    type: object
   CreateTenantRequestSwagger:
     properties:
       domain:
@@ -136,6 +187,14 @@ definitions:
     - tenantId
     - userId
     type: object
+  ReuploadFileRequestSwagger:
+    properties:
+      state:
+        example: upload_state_xxx
+        type: string
+    required:
+    - state
+    type: object
   UnlockAccountRequest:
     properties:
       tenantId:
@@ -207,6 +266,22 @@ definitions:
         type: boolean
     required:
     - isActive
+    type: object
+  UploadSignRequestSwagger:
+    properties:
+      fileName:
+        example: document.pdf
+        type: string
+      mediaType:
+        enum:
+        - file
+        - video
+        - audio
+        example: file
+        type: string
+    required:
+    - fileName
+    - mediaType
     type: object
   VerifyEmailRequest:
     properties:
@@ -557,6 +632,332 @@ definitions:
         type: string
     type: object
   HealthDataResponse:
+    type: object
+  LexiangDocFileDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangDocFileResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangDocFileResponse:
+    properties:
+      downloadUrl:
+        example: https://example.com/download
+        type: string
+      id:
+        example: file_123
+        type: string
+      name:
+        example: 附件.pdf
+        type: string
+    type: object
+  LexiangEntryContentDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangEntryContentResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangEntryContentResponse:
+    properties:
+      htmlContent:
+        example: <p>文档内容</p>
+        type: string
+      name:
+        example: 在线文档
+        type: string
+    type: object
+  LexiangEntryDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangEntryResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangEntryItem:
+    properties:
+      entryType:
+        example: file
+        type: string
+      hasChildren:
+        example: false
+        type: boolean
+      id:
+        example: entry_123
+        type: string
+      name:
+        example: 文档.pdf
+        type: string
+    type: object
+  LexiangEntryListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/LexiangEntryItem'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangEntryResponse:
+    properties:
+      createdAt:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      downloadUrl:
+        type: string
+      entryType:
+        example: file
+        type: string
+      hasChildren:
+        example: false
+        type: boolean
+      id:
+        example: entry_123
+        type: string
+      memberInheritType:
+        example: viewer
+        type: string
+      name:
+        example: 文档.pdf
+        type: string
+      updatedAt:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  LexiangFeedbackItem:
+    properties:
+      content:
+        example: 内容有误
+        type: string
+      createdAt:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      entryId:
+        example: entry_123
+        type: string
+      id:
+        example: feedback_123
+        type: string
+      ownerId:
+        example: user_123
+        type: string
+      reviewedAt:
+        type: string
+      status:
+        example: unprocessed
+        type: string
+      type:
+        example: kb_content_mistake
+        type: string
+    type: object
+  LexiangFeedbackListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/LexiangFeedbackItem'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangSpaceDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangSpaceResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangSpaceItem:
+    properties:
+      id:
+        example: space_123
+        type: string
+      logo:
+        type: string
+      name:
+        example: 我的知识库
+        type: string
+      rootEntryId:
+        example: entry_root_123
+        type: string
+    type: object
+  LexiangSpaceListDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        description: 响应数据
+        items:
+          $ref: '#/definitions/LexiangSpaceItem'
+        type: array
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangSpaceResponse:
+    properties:
+      id:
+        example: space_123
+        type: string
+      logo:
+        type: string
+      managerInheritType:
+        example: manager
+        type: string
+      memberInheritType:
+        example: viewer
+        type: string
+      name:
+        example: 我的知识库
+        type: string
+      rootEntryId:
+        example: entry_root_123
+        type: string
+      teamId:
+        example: team_123
+        type: string
+      visibleType:
+        example: 0
+        type: integer
+    type: object
+  LexiangUploadSignDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangUploadSignResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangUploadSignResponse:
+    properties:
+      bucket:
+        example: bucket-name
+        type: string
+      key:
+        example: path/to/file
+        type: string
+      region:
+        example: ap-guangzhou
+        type: string
+      state:
+        example: upload_state_xxx
+        type: string
+      uploadUrl:
+        example: https://bucket.cos.region.myqcloud.com/path/to/file
+        type: string
+    type: object
+  LexiangUploadStateDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangUploadStateResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangUploadStateResponse:
+    properties:
+      state:
+        example: upload_state_xxx
+        type: string
     type: object
   LoginDataResponse:
     properties:
@@ -2754,6 +3155,765 @@ paths:
       summary: 健康检查
       tags:
       - health
+  /lexiang/entries:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定知识库或父节点下的知识节点列表
+      parameters:
+      - description: 知识库ID
+        in: query
+        name: spaceId
+        required: true
+        type: string
+      - description: 父节点ID（空表示根目录）
+        in: query
+        name: parentId
+        type: string
+      - default: 20
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - description: 分页游标
+        in: query
+        name: pageToken
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangEntryListDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取知识节点列表
+      tags:
+      - Lexiang Entries
+  /lexiang/entries/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的知识节点
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 节点ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/AnyDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 节点不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除知识节点
+      tags:
+      - Lexiang Entries
+    get:
+      consumes:
+      - application/json
+      description: 根据节点ID获取详细信息
+      parameters:
+      - description: 节点ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangEntryDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 节点不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取知识节点详情
+      tags:
+      - Lexiang Entries
+  /lexiang/entries/{id}/content:
+    get:
+      consumes:
+      - application/json
+      description: 获取线上文档的 HTML 内容（仅支持 entry_type=page 的节点）
+      parameters:
+      - description: 节点ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangEntryContentDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 节点不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取线上文档内容
+      tags:
+      - Lexiang Entries
+  /lexiang/entries/{id}/reupload:
+    post:
+      consumes:
+      - application/json
+      description: 更新指定节点的文件内容
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 节点ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 重新上传请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ReuploadFileRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            $ref: '#/definitions/AnyDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 节点不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 重新上传文件
+      tags:
+      - Lexiang Entries
+  /lexiang/entries/file:
+    post:
+      consumes:
+      - application/json
+      description: 使用上传的 state 创建文件类型的知识节点
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 创建文件节点请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateFileEntryRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/LexiangEntryDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建文件节点
+      tags:
+      - Lexiang Entries
+  /lexiang/entries/folder:
+    post:
+      consumes:
+      - application/json
+      description: 在指定父节点下创建文件夹
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 创建文件夹请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateFolderRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/LexiangEntryDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建文件夹
+      tags:
+      - Lexiang Entries
+  /lexiang/feedbacks:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定知识库的用户反馈列表
+      parameters:
+      - description: 知识库ID
+        in: query
+        name: spaceId
+        required: true
+        type: string
+      - default: 20
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - description: 分页游标
+        in: query
+        name: pageToken
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangFeedbackListDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取知识反馈列表
+      tags:
+      - Lexiang Feedback
+  /lexiang/files/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取附件的详情信息，包含下载链接
+      parameters:
+      - description: 附件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangDocFileDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 附件不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取附件详情
+      tags:
+      - Lexiang Download
+  /lexiang/files/{id}/download:
+    get:
+      consumes:
+      - application/json
+      description: 下载附件内容
+      parameters:
+      - description: 附件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件内容
+          schema:
+            type: file
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 附件不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 下载附件
+      tags:
+      - Lexiang Download
+  /lexiang/spaces:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定团队下的知识库列表，支持分页
+      parameters:
+      - description: 团队ID
+        in: query
+        name: teamId
+        required: true
+        type: string
+      - default: 20
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      - description: 分页游标
+        in: query
+        name: pageToken
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangSpaceListDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取知识库列表
+      tags:
+      - Lexiang Knowledge Base
+    post:
+      consumes:
+      - application/json
+      description: 在指定团队下创建新的知识库
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 创建知识库请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateSpaceRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/LexiangSpaceDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建知识库
+      tags:
+      - Lexiang Knowledge Base
+  /lexiang/spaces/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的知识库
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/AnyDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除知识库
+      tags:
+      - Lexiang Knowledge Base
+    get:
+      consumes:
+      - application/json
+      description: 根据知识库ID获取详细信息
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangSpaceDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取知识库详情
+      tags:
+      - Lexiang Knowledge Base
+    put:
+      consumes:
+      - application/json
+      description: 更新知识库名称
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/LexiangSpaceDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新知识库
+      tags:
+      - Lexiang Knowledge Base
+  /lexiang/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 完整的文件上传流程：获取签名 -> 上传到 COS -> 返回 state
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 要上传的文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 媒体类型
+        enum:
+        - file
+        - video
+        - audio
+        in: formData
+        name: mediaType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功，返回 state 用于创建知识节点
+          schema:
+            $ref: '#/definitions/LexiangUploadStateDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 上传文件
+      tags:
+      - Lexiang Upload
+  /lexiang/upload/sign:
+    post:
+      consumes:
+      - application/json
+      description: 获取文件上传到腾讯云 COS 的签名信息
+      parameters:
+      - description: 乐享成员帐号
+        in: header
+        name: X-Staff-ID
+        required: true
+        type: string
+      - description: 获取上传签名请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/UploadSignRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            $ref: '#/definitions/LexiangUploadSignDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取上传签名
+      tags:
+      - Lexiang Upload
   /model-configurations:
     get:
       consumes:
@@ -4161,3 +5321,13 @@ tags:
   name: messages
 - description: 健康检查接口
   name: health
+- description: 乐享知识库管理接口
+  name: Lexiang Knowledge Base
+- description: 乐享知识节点管理接口
+  name: Lexiang Entries
+- description: 乐享文件上传接口
+  name: Lexiang Upload
+- description: 乐享附件下载接口
+  name: Lexiang Download
+- description: 乐享知识反馈接口
+  name: Lexiang Feedback

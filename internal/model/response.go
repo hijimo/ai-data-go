@@ -304,3 +304,131 @@ type TenantDataResponse = ResponseData[Tenant]
 // @name AnyDataResponse
 // 用于返回空数据或任意类型数据的成功响应
 type AnyDataResponse = ResponseData[interface{}]
+
+// ============================================================================
+// 乐享知识库相关响应类型（用于 Swagger）
+// ============================================================================
+
+// LexiangSpaceResponse 乐享知识库响应
+// @name LexiangSpaceResponse
+type LexiangSpaceResponse struct {
+	ID                 string `json:"id" example:"space_123"`
+	Name               string `json:"name" example:"我的知识库"`
+	Logo               string `json:"logo,omitempty"`
+	VisibleType        int    `json:"visibleType" example:"0"`
+	ManagerInheritType string `json:"managerInheritType" example:"manager"`
+	MemberInheritType  string `json:"memberInheritType" example:"viewer"`
+	TeamID             string `json:"teamId" example:"team_123"`
+	RootEntryID        string `json:"rootEntryId" example:"entry_root_123"`
+}
+
+// LexiangSpaceItem 乐享知识库列表项
+// @name LexiangSpaceItem
+type LexiangSpaceItem struct {
+	ID          string `json:"id" example:"space_123"`
+	Name        string `json:"name" example:"我的知识库"`
+	Logo        string `json:"logo,omitempty"`
+	RootEntryID string `json:"rootEntryId" example:"entry_root_123"`
+}
+
+// LexiangEntryResponse 乐享知识节点响应
+// @name LexiangEntryResponse
+type LexiangEntryResponse struct {
+	ID                string `json:"id" example:"entry_123"`
+	Name              string `json:"name" example:"文档.pdf"`
+	EntryType         string `json:"entryType" example:"file"`
+	HasChildren       bool   `json:"hasChildren" example:"false"`
+	CreatedAt         string `json:"createdAt" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt         string `json:"updatedAt" example:"2024-01-01T00:00:00Z"`
+	MemberInheritType string `json:"memberInheritType" example:"viewer"`
+	DownloadURL       string `json:"downloadUrl,omitempty"`
+}
+
+// LexiangEntryItem 乐享知识节点列表项
+// @name LexiangEntryItem
+type LexiangEntryItem struct {
+	ID          string `json:"id" example:"entry_123"`
+	Name        string `json:"name" example:"文档.pdf"`
+	EntryType   string `json:"entryType" example:"file"`
+	HasChildren bool   `json:"hasChildren" example:"false"`
+}
+
+// LexiangUploadSignResponse 乐享上传签名响应
+// @name LexiangUploadSignResponse
+type LexiangUploadSignResponse struct {
+	State     string `json:"state" example:"upload_state_xxx"`
+	Key       string `json:"key" example:"path/to/file"`
+	Bucket    string `json:"bucket" example:"bucket-name"`
+	Region    string `json:"region" example:"ap-guangzhou"`
+	UploadURL string `json:"uploadUrl" example:"https://bucket.cos.region.myqcloud.com/path/to/file"`
+}
+
+// LexiangFeedbackItem 乐享反馈列表项
+// @name LexiangFeedbackItem
+type LexiangFeedbackItem struct {
+	ID         string `json:"id" example:"feedback_123"`
+	Status     string `json:"status" example:"unprocessed"`
+	Type       string `json:"type" example:"kb_content_mistake"`
+	Content    string `json:"content" example:"内容有误"`
+	CreatedAt  string `json:"createdAt" example:"2024-01-01T00:00:00Z"`
+	ReviewedAt string `json:"reviewedAt,omitempty"`
+	OwnerID    string `json:"ownerId" example:"user_123"`
+	EntryID    string `json:"entryId" example:"entry_123"`
+}
+
+// LexiangSpaceDataResponse 乐享知识库数据响应（用于 Swagger）
+// @name LexiangSpaceDataResponse
+type LexiangSpaceDataResponse = ResponseData[LexiangSpaceResponse]
+
+// LexiangSpaceListDataResponse 乐享知识库列表数据响应（用于 Swagger）
+// @name LexiangSpaceListDataResponse
+type LexiangSpaceListDataResponse = ResponseData[[]LexiangSpaceItem]
+
+// LexiangEntryDataResponse 乐享知识节点数据响应（用于 Swagger）
+// @name LexiangEntryDataResponse
+type LexiangEntryDataResponse = ResponseData[LexiangEntryResponse]
+
+// LexiangEntryListDataResponse 乐享知识节点列表数据响应（用于 Swagger）
+// @name LexiangEntryListDataResponse
+type LexiangEntryListDataResponse = ResponseData[[]LexiangEntryItem]
+
+// LexiangUploadSignDataResponse 乐享上传签名数据响应（用于 Swagger）
+// @name LexiangUploadSignDataResponse
+type LexiangUploadSignDataResponse = ResponseData[LexiangUploadSignResponse]
+
+// LexiangFeedbackListDataResponse 乐享反馈列表数据响应（用于 Swagger）
+// @name LexiangFeedbackListDataResponse
+type LexiangFeedbackListDataResponse = ResponseData[[]LexiangFeedbackItem]
+
+// LexiangEntryContentResponse 乐享线上文档内容响应
+// @name LexiangEntryContentResponse
+type LexiangEntryContentResponse struct {
+	Name        string `json:"name" example:"在线文档"`
+	HTMLContent string `json:"htmlContent" example:"<p>文档内容</p>"`
+}
+
+// LexiangEntryContentDataResponse 乐享线上文档内容数据响应（用于 Swagger）
+// @name LexiangEntryContentDataResponse
+type LexiangEntryContentDataResponse = ResponseData[LexiangEntryContentResponse]
+
+// LexiangUploadStateResponse 乐享上传状态响应
+// @name LexiangUploadStateResponse
+type LexiangUploadStateResponse struct {
+	State string `json:"state" example:"upload_state_xxx"`
+}
+
+// LexiangUploadStateDataResponse 乐享上传状态数据响应（用于 Swagger）
+// @name LexiangUploadStateDataResponse
+type LexiangUploadStateDataResponse = ResponseData[LexiangUploadStateResponse]
+
+// LexiangDocFileResponse 乐享附件详情响应
+// @name LexiangDocFileResponse
+type LexiangDocFileResponse struct {
+	ID          string `json:"id" example:"file_123"`
+	Name        string `json:"name" example:"附件.pdf"`
+	DownloadURL string `json:"downloadUrl" example:"https://example.com/download"`
+}
+
+// LexiangDocFileDataResponse 乐享附件详情数据响应（用于 Swagger）
+// @name LexiangDocFileDataResponse
+type LexiangDocFileDataResponse = ResponseData[LexiangDocFileResponse]
