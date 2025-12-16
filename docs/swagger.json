@@ -3649,6 +3649,31 @@
                 }
             }
         },
+        "ChatHistoryMessage": {
+            "description": "历史对话中的单条消息",
+            "type": "object",
+            "required": [
+                "content",
+                "role"
+            ],
+            "properties": {
+                "content": {
+                    "description": "消息内容\n@Description 消息的文本内容\n@Example 你好",
+                    "type": "string",
+                    "example": "你好"
+                },
+                "role": {
+                    "description": "角色：user（用户）或 assistant（AI助手）\n@Description 消息发送者的角色\n@Example user",
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "assistant",
+                        "system"
+                    ],
+                    "example": "user"
+                }
+            }
+        },
         "ChatOptions": {
             "description": "AI模型的高级配置参数，所有字段都是可选的",
             "type": "object",
@@ -3693,6 +3718,13 @@
                 "message"
             ],
             "properties": {
+                "history": {
+                    "description": "历史消息（可选，用于多轮对话）\n@Description 历史对话消息列表，按时间顺序排列",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ChatHistoryMessage"
+                    }
+                },
                 "message": {
                     "description": "用户消息内容\n@Description 用户发送的消息文本内容\n@Example 你好，请介绍一下你自己",
                     "type": "string",

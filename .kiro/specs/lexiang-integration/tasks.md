@@ -1,0 +1,126 @@
+# 实现计划
+
+- [x] 1. 创建项目结构和基础类型定义
+  - [x] 1.1 创建 `pkg/lexiang` 目录和 `types.go` 文件
+    - 定义常量：`LexiangBaseURL`, `LexiangAPIURL`, `DefaultTimeout`, `TokenRefreshBuffer`
+    - 定义枚举类型：`EntryType`, `SpaceRole`, `FeedbackStatus`, `FeedbackType`
+    - 定义配置结构体：`Config`, `DefaultConfig()`
+    - _Requirements: 2.1, 2.5_
+  - [x] 1.2 创建请求和响应结构体
+    - Token 相关：`tokenRequest`, `tokenResponse`
+    - 知识库相关：`CreateSpaceRequest`, `SpaceResponse`, `SpaceListResponse`
+    - 知识节点相关：`CreateEntryRequest`, `EntryResponse`, `EntryListResponse`, `EntryContentResponse`
+    - 文件上传相关：`UploadSignRequest`, `UploadSignResponse`
+    - 附件下载相关：`DocFileResponse`
+    - 知识反馈相关：`FeedbackListResponse`
+    - _Requirements: 3.1, 4.1, 5.1, 6.1, 7.1_
+  - [x] 1.3 编写属性测试：上传签名响应 Round-Trip
+    - **Property 8: 上传签名响应 Round-Trip**
+    - **Validates: Requirements 5.5, 5.6**
+
+- [x] 2. 实现错误处理模块
+  - [x] 2.1 创建 `errors.go` 文件
+    - 定义 `LexiangError` 结构体
+    - 实现 `Error()` 方法
+    - 实现错误类型判断函数：`IsBadRequestError`, `IsForbiddenError`, `IsNotFoundError`, `IsRateLimitError`, `IsServerError`
+    - 实现 `handleAPIError` 函数解析 HTTP 响应错误
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+  - [x] 2.2 编写属性测试：错误状态码映射
+    - **Property 10: 错误状态码映射**
+    - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5**
+
+- [x] 3. 实现 TokenManager
+  - [x] 3.1 创建 `token_manager.go` 文件
+    - 定义 `TokenManager` 接口
+    - 实现 `tokenManagerImpl` 结构体
+    - 实现 `NewTokenManager` 构造函数
+    - 实现 `GetToken` 方法（带缓存和自动刷新）
+    - 实现 `InvalidateToken` 方法
+    - 实现 `refreshToken` 内部方法（带双重检查锁）
+    - _Requirements: 1.1, 1.2, 1.3, 1.5_
+  - [x] 3.2 编写属性测试：Token 缓存一致性
+    - **Property 1: Token 缓存一致性**
+    - **Validates: Requirements 1.1, 1.2**
+  - [x] 3.3 编写属性测试：Token 刷新并发安全
+    - **Property 2: Token 刷新并发安全**
+    - **Validates: Requirements 1.3**
+
+- [x] 4. 实现 LexiangClient 核心功能
+  - [x] 4.1 创建 `client.go` 文件
+    - 定义 `LexiangClient` 接口
+    - 实现 `lexiangClientImpl` 结构体
+    - 实现 `NewClient` 和 `NewClientFromEnv` 构造函数
+    - 实现 `Do` 方法（带 401 自动重试）
+    - 实现 `DoWithHeader` 方法
+    - 实现 `Get`, `Post`, `Put`, `Delete` 便捷方法
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 1.4_
+  - [x] 4.2 编写属性测试：请求头自动设置
+    - **Property 4: 请求头自动设置**
+    - **Validates: Requirements 2.2, 2.3**
+  - [x] 4.3 编写属性测试：自定义请求头传递
+    - **Property 5: 自定义请求头传递**
+    - **Validates: Requirements 2.4**
+  - [x] 4.4 编写属性测试：401 自动重试
+    - **Property 3: 401 自动重试**
+    - **Validates: Requirements 1.4**
+
+- [x] 5. Checkpoint - 确保所有测试通过
+  - 确保所有测试通过，如有问题请询问用户。
+
+- [x] 6. 实现知识库管理功能
+  - [x] 6.1 创建 `space.go` 文件
+    - 实现 `CreateSpace` 方法
+    - 实现 `UpdateSpace` 方法
+    - 实现 `DeleteSpace` 方法
+    - 实现 `ListSpaces` 方法（带分页参数）
+    - 实现 `GetSpace` 方法
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [x] 6.2 编写单元测试：知识库管理
+    - 测试 CreateSpace 请求格式和响应解析
+    - 测试 ListSpaces 分页参数传递
+    - _Requirements: 3.1, 3.4_
+
+- [x] 7. 实现知识节点管理功能
+  - [x] 7.1 创建 `entry.go` 文件
+    - 实现 `CreateFolder` 方法
+    - 实现 `CreateFileEntry` 方法
+    - 实现 `ReuploadFile` 方法
+    - 实现 `DeleteEntry` 方法
+    - 实现 `ListEntries` 方法（带分页参数）
+    - 实现 `GetEntry` 方法
+    - 实现 `GetEntryContent` 方法
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
+  - [x] 7.2 编写属性测试：分页参数传递
+    - **Property 7: 分页参数传递**
+    - **Validates: Requirements 3.4, 4.5, 7.1**
+
+- [x] 8. 实现文件上传功能
+  - [x] 8.1 创建 `upload.go` 文件
+    - 实现 `GetUploadSign` 方法
+    - 实现 `UploadFileToCOS` 方法（设置正确的请求头）
+    - 实现 `UploadFile` 方法（完整上传流程）
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [x] 8.2 编写属性测试：COS 上传请求头正确性
+    - **Property 9: COS 上传请求头正确性**
+    - **Validates: Requirements 5.2**
+
+- [x] 9. 实现附件下载功能
+  - [x] 9.1 创建 `download.go` 文件
+    - 实现 `GetDocFile` 方法
+    - 实现 `DownloadDocFile` 方法
+    - _Requirements: 6.1, 6.2_
+  - [x] 9.2 编写单元测试：附件下载
+    - 测试 GetDocFile 响应解析
+    - 测试 DownloadDocFile 完整流程
+    - _Requirements: 6.1, 6.2_
+
+- [x] 10. 实现知识反馈功能
+  - [x] 10.1 创建 `feedback.go` 文件
+    - 实现 `ListFeedbacks` 方法（带分页参数）
+    - _Requirements: 7.1, 7.2_
+  - [x] 10.2 编写单元测试：知识反馈
+    - 测试 ListFeedbacks 响应解析（包含 included 字段）
+    - _Requirements: 7.1, 7.2_
+
+- [x] 11. Final Checkpoint - 确保所有测试通过
+  - 确保所有测试通过，如有问题请询问用户。
