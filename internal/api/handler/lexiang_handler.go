@@ -151,7 +151,6 @@ type FeedbackItemSwagger struct {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param request body CreateSpaceRequestSwagger true "创建知识库请求"
 // @Success 201 {object} model.LexiangSpaceDataResponse "创建成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -161,11 +160,6 @@ type FeedbackItemSwagger struct {
 // @Router /lexiang/spaces [post]
 func (h *LexiangHandler) HandleCreateSpace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	var req CreateSpaceRequestSwagger
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -178,7 +172,7 @@ func (h *LexiangHandler) HandleCreateSpace(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	space, err := h.client.CreateSpace(ctx, staffID, req.TeamID, req.Name)
+	space, err := h.client.CreateSpace(ctx, req.TeamID, req.Name)
 	if err != nil {
 		h.logger.Error("创建知识库失败", logger.Fields{"error": err})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
@@ -266,7 +260,6 @@ func (h *LexiangHandler) HandleListSpaces(w http.ResponseWriter, r *http.Request
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param id path string true "知识库ID" example:"space_123"
 // @Param request body object{name=string} true "更新请求"
 // @Success 200 {object} model.LexiangSpaceDataResponse "更新成功"
@@ -278,11 +271,6 @@ func (h *LexiangHandler) HandleListSpaces(w http.ResponseWriter, r *http.Request
 // @Router /lexiang/spaces/{id} [put]
 func (h *LexiangHandler) HandleUpdateSpace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	spaceID := h.extractPathParam(r.URL.Path, "spaces")
 	if spaceID == "" {
@@ -298,7 +286,7 @@ func (h *LexiangHandler) HandleUpdateSpace(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	space, err := h.client.UpdateSpace(ctx, staffID, spaceID, req.Name)
+	space, err := h.client.UpdateSpace(ctx, spaceID, req.Name)
 	if err != nil {
 		h.logger.Error("更新知识库失败", logger.Fields{"error": err, "spaceId": spaceID})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
@@ -316,7 +304,6 @@ func (h *LexiangHandler) HandleUpdateSpace(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param id path string true "知识库ID" example:"space_123"
 // @Success 200 {object} model.AnyDataResponse "删除成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -327,11 +314,6 @@ func (h *LexiangHandler) HandleUpdateSpace(w http.ResponseWriter, r *http.Reques
 // @Router /lexiang/spaces/{id} [delete]
 func (h *LexiangHandler) HandleDeleteSpace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	spaceID := h.extractPathParam(r.URL.Path, "spaces")
 	if spaceID == "" {
@@ -339,7 +321,7 @@ func (h *LexiangHandler) HandleDeleteSpace(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.client.DeleteSpace(ctx, staffID, spaceID); err != nil {
+	if err := h.client.DeleteSpace(ctx, spaceID); err != nil {
 		h.logger.Error("删除知识库失败", logger.Fields{"error": err, "spaceId": spaceID})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
 		return
@@ -359,7 +341,6 @@ func (h *LexiangHandler) HandleDeleteSpace(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param request body CreateFolderRequestSwagger true "创建文件夹请求"
 // @Success 201 {object} model.LexiangEntryDataResponse "创建成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -369,11 +350,6 @@ func (h *LexiangHandler) HandleDeleteSpace(w http.ResponseWriter, r *http.Reques
 // @Router /lexiang/entries/folder [post]
 func (h *LexiangHandler) HandleCreateFolder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	var req CreateFolderRequestSwagger
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -386,7 +362,7 @@ func (h *LexiangHandler) HandleCreateFolder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	entry, err := h.client.CreateFolder(ctx, staffID, req.ParentID, req.Name)
+	entry, err := h.client.CreateFolder(ctx, req.ParentID, req.Name)
 	if err != nil {
 		h.logger.Error("创建文件夹失败", logger.Fields{"error": err})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
@@ -404,7 +380,6 @@ func (h *LexiangHandler) HandleCreateFolder(w http.ResponseWriter, r *http.Reque
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param request body CreateFileEntryRequestSwagger true "创建文件节点请求"
 // @Success 201 {object} model.LexiangEntryDataResponse "创建成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -414,11 +389,6 @@ func (h *LexiangHandler) HandleCreateFolder(w http.ResponseWriter, r *http.Reque
 // @Router /lexiang/entries/file [post]
 func (h *LexiangHandler) HandleCreateFileEntry(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	var req CreateFileEntryRequestSwagger
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -431,7 +401,7 @@ func (h *LexiangHandler) HandleCreateFileEntry(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	entry, err := h.client.CreateFileEntry(ctx, staffID, req.ParentID, req.State, lexiang.EntryType(req.EntryType), req.Name)
+	entry, err := h.client.CreateFileEntry(ctx, req.ParentID, req.State, lexiang.EntryType(req.EntryType), req.Name)
 	if err != nil {
 		h.logger.Error("创建文件节点失败", logger.Fields{"error": err})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
@@ -521,7 +491,6 @@ func (h *LexiangHandler) HandleListEntries(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param id path string true "节点ID" example:"entry_123"
 // @Success 200 {object} model.AnyDataResponse "删除成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -532,11 +501,6 @@ func (h *LexiangHandler) HandleListEntries(w http.ResponseWriter, r *http.Reques
 // @Router /lexiang/entries/{id} [delete]
 func (h *LexiangHandler) HandleDeleteEntry(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	entryID := h.extractPathParam(r.URL.Path, "entries")
 	if entryID == "" {
@@ -544,7 +508,7 @@ func (h *LexiangHandler) HandleDeleteEntry(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.client.DeleteEntry(ctx, staffID, entryID); err != nil {
+	if err := h.client.DeleteEntry(ctx, entryID); err != nil {
 		h.logger.Error("删除节点失败", logger.Fields{"error": err, "entryId": entryID})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
 		return
@@ -560,7 +524,6 @@ func (h *LexiangHandler) HandleDeleteEntry(w http.ResponseWriter, r *http.Reques
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param id path string true "节点ID" example:"entry_123"
 // @Param request body ReuploadFileRequestSwagger true "重新上传请求"
 // @Success 200 {object} model.AnyDataResponse "上传成功"
@@ -572,11 +535,6 @@ func (h *LexiangHandler) HandleDeleteEntry(w http.ResponseWriter, r *http.Reques
 // @Router /lexiang/entries/{id}/reupload [post]
 func (h *LexiangHandler) HandleReuploadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	entryID := h.extractPathParam(r.URL.Path, "entries")
 	if entryID == "" {
@@ -590,7 +548,7 @@ func (h *LexiangHandler) HandleReuploadFile(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := h.client.ReuploadFile(ctx, staffID, entryID, req.State); err != nil {
+	if err := h.client.ReuploadFile(ctx, entryID, req.State); err != nil {
 		h.logger.Error("重新上传文件失败", logger.Fields{"error": err, "entryId": entryID})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
 		return
@@ -646,7 +604,6 @@ func (h *LexiangHandler) HandleGetEntryContent(w http.ResponseWriter, r *http.Re
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param request body UploadSignRequestSwagger true "获取上传签名请求"
 // @Success 200 {object} model.LexiangUploadSignDataResponse "获取成功"
 // @Failure 400 {object} model.ErrorResponse "请求参数错误"
@@ -655,11 +612,6 @@ func (h *LexiangHandler) HandleGetEntryContent(w http.ResponseWriter, r *http.Re
 // @Router /lexiang/upload/sign [post]
 func (h *LexiangHandler) HandleGetUploadSign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	var req UploadSignRequestSwagger
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -672,7 +624,7 @@ func (h *LexiangHandler) HandleGetUploadSign(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	sign, err := h.client.GetUploadSign(ctx, staffID, req.FileName, req.MediaType)
+	sign, err := h.client.GetUploadSign(ctx, req.FileName, req.MediaType)
 	if err != nil {
 		h.logger.Error("获取上传签名失败", logger.Fields{"error": err})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
@@ -690,7 +642,6 @@ func (h *LexiangHandler) HandleGetUploadSign(w http.ResponseWriter, r *http.Requ
 // @Accept multipart/form-data
 // @Produce json
 // @Security BearerAuth
-// @Param X-Staff-ID header string true "乐享成员帐号" example:"staff_123"
 // @Param file formData file true "要上传的文件"
 // @Param mediaType formData string true "媒体类型" Enums(file, video, audio)
 // @Success 200 {object} model.LexiangUploadStateDataResponse "上传成功，返回 state 用于创建知识节点"
@@ -700,11 +651,6 @@ func (h *LexiangHandler) HandleGetUploadSign(w http.ResponseWriter, r *http.Requ
 // @Router /lexiang/upload [post]
 func (h *LexiangHandler) HandleUploadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	staffID := r.Header.Get("X-Staff-ID")
-	if staffID == "" {
-		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("X-Staff-ID 请求头不能为空"))
-		return
-	}
 
 	// 解析 multipart form，最大 100MB
 	if err := r.ParseMultipartForm(100 << 20); err != nil {
@@ -732,7 +678,7 @@ func (h *LexiangHandler) HandleUploadFile(w http.ResponseWriter, r *http.Request
 	}
 
 	// 调用完整上传流程
-	state, err := h.client.UploadFile(ctx, staffID, header.Filename, mediaType, fileData)
+	state, err := h.client.UploadFile(ctx, header.Filename, mediaType, fileData)
 	if err != nil {
 		h.logger.Error("上传文件失败", logger.Fields{"error": err, "fileName": header.Filename})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))

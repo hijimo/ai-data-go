@@ -1762,13 +1762,6 @@ const docTemplate = `{
                 "summary": "创建文件节点",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
                         "description": "创建文件节点请求",
                         "name": "request",
                         "in": "body",
@@ -1831,13 +1824,6 @@ const docTemplate = `{
                 ],
                 "summary": "创建文件夹",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "description": "创建文件夹请求",
                         "name": "request",
@@ -1960,13 +1946,6 @@ const docTemplate = `{
                 ],
                 "summary": "删除知识节点",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "节点ID",
@@ -2095,13 +2074,6 @@ const docTemplate = `{
                 ],
                 "summary": "重新上传文件",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "节点ID",
@@ -2435,13 +2407,6 @@ const docTemplate = `{
                 "summary": "创建知识库",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
                         "description": "创建知识库请求",
                         "name": "request",
                         "in": "body",
@@ -2565,13 +2530,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "知识库ID",
                         "name": "id",
                         "in": "path",
@@ -2651,13 +2609,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "知识库ID",
                         "name": "id",
                         "in": "path",
@@ -2723,13 +2674,6 @@ const docTemplate = `{
                 ],
                 "summary": "上传文件",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "要上传的文件",
@@ -2797,13 +2741,6 @@ const docTemplate = `{
                 ],
                 "summary": "获取上传签名",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "乐享成员帐号",
-                        "name": "X-Staff-ID",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "description": "获取上传签名请求",
                         "name": "request",

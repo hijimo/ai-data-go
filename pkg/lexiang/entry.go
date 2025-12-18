@@ -16,10 +16,9 @@ type ReuploadFileRequest struct {
 
 // CreateFolder 创建文件夹
 // 实现 Requirements 4.1: 在指定父节点下创建文件夹并返回节点信息
-// staffID: 成员帐号，作为文件夹创建者
 // parentID: 父节点 ID（可使用知识库的 root_entry ID）
 // name: 文件夹名称
-func (c *lexiangClientImpl) CreateFolder(ctx context.Context, staffID, parentID, name string) (*EntryResponse, error) {
+func (c *lexiangClientImpl) CreateFolder(ctx context.Context, parentID, name string) (*EntryResponse, error) {
 	// 构建请求体
 	req := CreateEntryRequest{
 		Name:      name,
@@ -27,10 +26,8 @@ func (c *lexiangClientImpl) CreateFolder(ctx context.Context, staffID, parentID,
 	}
 	req.Relationships.ParentEntry.Data.ID = parentID
 
-	// 发送请求，需要设置 x-staff-id 请求头
-	resp, err := c.DoWithHeader(ctx, http.MethodPost, "/entries", req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Post(ctx, "/entries", req)
 	if err != nil {
 		return nil, fmt.Errorf("创建文件夹请求失败: %w", err)
 	}
@@ -52,12 +49,11 @@ func (c *lexiangClientImpl) CreateFolder(ctx context.Context, staffID, parentID,
 
 // CreateFileEntry 创建文件知识节点
 // 实现 Requirements 4.2: 使用上传的 state 创建文件类型的知识节点
-// staffID: 成员帐号，作为文件创建者
 // parentID: 父节点 ID
 // state: 文件上传临时标识（从上传签名接口获取）
 // entryType: 节点类型（file/video/audio）
 // name: 节点标题，缺省时使用上传的文件名
-func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, staffID, parentID, state string, entryType EntryType, name string) (*EntryResponse, error) {
+func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, parentID, state string, entryType EntryType, name string) (*EntryResponse, error) {
 	// 构建请求体
 	req := CreateEntryRequest{
 		State:     state,
@@ -68,10 +64,8 @@ func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, staffID, parent
 	}
 	req.Relationships.ParentEntry.Data.ID = parentID
 
-	// 发送请求
-	resp, err := c.DoWithHeader(ctx, http.MethodPost, "/entries", req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Post(ctx, "/entries", req)
 	if err != nil {
 		return nil, fmt.Errorf("创建文件知识节点请求失败: %w", err)
 	}
@@ -93,20 +87,17 @@ func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, staffID, parent
 
 // ReuploadFile 重新上传文件
 // 实现 Requirements 4.3: 更新指定节点的文件内容
-// staffID: 成员帐号，需具有操作权限
 // entryID: 知识节点 ID
 // state: 新文件的上传临时标识
 // 注意：新版本文件扩展名必须与原文件一致
-func (c *lexiangClientImpl) ReuploadFile(ctx context.Context, staffID, entryID, state string) error {
+func (c *lexiangClientImpl) ReuploadFile(ctx context.Context, entryID, state string) error {
 	// 构建请求体
 	req := ReuploadFileRequest{
 		State: state,
 	}
 
-	// 发送请求
-	resp, err := c.DoWithHeader(ctx, http.MethodPut, "/entries/"+entryID+"/file", req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Put(ctx, "/entries/"+entryID+"/file", req)
 	if err != nil {
 		return fmt.Errorf("重新上传文件请求失败: %w", err)
 	}
@@ -122,14 +113,11 @@ func (c *lexiangClientImpl) ReuploadFile(ctx context.Context, staffID, entryID, 
 
 // DeleteEntry 删除知识节点
 // 实现 Requirements 4.4: 删除指定的知识节点
-// staffID: 成员帐号，需具有操作权限，或使用 "system-bot" 忽略权限校验
 // entryID: 知识节点 ID
 // 注意：删除时需保证节点下没有子节点
-func (c *lexiangClientImpl) DeleteEntry(ctx context.Context, staffID, entryID string) error {
-	// 发送请求
-	resp, err := c.DoWithHeader(ctx, http.MethodDelete, "/entries/"+entryID, nil, map[string]string{
-		"x-staff-id": staffID,
-	})
+func (c *lexiangClientImpl) DeleteEntry(ctx context.Context, entryID string) error {
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Delete(ctx, "/entries/"+entryID)
 	if err != nil {
 		return fmt.Errorf("删除知识节点请求失败: %w", err)
 	}

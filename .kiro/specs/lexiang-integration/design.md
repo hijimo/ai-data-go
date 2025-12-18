@@ -200,7 +200,7 @@ type LexiangClient interface {
 const (
     LexiangBaseURL  = "https://lxapi.lexiangla.com/cgi-bin"
     LexiangTokenURL = "https://lxapi.lexiangla.com/cgi-bin/token"
-    LexiangAPIURL   = "https://lxapi.lexiangla.com/cgi-bin/v1"
+    LexiangAPIURL   = "https://lxapi.lexiangla.com/cgi-bin/v1/kb"
     
     DefaultTimeout       = 30 * time.Second
     TokenRefreshBuffer   = 5 * time.Minute

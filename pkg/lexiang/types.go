@@ -8,7 +8,7 @@ const (
 	// LexiangBaseURL 乐享 API 基础地址
 	LexiangBaseURL = "https://lxapi.lexiangla.com/cgi-bin"
 	// LexiangAPIURL 乐享业务 API 地址
-	LexiangAPIURL = "https://lxapi.lexiangla.com/cgi-bin/v1"
+	LexiangAPIURL = "https://lxapi.lexiangla.com/cgi-bin/v1/kb"
 	// DefaultTimeout 默认 HTTP 超时时间
 	DefaultTimeout = 30 * time.Second
 	// TokenRefreshBuffer Token 提前刷新时间，避免临界点失效
@@ -89,6 +89,8 @@ type Config struct {
 	AppKey string
 	// AppSecret 应用 Secret（必填）
 	AppSecret string
+	// StaffID 成员帐号（必填，用于 x-staff-id 请求头）
+	StaffID string
 	// BaseURL API 基础 URL（可选，默认为官方地址）
 	BaseURL string
 	// Timeout HTTP 超时时间（可选，默认 30 秒）

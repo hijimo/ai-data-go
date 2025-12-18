@@ -3209,11 +3209,6 @@ paths:
       - application/json
       description: 删除指定的知识节点
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 节点ID
         in: path
         name: id
@@ -3334,11 +3329,6 @@ paths:
       - application/json
       description: 更新指定节点的文件内容
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 节点ID
         in: path
         name: id
@@ -3388,11 +3378,6 @@ paths:
       - application/json
       description: 使用上传的 state 创建文件类型的知识节点
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 创建文件节点请求
         in: body
         name: request
@@ -3433,11 +3418,6 @@ paths:
       - application/json
       description: 在指定父节点下创建文件夹
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 创建文件夹请求
         in: body
         name: request
@@ -3643,11 +3623,6 @@ paths:
       - application/json
       description: 在指定团队下创建新的知识库
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 创建知识库请求
         in: body
         name: request
@@ -3688,11 +3663,6 @@ paths:
       - application/json
       description: 删除指定的知识库
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 知识库ID
         in: path
         name: id
@@ -3773,11 +3743,6 @@ paths:
       - application/json
       description: 更新知识库名称
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 知识库ID
         in: path
         name: id
@@ -3830,11 +3795,6 @@ paths:
       - multipart/form-data
       description: 完整的文件上传流程：获取签名 -> 上传到 COS -> 返回 state
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 要上传的文件
         in: formData
         name: file
@@ -3879,11 +3839,6 @@ paths:
       - application/json
       description: 获取文件上传到腾讯云 COS 的签名信息
       parameters:
-      - description: 乐享成员帐号
-        in: header
-        name: X-Staff-ID
-        required: true
-        type: string
       - description: 获取上传签名请求
         in: body
         name: request

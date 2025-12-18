@@ -11,19 +11,17 @@ import (
 )
 
 // GetUploadSign 获取上传签名
-// staffID: 成员帐号，作为文件上传者
 // fileName: 文件名称（需带扩展名）
 // mediaType: 媒体类型（file/video/audio）
 // 返回包含 COS 上传签名和 state 的响应
-func (c *lexiangClientImpl) GetUploadSign(ctx context.Context, staffID, fileName, mediaType string) (*UploadSignResponse, error) {
+func (c *lexiangClientImpl) GetUploadSign(ctx context.Context, fileName, mediaType string) (*UploadSignResponse, error) {
 	req := UploadSignRequest{
 		Name:      fileName,
 		MediaType: mediaType,
 	}
 
-	resp, err := c.DoWithHeader(ctx, http.MethodPost, "/upload-signs", req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Post(ctx, "/upload-signs", req)
 	if err != nil {
 		return nil, fmt.Errorf("获取上传签名请求失败: %w", err)
 	}
@@ -95,14 +93,13 @@ func (c *lexiangClientImpl) UploadFileToCOS(ctx context.Context, sign *UploadSig
 }
 
 // UploadFile 完整的文件上传流程
-// staffID: 成员帐号，作为文件上传者
 // fileName: 文件名称（需带扩展名）
 // mediaType: 媒体类型（file/video/audio）
 // fileData: 文件二进制数据
 // 返回 state 用于后续创建知识节点
-func (c *lexiangClientImpl) UploadFile(ctx context.Context, staffID, fileName, mediaType string, fileData []byte) (string, error) {
+func (c *lexiangClientImpl) UploadFile(ctx context.Context, fileName, mediaType string, fileData []byte) (string, error) {
 	// 1. 获取上传签名
-	sign, err := c.GetUploadSign(ctx, staffID, fileName, mediaType)
+	sign, err := c.GetUploadSign(ctx, fileName, mediaType)
 	if err != nil {
 		return "", fmt.Errorf("获取上传签名失败: %w", err)
 	}

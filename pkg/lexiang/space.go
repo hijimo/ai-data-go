@@ -20,16 +20,14 @@ type UpdateSpaceRequest struct {
 
 // CreateSpace 创建知识库
 // 实现 Requirements 3.1: 向乐享 API 发送创建知识库请求并返回包含知识库 ID 和根目录 ID 的响应
-func (c *lexiangClientImpl) CreateSpace(ctx context.Context, staffID, teamID, name string) (*SpaceResponse, error) {
+func (c *lexiangClientImpl) CreateSpace(ctx context.Context, teamID, name string) (*SpaceResponse, error) {
 	// 构建请求体
 	req := CreateSpaceRequest{}
 	req.Data.Attributes.Name = name
 	req.Data.Relationships.Team.Data.ID = teamID
 
-	// 发送请求，需要设置 x-staff-id 请求头
-	resp, err := c.DoWithHeader(ctx, http.MethodPost, "/spaces", req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Post(ctx, "/spaces", req)
 	if err != nil {
 		return nil, fmt.Errorf("创建知识库请求失败: %w", err)
 	}
@@ -51,15 +49,13 @@ func (c *lexiangClientImpl) CreateSpace(ctx context.Context, staffID, teamID, na
 
 // UpdateSpace 更新知识库
 // 实现 Requirements 3.2: 向乐享 API 发送更新知识库请求
-func (c *lexiangClientImpl) UpdateSpace(ctx context.Context, staffID, spaceID, name string) (*SpaceResponse, error) {
+func (c *lexiangClientImpl) UpdateSpace(ctx context.Context, spaceID, name string) (*SpaceResponse, error) {
 	// 构建请求体
 	req := UpdateSpaceRequest{}
 	req.Data.Attributes.Name = name
 
-	// 发送请求
-	resp, err := c.DoWithHeader(ctx, http.MethodPut, "/spaces/"+spaceID, req, map[string]string{
-		"x-staff-id": staffID,
-	})
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Put(ctx, "/spaces/"+spaceID, req)
 	if err != nil {
 		return nil, fmt.Errorf("更新知识库请求失败: %w", err)
 	}
@@ -81,11 +77,9 @@ func (c *lexiangClientImpl) UpdateSpace(ctx context.Context, staffID, spaceID, n
 
 // DeleteSpace 删除知识库
 // 实现 Requirements 3.3: 向乐享 API 发送删除知识库请求
-func (c *lexiangClientImpl) DeleteSpace(ctx context.Context, staffID, spaceID string) error {
-	// 发送请求
-	resp, err := c.DoWithHeader(ctx, http.MethodDelete, "/spaces/"+spaceID, nil, map[string]string{
-		"x-staff-id": staffID,
-	})
+func (c *lexiangClientImpl) DeleteSpace(ctx context.Context, spaceID string) error {
+	// 发送请求（x-staff-id 由 doRequest 自动添加）
+	resp, err := c.Delete(ctx, "/spaces/"+spaceID)
 	if err != nil {
 		return fmt.Errorf("删除知识库请求失败: %w", err)
 	}
