@@ -36,8 +36,8 @@ func TestProperty_UploadSignResponseRoundTrip(t *testing.T) {
 					State: state,
 				}
 				original.Object.Key = key
-				original.Object.Options.Bucket = bucket
-				original.Object.Options.Region = region
+				original.Options.Bucket = bucket
+				original.Options.Region = region
 				original.Object.Auth.Authorization = auth
 				original.Object.Auth.XCosSecurityToken = token
 				original.Object.Headers.ContentDisposition = contentDisposition
@@ -161,12 +161,12 @@ func TestProperty_UploadSignResponseJSONParsing(t *testing.T) {
 					t.Logf("Object.Key 不匹配: 期望 %q, 实际 %q", key, response.Object.Key)
 					return false
 				}
-				if response.Object.Options.Bucket != bucket {
-					t.Logf("Object.Options.Bucket 不匹配: 期望 %q, 实际 %q", bucket, response.Object.Options.Bucket)
+				if response.Options.Bucket != bucket {
+					t.Logf("Object.Options.Bucket 不匹配: 期望 %q, 实际 %q", bucket, response.Options.Bucket)
 					return false
 				}
-				if response.Object.Options.Region != region {
-					t.Logf("Object.Options.Region 不匹配: 期望 %q, 实际 %q", region, response.Object.Options.Region)
+				if response.Options.Region != region {
+					t.Logf("Object.Options.Region 不匹配: 期望 %q, 实际 %q", region, response.Options.Region)
 					return false
 				}
 				if response.Object.Auth.Authorization != auth {
@@ -1310,7 +1310,7 @@ func TestProperty_RequestHeadersAutoSet(t *testing.T) {
 				}
 
 				// 创建 LexiangClient，使用 API 服务器地址
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 
 				ctx := context.Background()
 
@@ -1436,7 +1436,7 @@ func TestProperty_ConvenienceMethodsHeadersAutoSet(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 根据 methodIndex 选择便捷方法
@@ -1576,7 +1576,7 @@ func TestProperty_HeadersUseRefreshedToken(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 第一次请求
@@ -1745,7 +1745,7 @@ func TestProperty_CustomHeadersPassedCorrectly(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 准备自定义请求头
@@ -1894,7 +1894,7 @@ func TestProperty_MultipleCustomHeadersPassedCorrectly(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 发送带多个自定义请求头的请求
@@ -1990,7 +1990,7 @@ func TestProperty_XStaffIdHeaderPassedCorrectly(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 准备 x-staff-id 请求头
@@ -2082,7 +2082,7 @@ func TestProperty_EmptyCustomHeadersDoNotAffectStandardHeaders(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 根据参数决定使用 nil 还是空 map
@@ -2257,7 +2257,7 @@ func TestProperty_401AutoRetry(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 发送请求
@@ -2372,7 +2372,7 @@ func TestProperty_401RetryUsesNewToken(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 发送请求
@@ -2496,7 +2496,7 @@ func TestProperty_401RetryOnlyOnce(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 发送请求
@@ -2601,7 +2601,7 @@ func TestProperty_Non401ErrorsDoNotTriggerRetry(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 发送请求
@@ -2723,7 +2723,7 @@ func TestProperty_401RetryPreservesCustomHeaders(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 准备自定义请求头
@@ -2876,7 +2876,7 @@ func TestProperty_PaginationParametersPassed(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 调用 ListSpaces 方法
@@ -3011,7 +3011,7 @@ func TestProperty_ListEntriesPaginationParametersPassed(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 调用 ListEntries 方法
@@ -3157,7 +3157,7 @@ func TestProperty_PaginationBoundaryValues(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 调用 ListSpaces 方法
@@ -3252,7 +3252,7 @@ func TestProperty_PaginationParameterCombinations(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, apiServer.URL)
+				client := NewClientWithTokenManager(tm, apiServer.URL, "test-staff")
 				ctx := context.Background()
 
 				// 根据参数决定实际传递的值
@@ -3457,7 +3457,7 @@ func TestProperty_COSUploadHeadersCorrectness(t *testing.T) {
 					return false
 				}
 
-				client := NewClientWithTokenManager(tm, tokenServer.URL)
+				client := NewClientWithTokenManager(tm, tokenServer.URL, "test-staff")
 
 				// 构造 UploadSignResponse，使用模拟 COS 服务器地址
 				// 由于 UploadFileToCOS 会构建完整的 COS URL，我们需要特殊处理
@@ -3466,8 +3466,8 @@ func TestProperty_COSUploadHeadersCorrectness(t *testing.T) {
 					State: "test_state_123",
 				}
 				sign.Object.Key = "test/file.pdf"
-				sign.Object.Options.Bucket = cosURL.Hostname()
-				sign.Object.Options.Region = ""
+				sign.Options.Bucket = cosURL.Hostname()
+				sign.Options.Region = ""
 				sign.Object.Auth.Authorization = authorization
 				sign.Object.Auth.XCosSecurityToken = securityToken
 				sign.Object.Headers.ContentDisposition = contentDisposition
@@ -3651,8 +3651,8 @@ func TestProperty_UploadFileToCOSFullFlowHeaders(t *testing.T) {
 					State: "test_state",
 				}
 				sign.Object.Key = "test/document.pdf"
-				sign.Object.Options.Bucket = bucket
-				sign.Object.Options.Region = "ap-shanghai"
+				sign.Options.Bucket = bucket
+				sign.Options.Region = "ap-shanghai"
 				sign.Object.Auth.Authorization = authorization
 				sign.Object.Auth.XCosSecurityToken = securityToken
 
@@ -3777,8 +3777,8 @@ func TestProperty_COSUploadOptionalHeaders(t *testing.T) {
 					State: "test_state",
 				}
 				sign.Object.Key = "test/file.pdf"
-				sign.Object.Options.Bucket = bucket
-				sign.Object.Options.Region = "ap-shanghai"
+				sign.Options.Bucket = bucket
+				sign.Options.Region = "ap-shanghai"
 				sign.Object.Auth.Authorization = "test_auth"
 				sign.Object.Auth.XCosSecurityToken = "test_token"
 				sign.Object.Headers.ContentDisposition = contentDisposition

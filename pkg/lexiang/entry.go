@@ -19,12 +19,12 @@ type ReuploadFileRequest struct {
 // parentID: 父节点 ID（可使用知识库的 root_entry ID）
 // name: 文件夹名称
 func (c *lexiangClientImpl) CreateFolder(ctx context.Context, parentID, name string) (*EntryResponse, error) {
-	// 构建请求体
-	req := CreateEntryRequest{
-		Name:      name,
-		EntryType: EntryTypeFolder,
-	}
-	req.Relationships.ParentEntry.Data.ID = parentID
+	// 构建请求体（符合官方 API 文档结构）
+	var req CreateEntryRequest
+	req.Data.Attributes.Name = name
+	req.Data.Attributes.EntryType = EntryTypeFolder
+	req.Data.Relationships.ParentEntry.Data.Type = "entry"
+	req.Data.Relationships.ParentEntry.Data.ID = parentID
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
 	resp, err := c.Post(ctx, "/entries", req)
@@ -49,23 +49,24 @@ func (c *lexiangClientImpl) CreateFolder(ctx context.Context, parentID, name str
 
 // CreateFileEntry 创建文件知识节点
 // 实现 Requirements 4.2: 使用上传的 state 创建文件类型的知识节点
+// 官方文档: POST /entries?state={STATE}
 // parentID: 父节点 ID
-// state: 文件上传临时标识（从上传签名接口获取）
+// state: 文件上传临时标识（从上传签名接口获取，通过 URL query 参数传递）
 // entryType: 节点类型（file/video/audio）
 // name: 节点标题，缺省时使用上传的文件名
 func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, parentID, state string, entryType EntryType, name string) (*EntryResponse, error) {
-	// 构建请求体
-	req := CreateEntryRequest{
-		State:     state,
-		EntryType: entryType,
-	}
+	// 构建请求体（符合官方 API 文档结构）
+	var req CreateEntryRequest
+	req.Data.Attributes.EntryType = entryType
 	if name != "" {
-		req.Name = name
+		req.Data.Attributes.Name = name
 	}
-	req.Relationships.ParentEntry.Data.ID = parentID
+	req.Data.Relationships.ParentEntry.Data.Type = "entry"
+	req.Data.Relationships.ParentEntry.Data.ID = parentID
 
-	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Post(ctx, "/entries", req)
+	// 发送请求，state 通过 URL query 参数传递（x-staff-id 由 doRequest 自动添加）
+	path := "/entries?state=" + url.QueryEscape(state)
+	resp, err := c.Post(ctx, path, req)
 	if err != nil {
 		return nil, fmt.Errorf("创建文件知识节点请求失败: %w", err)
 	}

@@ -680,7 +680,7 @@ func (h *LexiangHandler) HandleUploadFile(w http.ResponseWriter, r *http.Request
 	// 调用完整上传流程
 	state, err := h.client.UploadFile(ctx, header.Filename, mediaType, fileData)
 	if err != nil {
-		h.logger.Error("上传文件失败", logger.Fields{"error": err, "fileName": header.Filename})
+		h.logger.Error("上传文件失败", logger.Fields{"error": err.Error(), "fileName": header.Filename})
 		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
 		return
 	}
@@ -945,12 +945,12 @@ func (h *LexiangHandler) convertEntryListResponse(entries *lexiang.EntryListResp
 
 // convertUploadSignResponse 转换上传签名响应
 func (h *LexiangHandler) convertUploadSignResponse(sign *lexiang.UploadSignResponse) *UploadSignResponseSwagger {
-	uploadURL := "https://" + sign.Object.Options.Bucket + ".cos." + sign.Object.Options.Region + ".myqcloud.com/" + sign.Object.Key
+	uploadURL := "https://" + sign.Options.Bucket + ".cos." + sign.Options.Region + ".myqcloud.com/" + sign.Object.Key
 	return &UploadSignResponseSwagger{
-		State:     sign.State,
+		State:     sign.Object.State,
 		Key:       sign.Object.Key,
-		Bucket:    sign.Object.Options.Bucket,
-		Region:    sign.Object.Options.Region,
+		Bucket:    sign.Options.Bucket,
+		Region:    sign.Options.Region,
 		UploadURL: uploadURL,
 	}
 }

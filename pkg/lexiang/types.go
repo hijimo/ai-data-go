@@ -1,7 +1,9 @@
 // Package lexiang 提供腾讯乐享知识库 API 的 Go 客户端封装
 package lexiang
 
-import "time"
+import (
+	"time"
+)
 
 // API 地址常量
 const (
@@ -204,17 +206,22 @@ type SpaceListResponse struct {
 // ============================================================================
 
 // CreateEntryRequest 创建知识节点请求
+// 符合官方 API 文档结构：data.attributes + data.relationships
 type CreateEntryRequest struct {
-	Name          string    `json:"name,omitempty"`
-	State         string    `json:"state,omitempty"`
-	EntryType     EntryType `json:"entry_type"`
-	Relationships struct {
-		ParentEntry struct {
-			Data struct {
-				ID string `json:"id"`
-			} `json:"data"`
-		} `json:"parent_entry"`
-	} `json:"relationships"`
+	Data struct {
+		Attributes struct {
+			Name      string    `json:"name,omitempty"`
+			EntryType EntryType `json:"entry_type"`
+		} `json:"attributes"`
+		Relationships struct {
+			ParentEntry struct {
+				Data struct {
+					Type string `json:"type"`
+					ID   string `json:"id"`
+				} `json:"data"`
+			} `json:"parent_entry"`
+		} `json:"relationships"`
+	} `json:"data"`
 }
 
 // EntryResponse 知识节点响应
@@ -269,19 +276,24 @@ type UploadSignRequest struct {
 }
 
 // UploadSignResponse 获取上传签名响应
+// 根据腾讯乐享 API 文档：https://lexiang.tencent.com/wiki/api/12004.html
+// 响应结构：options 在顶层包含 Bucket/Region，object 包含 key/state/auth/headers
 type UploadSignResponse struct {
-	State  string `json:"state"`
+	// Options COS 存储桶配置（顶层字段）
+	Options struct {
+		Bucket string `json:"Bucket"`
+		Region string `json:"Region"`
+	} `json:"options"`
+	// Object 文件对象信息（包含 state）
 	Object struct {
-		Key     string `json:"key"`
-		Options struct {
-			Bucket string `json:"bucket"`
-			Region string `json:"region"`
-		} `json:"options"`
-		Auth struct {
+		Key   string `json:"key"`
+		State string `json:"state"`
+		Auth  struct {
 			Authorization     string `json:"Authorization"`
 			XCosSecurityToken string `json:"XCosSecurityToken"`
 		} `json:"auth"`
 		Headers struct {
+			ContentType        string `json:"Content-Type"`
 			ContentDisposition string `json:"Content-Disposition"`
 		} `json:"headers"`
 	} `json:"object"`

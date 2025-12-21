@@ -14,6 +14,7 @@ import (
 // fileName: 文件名称（需带扩展名）
 // mediaType: 媒体类型（file/video/audio）
 // 返回包含 COS 上传签名和 state 的响应
+// API 路径：POST /kb/files/upload-params
 func (c *lexiangClientImpl) GetUploadSign(ctx context.Context, fileName, mediaType string) (*UploadSignResponse, error) {
 	req := UploadSignRequest{
 		Name:      fileName,
@@ -21,14 +22,14 @@ func (c *lexiangClientImpl) GetUploadSign(ctx context.Context, fileName, mediaTy
 	}
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Post(ctx, "/upload-signs", req)
+	resp, err := c.Post(ctx, "/files/upload-params", req)
 	if err != nil {
 		return nil, fmt.Errorf("获取上传签名请求失败: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 检查响应状态码
-	if resp.StatusCode != http.StatusOK {
+	// 检查响应状态码（文档说明返回 201 Created）
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return nil, handleAPIError(resp)
 	}
 
@@ -50,9 +51,10 @@ func (c *lexiangClientImpl) UploadFileToCOS(ctx context.Context, sign *UploadSig
 	}
 
 	// 构建 COS 上传 URL
+	// 根据文档：options 在顶层包含 Bucket/Region，object 包含 key
 	url := fmt.Sprintf("https://%s.cos.%s.myqcloud.com/%s",
-		sign.Object.Options.Bucket,
-		sign.Object.Options.Region,
+		sign.Options.Bucket,
+		sign.Options.Region,
 		sign.Object.Key,
 	)
 
@@ -109,6 +111,6 @@ func (c *lexiangClientImpl) UploadFile(ctx context.Context, fileName, mediaType 
 		return "", fmt.Errorf("上传到 COS 失败: %w", err)
 	}
 
-	// 3. 返回 state 用于后续关联
-	return sign.State, nil
+	// 3. 返回 state 用于后续关联（state 在 object 内部）
+	return sign.Object.State, nil
 }

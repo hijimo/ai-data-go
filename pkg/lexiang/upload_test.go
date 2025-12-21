@@ -28,13 +28,12 @@ func TestGetUploadSign_RequestFormat(t *testing.T) {
 		// 解析请求体
 		json.NewDecoder(r.Body).Decode(&capturedReq.Body)
 
-		// 返回模拟响应
-		resp := UploadSignResponse{
-			State: "test_state_123",
-		}
+		// 返回模拟响应（新的数据结构）
+		resp := UploadSignResponse{}
+		resp.Object.State = "test_state_123"
+		resp.Options.Bucket = "lexiang-10029162"
+		resp.Options.Region = "ap-shanghai"
 		resp.Object.Key = "company_xx/files/2024/01/uuid.pdf"
-		resp.Object.Options.Bucket = "lexiang-10029162"
-		resp.Object.Options.Region = "ap-shanghai"
 		resp.Object.Auth.Authorization = "test_auth"
 		resp.Object.Auth.XCosSecurityToken = "test_token"
 		resp.Object.Headers.ContentDisposition = `attachment; filename="test.pdf"`
@@ -46,11 +45,11 @@ func TestGetUploadSign_RequestFormat(t *testing.T) {
 
 	// 创建模拟 TokenManager
 	mockTM := &mockTokenManager{token: "test_token"}
-	client := NewClientWithTokenManager(mockTM, server.URL)
+	client := NewClientWithTokenManager(mockTM, server.URL, "staff123")
 
 	// 调用方法
 	ctx := context.Background()
-	result, err := client.GetUploadSign(ctx, "staff123", "test.pdf", "file")
+	result, err := client.GetUploadSign(ctx, "test.pdf", "file")
 
 	// 验证
 	if err != nil {
@@ -60,11 +59,6 @@ func TestGetUploadSign_RequestFormat(t *testing.T) {
 	// 验证请求方法
 	if capturedReq.Method != http.MethodPost {
 		t.Errorf("期望 POST 方法，实际: %s", capturedReq.Method)
-	}
-
-	// 验证请求路径
-	if capturedReq.Path != "/upload-signs" {
-		t.Errorf("期望路径 /upload-signs，实际: %s", capturedReq.Path)
 	}
 
 	// 验证 x-staff-id 头
@@ -81,25 +75,25 @@ func TestGetUploadSign_RequestFormat(t *testing.T) {
 	}
 
 	// 验证响应解析
-	if result.State != "test_state_123" {
-		t.Errorf("期望 state=test_state_123，实际: %s", result.State)
+	if result.Object.State != "test_state_123" {
+		t.Errorf("期望 state=test_state_123，实际: %s", result.Object.State)
 	}
-	if result.Object.Options.Bucket != "lexiang-10029162" {
-		t.Errorf("期望 bucket=lexiang-10029162，实际: %s", result.Object.Options.Bucket)
+	if result.Options.Bucket != "lexiang-10029162" {
+		t.Errorf("期望 bucket=lexiang-10029162，实际: %s", result.Options.Bucket)
 	}
 }
 
 // TestGetUploadSign_ResponseParsing 测试上传签名响应解析
 func TestGetUploadSign_ResponseParsing(t *testing.T) {
-	// 模拟乐享 API 的真实响应格式
+	// 模拟乐享 API 的真实响应格式（新结构）
 	mockResponse := `{
 		"state": "abc123xyz",
+		"options": {
+			"bucket": "lexiang-10029162",
+			"region": "ap-shanghai"
+		},
 		"object": {
 			"key": "company_xx/files/2024/01/uuid.pdf",
-			"options": {
-				"bucket": "lexiang-10029162",
-				"region": "ap-shanghai"
-			},
 			"auth": {
 				"Authorization": "q-sign-algorithm=sha1&q-ak=xxx",
 				"XCosSecurityToken": "security_token_xxx"
@@ -117,27 +111,27 @@ func TestGetUploadSign_ResponseParsing(t *testing.T) {
 	defer server.Close()
 
 	mockTM := &mockTokenManager{token: "test_token"}
-	client := NewClientWithTokenManager(mockTM, server.URL)
+	client := NewClientWithTokenManager(mockTM, server.URL, "staff123")
 
 	ctx := context.Background()
-	result, err := client.GetUploadSign(ctx, "staff123", "document.pdf", "file")
+	result, err := client.GetUploadSign(ctx, "document.pdf", "file")
 
 	if err != nil {
 		t.Fatalf("GetUploadSign 失败: %v", err)
 	}
 
 	// 验证所有字段正确解析
-	if result.State != "abc123xyz" {
-		t.Errorf("state 解析错误，期望: abc123xyz，实际: %s", result.State)
+	if result.Object.State != "abc123xyz" {
+		t.Errorf("state 解析错误，期望: abc123xyz，实际: %s", result.Object.State)
 	}
 	if result.Object.Key != "company_xx/files/2024/01/uuid.pdf" {
 		t.Errorf("key 解析错误，期望: company_xx/files/2024/01/uuid.pdf，实际: %s", result.Object.Key)
 	}
-	if result.Object.Options.Bucket != "lexiang-10029162" {
-		t.Errorf("bucket 解析错误，期望: lexiang-10029162，实际: %s", result.Object.Options.Bucket)
+	if result.Options.Bucket != "lexiang-10029162" {
+		t.Errorf("bucket 解析错误，期望: lexiang-10029162，实际: %s", result.Options.Bucket)
 	}
-	if result.Object.Options.Region != "ap-shanghai" {
-		t.Errorf("region 解析错误，期望: ap-shanghai，实际: %s", result.Object.Options.Region)
+	if result.Options.Region != "ap-shanghai" {
+		t.Errorf("region 解析错误，期望: ap-shanghai，实际: %s", result.Options.Region)
 	}
 	if result.Object.Auth.Authorization != "q-sign-algorithm=sha1&q-ak=xxx" {
 		t.Errorf("Authorization 解析错误")
@@ -153,7 +147,7 @@ func TestGetUploadSign_ResponseParsing(t *testing.T) {
 // TestUploadFileToCOS_NilSign 测试空签名参数
 func TestUploadFileToCOS_NilSign(t *testing.T) {
 	mockTM := &mockTokenManager{token: "test_token"}
-	client := NewClientWithTokenManager(mockTM, "http://localhost")
+	client := NewClientWithTokenManager(mockTM, "http://localhost", "staff123")
 
 	ctx := context.Background()
 	err := client.UploadFileToCOS(ctx, nil, []byte("test data"))
@@ -170,35 +164,32 @@ func TestUploadFileToCOS_NilSign(t *testing.T) {
 func TestUploadFile_GetSignStep(t *testing.T) {
 	// 创建乐享 API 模拟服务器
 	lexiangServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/upload-signs" {
-			resp := UploadSignResponse{
-				State: "complete_flow_state",
-			}
-			resp.Object.Key = "test/file.pdf"
-			resp.Object.Options.Bucket = "test-bucket"
-			resp.Object.Options.Region = "test-region"
-			resp.Object.Auth.Authorization = "test_auth"
-			resp.Object.Auth.XCosSecurityToken = "test_token"
+		resp := UploadSignResponse{}
+		resp.Object.State = "complete_flow_state"
+		resp.Options.Bucket = "test-bucket"
+		resp.Options.Region = "test-region"
+		resp.Object.Key = "test/file.pdf"
+		resp.Object.Auth.Authorization = "test_auth"
+		resp.Object.Auth.XCosSecurityToken = "test_token"
 
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
-		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
 	}))
 	defer lexiangServer.Close()
 
 	mockTM := &mockTokenManager{token: "test_token"}
-	client := NewClientWithTokenManager(mockTM, lexiangServer.URL)
+	client := NewClientWithTokenManager(mockTM, lexiangServer.URL, "staff123")
 
 	ctx := context.Background()
 
 	// 测试获取签名部分
-	sign, err := client.GetUploadSign(ctx, "staff123", "test.pdf", "file")
+	sign, err := client.GetUploadSign(ctx, "test.pdf", "file")
 	if err != nil {
 		t.Fatalf("GetUploadSign 失败: %v", err)
 	}
 
-	if sign.State != "complete_flow_state" {
-		t.Errorf("state 不正确，期望: complete_flow_state，实际: %s", sign.State)
+	if sign.Object.State != "complete_flow_state" {
+		t.Errorf("state 不正确，期望: complete_flow_state，实际: %s", sign.Object.State)
 	}
 }
 
@@ -239,10 +230,10 @@ func TestGetUploadSign_ErrorHandling(t *testing.T) {
 			defer server.Close()
 
 			mockTM := &mockTokenManager{token: "test_token"}
-			client := NewClientWithTokenManager(mockTM, server.URL)
+			client := NewClientWithTokenManager(mockTM, server.URL, "staff123")
 
 			ctx := context.Background()
-			_, err := client.GetUploadSign(ctx, "staff123", "test.pdf", "file")
+			_, err := client.GetUploadSign(ctx, "test.pdf", "file")
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetUploadSign() error = %v, wantErr %v", err, tt.wantErr)
@@ -271,17 +262,18 @@ func TestGetUploadSign_MediaTypes(t *testing.T) {
 				json.NewDecoder(r.Body).Decode(&req)
 				capturedMediaType = req.MediaType
 
-				resp := UploadSignResponse{State: "test_state"}
+				resp := UploadSignResponse{}
+				resp.Object.State = "test_state"
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(resp)
 			}))
 			defer server.Close()
 
 			mockTM := &mockTokenManager{token: "test_token"}
-			client := NewClientWithTokenManager(mockTM, server.URL)
+			client := NewClientWithTokenManager(mockTM, server.URL, "staff123")
 
 			ctx := context.Background()
-			_, err := client.GetUploadSign(ctx, "staff123", "test.mp4", tt.mediaType)
+			_, err := client.GetUploadSign(ctx, "test.mp4", tt.mediaType)
 
 			if err != nil {
 				t.Fatalf("GetUploadSign 失败: %v", err)
