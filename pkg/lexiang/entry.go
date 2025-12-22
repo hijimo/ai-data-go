@@ -64,8 +64,18 @@ func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, parentID, state
 	req.Data.Relationships.ParentEntry.Data.Type = "entry"
 	req.Data.Relationships.ParentEntry.Data.ID = parentID
 
-	// 发送请求，state 通过 URL query 参数传递（x-staff-id 由 doRequest 自动添加）
+	// 打印 curl 格式的请求（用于调试）
 	path := "/entries?state=" + url.QueryEscape(state)
+	reqBody, _ := json.MarshalIndent(req, "", "  ")
+	fmt.Printf("\n========== CreateFileEntry Request (curl format) ==========\n")
+	fmt.Printf("curl -X POST '%s%s' \\\n", c.apiURL, path)
+	fmt.Printf("  -H 'Content-Type: application/json; charset=utf-8' \\\n")
+	fmt.Printf("  -H 'Authorization: Bearer <TOKEN>' \\\n")
+	fmt.Printf("  -H 'x-staff-id: %s' \\\n", c.staffID)
+	fmt.Printf("  -d '%s'\n", string(reqBody))
+	fmt.Printf("============================================================\n\n")
+
+	// 发送请求，state 通过 URL query 参数传递（x-staff-id 由 doRequest 自动添加）
 	resp, err := c.Post(ctx, path, req)
 	if err != nil {
 		return nil, fmt.Errorf("创建文件知识节点请求失败: %w", err)
