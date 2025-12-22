@@ -22,7 +22,7 @@ func (c *lexiangClientImpl) GetUploadSign(ctx context.Context, fileName, mediaTy
 	}
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Post(ctx, "/files/upload-params", req)
+	resp, err := c.Post(ctx, "/kb/files/upload-params", req)
 	if err != nil {
 		return nil, fmt.Errorf("获取上传签名请求失败: %w", err)
 	}

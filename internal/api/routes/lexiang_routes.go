@@ -91,4 +91,18 @@ func RegisterLexiangRoutes(
 	// GET /api/v1/lexiang/feedbacks - 获取知识反馈列表
 	mux.Handle("GET /api/v1/lexiang/feedbacks",
 		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(lexiangHandler.HandleListFeedbacks))))
+
+	// ========== AI 问答和搜索路由 ==========
+
+	// POST /api/v1/lexiang/ai/qa - AI问答（非流式）
+	mux.Handle("POST /api/v1/lexiang/ai/qa",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(lexiangHandler.HandleAIQA))))
+
+	// POST /api/v1/lexiang/ai/qa/stream - AI问答（流式）
+	mux.Handle("POST /api/v1/lexiang/ai/qa/stream",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(lexiangHandler.HandleAIQAStream))))
+
+	// POST /api/v1/lexiang/ai/search - AI搜索
+	mux.Handle("POST /api/v1/lexiang/ai/search",
+		jwtAuthMiddleware(rbacMiddleware("tenant_admin")(http.HandlerFunc(lexiangHandler.HandleAISearch))))
 }

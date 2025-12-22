@@ -27,7 +27,7 @@ func (c *lexiangClientImpl) CreateSpace(ctx context.Context, teamID, name string
 	req.Data.Relationships.Team.Data.ID = teamID
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Post(ctx, "/spaces", req)
+	resp, err := c.Post(ctx, "/kb/spaces", req)
 	if err != nil {
 		return nil, fmt.Errorf("创建知识库请求失败: %w", err)
 	}
@@ -55,7 +55,7 @@ func (c *lexiangClientImpl) UpdateSpace(ctx context.Context, spaceID, name strin
 	req.Data.Attributes.Name = name
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Put(ctx, "/spaces/"+spaceID, req)
+	resp, err := c.Put(ctx, "/kb/spaces/"+spaceID, req)
 	if err != nil {
 		return nil, fmt.Errorf("更新知识库请求失败: %w", err)
 	}
@@ -79,7 +79,7 @@ func (c *lexiangClientImpl) UpdateSpace(ctx context.Context, spaceID, name strin
 // 实现 Requirements 3.3: 向乐享 API 发送删除知识库请求
 func (c *lexiangClientImpl) DeleteSpace(ctx context.Context, spaceID string) error {
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Delete(ctx, "/spaces/"+spaceID)
+	resp, err := c.Delete(ctx, "/kb/spaces/"+spaceID)
 	if err != nil {
 		return fmt.Errorf("删除知识库请求失败: %w", err)
 	}
@@ -107,7 +107,7 @@ func (c *lexiangClientImpl) ListSpaces(ctx context.Context, teamID string, limit
 	}
 
 	// 构建请求路径
-	path := "/spaces?" + params.Encode()
+	path := "/kb/spaces?" + params.Encode()
 
 	// 发送请求
 	resp, err := c.Get(ctx, path)
@@ -134,7 +134,7 @@ func (c *lexiangClientImpl) ListSpaces(ctx context.Context, teamID string, limit
 // 实现 Requirements 3.5: 返回指定知识库的详细信息
 func (c *lexiangClientImpl) GetSpace(ctx context.Context, spaceID string) (*SpaceResponse, error) {
 	// 发送请求
-	resp, err := c.Get(ctx, "/spaces/"+spaceID)
+	resp, err := c.Get(ctx, "/kb/spaces/"+spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("获取知识库详情请求失败: %w", err)
 	}

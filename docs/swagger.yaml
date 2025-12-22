@@ -1,5 +1,86 @@
 basePath: /api/v1
 definitions:
+  AIQARequestSwagger:
+    properties:
+      anonymousStaffId:
+        example: anonymous_user_123456
+        type: string
+      language:
+        enum:
+        - zh-CN
+        - en
+        example: zh-CN
+        type: string
+      maxChars:
+        example: 2000
+        type: integer
+      newSession:
+        example: true
+        type: boolean
+      qaMode:
+        enum:
+        - normal
+        - normal-ds-v3
+        - normal-ds-v3.1
+        - reasoning
+        - reasoning-ds-v3.1
+        - research
+        - research-ds-v3.1
+        example: normal
+        type: string
+      query:
+        example: 如何使用知识库？
+        maxLength: 1024
+        type: string
+      sessionId:
+        example: session_abc123
+        type: string
+      skipFaq:
+        example: false
+        type: boolean
+      stream:
+        example: false
+        type: boolean
+      targets:
+        items:
+          $ref: '#/definitions/AITargetSwagger'
+        type: array
+    required:
+    - query
+    type: object
+  AISearchRequestSwagger:
+    properties:
+      query:
+        example: 知识库使用指南
+        maxLength: 1024
+        type: string
+      targets:
+        items:
+          $ref: '#/definitions/AITargetSwagger'
+        type: array
+      topN:
+        example: 10
+        maximum: 50
+        minimum: 1
+        type: integer
+    required:
+    - query
+    - topN
+    type: object
+  AITargetSwagger:
+    properties:
+      id:
+        example: space_123
+        type: string
+      type:
+        enum:
+        - space
+        - team
+        - team_code
+        - kb_entry
+        example: space
+        type: string
+    type: object
   ChangePasswordRequest:
     properties:
       newPassword:
@@ -633,6 +714,97 @@ definitions:
     type: object
   HealthDataResponse:
     type: object
+  LexiangAIQADataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangAIQAResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangAIQAResponse:
+    properties:
+      additionalContent:
+        $ref: '#/definitions/LexiangAdditionalContent'
+      answerSource:
+        example: internal
+        type: string
+      content:
+        example: 知识库是用于存储和管理文档的工具...
+        type: string
+      reasoningContent:
+        example: 让我思考一下这个问题...
+        type: string
+      sessionId:
+        example: session_abc123
+        type: string
+    type: object
+  LexiangAISearchDataResponse:
+    properties:
+      code:
+        description: 响应代码
+        example: 200
+        type: integer
+      data:
+        allOf:
+        - $ref: '#/definitions/LexiangAISearchResponse'
+        description: 响应数据
+      message:
+        description: 响应信息
+        example: success
+        type: string
+      traceId:
+        description: 追踪ID（用于全链路追踪和问题排查）
+        example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangAISearchResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/LexiangAISearchResultItem'
+        type: array
+    type: object
+  LexiangAISearchResultItem:
+    properties:
+      content:
+        example: |-
+          ## 如何使用知识库
+
+          知识库是...
+        type: string
+      title:
+        example: 知识库使用指南
+        type: string
+      url:
+        example: https://lexiang.tencent.com/kb/entry/123
+        type: string
+    type: object
+  LexiangAdditionalContent:
+    properties:
+      generatedQuestion:
+        example: 如何使用乐享知识库？
+        type: string
+      referenceChunks:
+        items:
+          $ref: '#/definitions/LexiangReferenceChunk'
+        type: array
+      referenceDocs:
+        items:
+          $ref: '#/definitions/LexiangReferenceDoc'
+        type: array
+    type: object
   LexiangDocFileDataResponse:
     properties:
       code:
@@ -816,6 +988,33 @@ definitions:
       traceId:
         description: 追踪ID（用于全链路追踪和问题排查）
         example: trace-1729756800-a1b2c3d4
+        type: string
+    type: object
+  LexiangReferenceChunk:
+    properties:
+      content:
+        example: 这是匹配的内容段落...
+        type: string
+      targetId:
+        example: entry_123
+        type: string
+      targetType:
+        example: kb_entry
+        type: string
+      title:
+        example: 知识库使用指南
+        type: string
+      url:
+        example: https://lexiang.tencent.com/kb/entry/123
+        type: string
+    type: object
+  LexiangReferenceDoc:
+    properties:
+      title:
+        example: 知识库使用指南
+        type: string
+      url:
+        example: https://lexiang.tencent.com/kb/entry/123
         type: string
     type: object
   LexiangSpaceDataResponse:
@@ -3155,6 +3354,114 @@ paths:
       summary: 健康检查
       tags:
       - health
+  /lexiang/ai/qa:
+    post:
+      consumes:
+      - application/json
+      description: 向乐享AI助手提问，获取基于知识库内容的回答
+      parameters:
+      - description: AI问答请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/AIQARequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 问答成功
+          schema:
+            $ref: '#/definitions/LexiangAIQADataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: AI问答
+      tags:
+      - Lexiang AI
+  /lexiang/ai/qa/stream:
+    post:
+      consumes:
+      - application/json
+      description: 向乐享AI助手提问，以 Server-Sent Events 流式返回回答
+      parameters:
+      - description: AI问答请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/AIQARequestSwagger'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: SSE 流式响应
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: AI问答（流式）
+      tags:
+      - Lexiang AI
+  /lexiang/ai/search:
+    post:
+      consumes:
+      - application/json
+      description: 使用AI在知识库中搜索相关文档
+      parameters:
+      - description: AI搜索请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/AISearchRequestSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 搜索成功
+          schema:
+            $ref: '#/definitions/LexiangAISearchDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: 未认证
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: AI搜索
+      tags:
+      - Lexiang AI
   /lexiang/entries:
     get:
       consumes:

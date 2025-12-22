@@ -1666,6 +1666,177 @@
                 }
             }
         },
+        "/lexiang/ai/qa": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "向乐享AI助手提问，获取基于知识库内容的回答",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang AI"
+                ],
+                "summary": "AI问答",
+                "parameters": [
+                    {
+                        "description": "AI问答请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AIQARequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "问答成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangAIQADataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/ai/qa/stream": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "向乐享AI助手提问，以 Server-Sent Events 流式返回回答",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "Lexiang AI"
+                ],
+                "summary": "AI问答（流式）",
+                "parameters": [
+                    {
+                        "description": "AI问答请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AIQARequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSE 流式响应",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lexiang/ai/search": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "使用AI在知识库中搜索相关文档",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lexiang AI"
+                ],
+                "summary": "AI搜索",
+                "parameters": [
+                    {
+                        "description": "AI搜索请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AISearchRequestSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "搜索成功",
+                        "schema": {
+                            "$ref": "#/definitions/LexiangAISearchDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/lexiang/entries": {
             "get": {
                 "security": [
@@ -4334,6 +4505,115 @@
         }
     },
     "definitions": {
+        "AIQARequestSwagger": {
+            "type": "object",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "anonymousStaffId": {
+                    "type": "string",
+                    "example": "anonymous_user_123456"
+                },
+                "language": {
+                    "type": "string",
+                    "enum": [
+                        "zh-CN",
+                        "en"
+                    ],
+                    "example": "zh-CN"
+                },
+                "maxChars": {
+                    "type": "integer",
+                    "example": 2000
+                },
+                "newSession": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "qaMode": {
+                    "type": "string",
+                    "enum": [
+                        "normal",
+                        "normal-ds-v3",
+                        "normal-ds-v3.1",
+                        "reasoning",
+                        "reasoning-ds-v3.1",
+                        "research",
+                        "research-ds-v3.1"
+                    ],
+                    "example": "normal"
+                },
+                "query": {
+                    "type": "string",
+                    "maxLength": 1024,
+                    "example": "如何使用知识库？"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "example": "session_abc123"
+                },
+                "skipFaq": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "stream": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "targets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AITargetSwagger"
+                    }
+                }
+            }
+        },
+        "AISearchRequestSwagger": {
+            "type": "object",
+            "required": [
+                "query",
+                "topN"
+            ],
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "maxLength": 1024,
+                    "example": "知识库使用指南"
+                },
+                "targets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AITargetSwagger"
+                    }
+                },
+                "topN": {
+                    "type": "integer",
+                    "maximum": 50,
+                    "minimum": 1,
+                    "example": 10
+                }
+            }
+        },
+        "AITargetSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "space_123"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "space",
+                        "team",
+                        "team_code",
+                        "kb_entry"
+                    ],
+                    "example": "space"
+                }
+            }
+        },
         "ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -5126,6 +5406,135 @@
         "HealthDataResponse": {
             "type": "object"
         },
+        "LexiangAIQADataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangAIQAResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangAIQAResponse": {
+            "type": "object",
+            "properties": {
+                "additionalContent": {
+                    "$ref": "#/definitions/LexiangAdditionalContent"
+                },
+                "answerSource": {
+                    "type": "string",
+                    "example": "internal"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "知识库是用于存储和管理文档的工具..."
+                },
+                "reasoningContent": {
+                    "type": "string",
+                    "example": "让我思考一下这个问题..."
+                },
+                "sessionId": {
+                    "type": "string",
+                    "example": "session_abc123"
+                }
+            }
+        },
+        "LexiangAISearchDataResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应代码",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/LexiangAISearchResponse"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "响应信息",
+                    "type": "string",
+                    "example": "success"
+                },
+                "traceId": {
+                    "description": "追踪ID（用于全链路追踪和问题排查）",
+                    "type": "string",
+                    "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangAISearchResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangAISearchResultItem"
+                    }
+                }
+            }
+        },
+        "LexiangAISearchResultItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "## 如何使用知识库\n\n知识库是..."
+                },
+                "title": {
+                    "type": "string",
+                    "example": "知识库使用指南"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://lexiang.tencent.com/kb/entry/123"
+                }
+            }
+        },
+        "LexiangAdditionalContent": {
+            "type": "object",
+            "properties": {
+                "generatedQuestion": {
+                    "type": "string",
+                    "example": "如何使用乐享知识库？"
+                },
+                "referenceChunks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangReferenceChunk"
+                    }
+                },
+                "referenceDocs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/LexiangReferenceDoc"
+                    }
+                }
+            }
+        },
         "LexiangDocFileDataResponse": {
             "type": "object",
             "properties": {
@@ -5384,6 +5793,44 @@
                     "description": "追踪ID（用于全链路追踪和问题排查）",
                     "type": "string",
                     "example": "trace-1729756800-a1b2c3d4"
+                }
+            }
+        },
+        "LexiangReferenceChunk": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "这是匹配的内容段落..."
+                },
+                "targetId": {
+                    "type": "string",
+                    "example": "entry_123"
+                },
+                "targetType": {
+                    "type": "string",
+                    "example": "kb_entry"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "知识库使用指南"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://lexiang.tencent.com/kb/entry/123"
+                }
+            }
+        },
+        "LexiangReferenceDoc": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "知识库使用指南"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://lexiang.tencent.com/kb/entry/123"
                 }
             }
         },

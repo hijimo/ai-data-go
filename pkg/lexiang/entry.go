@@ -27,7 +27,7 @@ func (c *lexiangClientImpl) CreateFolder(ctx context.Context, parentID, name str
 	req.Data.Relationships.ParentEntry.Data.ID = parentID
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Post(ctx, "/entries", req)
+	resp, err := c.Post(ctx, "/kb/entries", req)
 	if err != nil {
 		return nil, fmt.Errorf("创建文件夹请求失败: %w", err)
 	}
@@ -65,7 +65,7 @@ func (c *lexiangClientImpl) CreateFileEntry(ctx context.Context, parentID, state
 	req.Data.Relationships.ParentEntry.Data.ID = parentID
 
 	// 打印 curl 格式的请求（用于调试）
-	path := "/entries?state=" + url.QueryEscape(state)
+	path := "/kb/entries?state=" + url.QueryEscape(state)
 	reqBody, _ := json.MarshalIndent(req, "", "  ")
 	fmt.Printf("\n========== CreateFileEntry Request (curl format) ==========\n")
 	fmt.Printf("curl -X POST '%s%s' \\\n", c.apiURL, path)
@@ -108,7 +108,7 @@ func (c *lexiangClientImpl) ReuploadFile(ctx context.Context, entryID, state str
 	}
 
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Put(ctx, "/entries/"+entryID+"/file", req)
+	resp, err := c.Put(ctx, "/kb/entries/"+entryID+"/file", req)
 	if err != nil {
 		return fmt.Errorf("重新上传文件请求失败: %w", err)
 	}
@@ -128,7 +128,7 @@ func (c *lexiangClientImpl) ReuploadFile(ctx context.Context, entryID, state str
 // 注意：删除时需保证节点下没有子节点
 func (c *lexiangClientImpl) DeleteEntry(ctx context.Context, entryID string) error {
 	// 发送请求（x-staff-id 由 doRequest 自动添加）
-	resp, err := c.Delete(ctx, "/entries/"+entryID)
+	resp, err := c.Delete(ctx, "/kb/entries/"+entryID)
 	if err != nil {
 		return fmt.Errorf("删除知识节点请求失败: %w", err)
 	}
@@ -163,7 +163,7 @@ func (c *lexiangClientImpl) ListEntries(ctx context.Context, spaceID, parentID s
 	}
 
 	// 构建请求路径
-	path := "/entries?" + params.Encode()
+	path := "/kb/entries?" + params.Encode()
 
 	// 发送请求
 	resp, err := c.Get(ctx, path)
@@ -191,7 +191,7 @@ func (c *lexiangClientImpl) ListEntries(ctx context.Context, spaceID, parentID s
 // entryID: 知识节点 ID
 func (c *lexiangClientImpl) GetEntry(ctx context.Context, entryID string) (*EntryResponse, error) {
 	// 发送请求
-	resp, err := c.Get(ctx, "/entries/"+entryID)
+	resp, err := c.Get(ctx, "/kb/entries/"+entryID)
 	if err != nil {
 		return nil, fmt.Errorf("获取知识节点详情请求失败: %w", err)
 	}
@@ -217,7 +217,7 @@ func (c *lexiangClientImpl) GetEntry(ctx context.Context, entryID string) (*Entr
 // 注意：返回的 html_content 可能包含附件链接 /kb_files/{file_id}，需使用附件详情接口下载
 func (c *lexiangClientImpl) GetEntryContent(ctx context.Context, entryID string) (*EntryContentResponse, error) {
 	// 发送请求，固定 content_type=html
-	resp, err := c.Get(ctx, "/entries/"+entryID+"/content?content_type=html")
+	resp, err := c.Get(ctx, "/kb/entries/"+entryID+"/content?content_type=html")
 	if err != nil {
 		return nil, fmt.Errorf("获取线上文档内容请求失败: %w", err)
 	}

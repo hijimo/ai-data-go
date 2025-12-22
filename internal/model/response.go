@@ -432,3 +432,64 @@ type LexiangDocFileResponse struct {
 // LexiangDocFileDataResponse 乐享附件详情数据响应（用于 Swagger）
 // @name LexiangDocFileDataResponse
 type LexiangDocFileDataResponse = ResponseData[LexiangDocFileResponse]
+
+// ============================================================================
+// 乐享 AI 问答和搜索响应类型（用于 Swagger）
+// ============================================================================
+
+// LexiangReferenceChunk 参考内容段落
+// @name LexiangReferenceChunk
+type LexiangReferenceChunk struct {
+	Content    string `json:"content" example:"这是匹配的内容段落..."`
+	TargetID   string `json:"targetId" example:"entry_123"`
+	TargetType string `json:"targetType" example:"kb_entry"`
+	Title      string `json:"title" example:"知识库使用指南"`
+	URL        string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// LexiangReferenceDoc 参考文档来源
+// @name LexiangReferenceDoc
+type LexiangReferenceDoc struct {
+	Title string `json:"title" example:"知识库使用指南"`
+	URL   string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// LexiangAdditionalContent 附加内容信息
+// @name LexiangAdditionalContent
+type LexiangAdditionalContent struct {
+	GeneratedQuestion string                  `json:"generatedQuestion,omitempty" example:"如何使用乐享知识库？"`
+	ReferenceChunks   []LexiangReferenceChunk `json:"referenceChunks,omitempty"`
+	ReferenceDocs     []LexiangReferenceDoc   `json:"referenceDocs,omitempty"`
+}
+
+// LexiangAIQAResponse AI问答响应数据
+// @name LexiangAIQAResponse
+type LexiangAIQAResponse struct {
+	Content           string                    `json:"content" example:"知识库是用于存储和管理文档的工具..."`
+	AnswerSource      string                    `json:"answerSource" example:"internal"`
+	ReasoningContent  string                    `json:"reasoningContent,omitempty" example:"让我思考一下这个问题..."`
+	SessionID         string                    `json:"sessionId" example:"session_abc123"`
+	AdditionalContent *LexiangAdditionalContent `json:"additionalContent,omitempty"`
+}
+
+// LexiangAIQADataResponse 乐享AI问答数据响应（用于 Swagger）
+// @name LexiangAIQADataResponse
+type LexiangAIQADataResponse = ResponseData[LexiangAIQAResponse]
+
+// LexiangAISearchResultItem AI搜索结果项
+// @name LexiangAISearchResultItem
+type LexiangAISearchResultItem struct {
+	Title   string `json:"title" example:"知识库使用指南"`
+	Content string `json:"content" example:"## 如何使用知识库\n\n知识库是..."`
+	URL     string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// LexiangAISearchResponse AI搜索响应数据
+// @name LexiangAISearchResponse
+type LexiangAISearchResponse struct {
+	List []LexiangAISearchResultItem `json:"list"`
+}
+
+// LexiangAISearchDataResponse 乐享AI搜索数据响应（用于 Swagger）
+// @name LexiangAISearchDataResponse
+type LexiangAISearchDataResponse = ResponseData[LexiangAISearchResponse]

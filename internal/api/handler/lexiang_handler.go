@@ -972,3 +972,413 @@ func (h *LexiangHandler) convertFeedbackListResponse(feedbacks *lexiang.Feedback
 	}
 	return result
 }
+
+// ============================================================================
+// AI 问答和搜索接口
+// ============================================================================
+
+// AIQARequestSwagger AI问答请求
+// @name AIQARequest
+type AIQARequestSwagger struct {
+	Query            string            `json:"query" validate:"required,max=1024" example:"如何使用知识库？"`
+	Stream           bool              `json:"stream,omitempty" example:"false"`
+	AnonymousStaffID string            `json:"anonymousStaffId,omitempty" example:"anonymous_user_123456"`
+	SkipFAQ          bool              `json:"skipFaq,omitempty" example:"false"`
+	NewSession       bool              `json:"newSession,omitempty" example:"true"`
+	SessionID        string            `json:"sessionId,omitempty" example:"session_abc123"`
+	QAMode           string            `json:"qaMode,omitempty" example:"normal" enums:"normal,normal-ds-v3,normal-ds-v3.1,reasoning,reasoning-ds-v3.1,research,research-ds-v3.1"`
+	MaxChars         int               `json:"maxChars,omitempty" example:"2000"`
+	Language         string            `json:"language,omitempty" example:"zh-CN" enums:"zh-CN,en"`
+	Targets          []AITargetSwagger `json:"targets,omitempty"`
+}
+
+// AITargetSwagger AI知识范围目标
+type AITargetSwagger struct {
+	Type string `json:"type" example:"space" enums:"space,team,team_code,kb_entry"`
+	ID   string `json:"id" example:"space_123"`
+}
+
+// AISearchRequestSwagger AI搜索请求
+// @name AISearchRequest
+type AISearchRequestSwagger struct {
+	Query   string            `json:"query" validate:"required,max=1024" example:"知识库使用指南"`
+	TopN    int               `json:"topN" validate:"required,min=1,max=50" example:"10"`
+	Targets []AITargetSwagger `json:"targets,omitempty"`
+}
+
+// ReferenceChunkSwagger 参考内容段落
+type ReferenceChunkSwagger struct {
+	Content    string `json:"content" example:"这是匹配的内容段落..."`
+	TargetID   string `json:"targetId" example:"entry_123"`
+	TargetType string `json:"targetType" example:"kb_entry"`
+	Title      string `json:"title" example:"知识库使用指南"`
+	URL        string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// ReferenceDocSwagger 参考文档来源
+type ReferenceDocSwagger struct {
+	Title string `json:"title" example:"知识库使用指南"`
+	URL   string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// AdditionalContentSwagger 附加内容信息
+type AdditionalContentSwagger struct {
+	GeneratedQuestion string                  `json:"generatedQuestion,omitempty" example:"如何使用乐享知识库？"`
+	ReferenceChunks   []ReferenceChunkSwagger `json:"referenceChunks,omitempty"`
+	ReferenceDocs     []ReferenceDocSwagger   `json:"referenceDocs,omitempty"`
+}
+
+// AIQAResponseSwagger AI问答响应数据
+type AIQAResponseSwagger struct {
+	Content           string                    `json:"content" example:"知识库是用于存储和管理文档的工具..."`
+	AnswerSource      string                    `json:"answerSource" example:"internal"`
+	ReasoningContent  string                    `json:"reasoningContent,omitempty" example:"让我思考一下这个问题..."`
+	SessionID         string                    `json:"sessionId" example:"session_abc123"`
+	AdditionalContent *AdditionalContentSwagger `json:"additionalContent,omitempty"`
+}
+
+// AISearchResultItemSwagger AI搜索结果项
+type AISearchResultItemSwagger struct {
+	Title   string `json:"title" example:"知识库使用指南"`
+	Content string `json:"content" example:"## 如何使用知识库\n\n知识库是..."`
+	URL     string `json:"url" example:"https://lexiang.tencent.com/kb/entry/123"`
+}
+
+// AISearchResponseSwagger AI搜索响应数据
+type AISearchResponseSwagger struct {
+	List []AISearchResultItemSwagger `json:"list"`
+}
+
+// HandleAIQA AI问答（非流式）
+// @Summary AI问答
+// @Description 向乐享AI助手提问，获取基于知识库内容的回答
+// @Tags Lexiang AI
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body AIQARequestSwagger true "AI问答请求"
+// @Success 200 {object} model.LexiangAIQADataResponse "问答成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /lexiang/ai/qa [post]
+func (h *LexiangHandler) HandleAIQA(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req AIQARequestSwagger
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.writeValidationErrorResponse(w, ctx, validationErrors)
+		return
+	}
+
+	// 转换请求
+	qaReq := h.convertAIQARequest(&req)
+
+	// 调用 AI 问答
+	qaResp, err := h.client.AIQA(ctx, qaReq)
+	if err != nil {
+		h.logger.Error("AI问答失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
+		return
+	}
+
+	// 转换响应
+	resp := h.convertAIQAResponse(qaResp)
+	h.writeJSONResponse(w, http.StatusOK, response.SuccessWithContext(ctx, resp))
+}
+
+// HandleAIQAStream AI问答（流式）
+// @Summary AI问答（流式）
+// @Description 向乐享AI助手提问，以 Server-Sent Events 流式返回回答
+// @Tags Lexiang AI
+// @Accept json
+// @Produce text/event-stream
+// @Security BearerAuth
+// @Param request body AIQARequestSwagger true "AI问答请求"
+// @Success 200 {string} string "SSE 流式响应"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /lexiang/ai/qa/stream [post]
+func (h *LexiangHandler) HandleAIQAStream(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req AIQARequestSwagger
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.writeValidationErrorResponse(w, ctx, validationErrors)
+		return
+	}
+
+	// 转换请求
+	qaReq := h.convertAIQARequest(&req)
+
+	// 设置 SSE 响应头
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	// 获取 Flusher
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		h.writeErrorResponse(w, ctx, errors.NewInternalError(nil))
+		return
+	}
+
+	// 调用流式 AI 问答
+	eventChan, errChan := h.client.AIQAStream(ctx, qaReq)
+
+	// 处理流式响应
+	for {
+		select {
+		case event, ok := <-eventChan:
+			if !ok {
+				// 通道关闭，发送结束标记
+				w.Write([]byte("data: [DONE]\n\n"))
+				flusher.Flush()
+				return
+			}
+
+			// 转换并发送事件
+			eventData := h.convertAIQAStreamEvent(event)
+			jsonData, err := json.Marshal(eventData)
+			if err != nil {
+				h.logger.Error("序列化流式事件失败", logger.Fields{"error": err})
+				continue
+			}
+
+			w.Write([]byte("data: "))
+			w.Write(jsonData)
+			w.Write([]byte("\n\n"))
+			flusher.Flush()
+
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				h.logger.Error("AI问答流式响应错误", logger.Fields{"error": err})
+				// 发送错误事件
+				errorEvent := map[string]string{"error": err.Error()}
+				jsonData, _ := json.Marshal(errorEvent)
+				w.Write([]byte("data: "))
+				w.Write(jsonData)
+				w.Write([]byte("\n\n"))
+				flusher.Flush()
+			}
+			return
+
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// HandleAISearch AI搜索
+// @Summary AI搜索
+// @Description 使用AI在知识库中搜索相关文档
+// @Tags Lexiang AI
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body AISearchRequestSwagger true "AI搜索请求"
+// @Success 200 {object} model.LexiangAISearchDataResponse "搜索成功"
+// @Failure 400 {object} model.ErrorResponse "请求参数错误"
+// @Failure 401 {object} model.ErrorResponse "未认证"
+// @Failure 500 {object} model.ErrorResponse "服务器内部错误"
+// @Router /lexiang/ai/search [post]
+func (h *LexiangHandler) HandleAISearch(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req AISearchRequestSwagger
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, ctx, errors.NewBadRequestError("无效的请求参数"))
+		return
+	}
+
+	if validationErrors := h.validator.ValidateStruct(&req); validationErrors != nil {
+		h.writeValidationErrorResponse(w, ctx, validationErrors)
+		return
+	}
+
+	// 转换请求
+	searchReq := h.convertAISearchRequest(&req)
+
+	// 调用 AI 搜索
+	searchResp, err := h.client.AISearch(ctx, searchReq)
+	if err != nil {
+		h.logger.Error("AI搜索失败", logger.Fields{"error": err})
+		h.writeErrorResponse(w, ctx, h.convertLexiangError(err))
+		return
+	}
+
+	// 转换响应
+	resp := h.convertAISearchResponse(searchResp)
+	h.writeJSONResponse(w, http.StatusOK, response.SuccessWithContext(ctx, resp))
+}
+
+// convertAIQARequest 转换 AI 问答请求
+func (h *LexiangHandler) convertAIQARequest(req *AIQARequestSwagger) *lexiang.AIQARequest {
+	qaReq := &lexiang.AIQARequest{
+		Query:            req.Query,
+		Stream:           req.Stream,
+		AnonymousStaffID: req.AnonymousStaffID,
+		SkipFAQ:          req.SkipFAQ,
+		NewSession:       req.NewSession,
+		SessionID:        req.SessionID,
+		QAMode:           lexiang.QAMode(req.QAMode),
+		MaxChars:         req.MaxChars,
+		Language:         req.Language,
+	}
+
+	if len(req.Targets) > 0 {
+		qaReq.Targets = make([]lexiang.Target, len(req.Targets))
+		for i, t := range req.Targets {
+			qaReq.Targets[i] = lexiang.Target{
+				Type: lexiang.TargetType(t.Type),
+				ID:   t.ID,
+			}
+		}
+	}
+
+	return qaReq
+}
+
+// convertAIQAResponse 转换 AI 问答响应
+func (h *LexiangHandler) convertAIQAResponse(resp *lexiang.AIQAResponse) *AIQAResponseSwagger {
+	if resp.Data == nil {
+		return &AIQAResponseSwagger{}
+	}
+
+	result := &AIQAResponseSwagger{
+		Content:          resp.Data.Content,
+		AnswerSource:     resp.Data.AnswerSource,
+		ReasoningContent: resp.Data.ReasoningContent,
+		SessionID:        resp.Data.SessionID,
+	}
+
+	if resp.Data.AdditionalContent != nil {
+		result.AdditionalContent = h.convertAdditionalContent(resp.Data.AdditionalContent)
+	}
+
+	return result
+}
+
+// convertAdditionalContent 转换附加内容
+func (h *LexiangHandler) convertAdditionalContent(ac *lexiang.AdditionalContent) *AdditionalContentSwagger {
+	result := &AdditionalContentSwagger{
+		GeneratedQuestion: ac.GeneratedQuestion,
+	}
+
+	if len(ac.ReferenceChunks) > 0 {
+		result.ReferenceChunks = make([]ReferenceChunkSwagger, len(ac.ReferenceChunks))
+		for i, chunk := range ac.ReferenceChunks {
+			result.ReferenceChunks[i] = ReferenceChunkSwagger{
+				Content:    chunk.Content,
+				TargetID:   chunk.TargetID,
+				TargetType: chunk.TargetType,
+				Title:      chunk.Title,
+				URL:        chunk.URL,
+			}
+		}
+	}
+
+	if len(ac.ReferenceDocs) > 0 {
+		result.ReferenceDocs = make([]ReferenceDocSwagger, len(ac.ReferenceDocs))
+		for i, doc := range ac.ReferenceDocs {
+			result.ReferenceDocs[i] = ReferenceDocSwagger{
+				Title: doc.Title,
+				URL:   doc.URL,
+			}
+		}
+	}
+
+	return result
+}
+
+// convertAIQAStreamEvent 转换流式事件
+func (h *LexiangHandler) convertAIQAStreamEvent(event *lexiang.AIQAStreamEvent) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	if event.CompletionID != "" {
+		result["completionId"] = event.CompletionID
+	}
+	if event.SessionID != "" {
+		result["sessionId"] = event.SessionID
+	}
+	if event.DeltaContent != "" {
+		result["deltaContent"] = event.DeltaContent
+	}
+	if event.Content != "" {
+		result["content"] = event.Content
+	}
+	if event.FinishReason != "" {
+		result["finishReason"] = event.FinishReason
+	}
+	if event.IsStop {
+		result["isStop"] = event.IsStop
+	}
+	if event.AnswerSource != "" {
+		result["answerSource"] = event.AnswerSource
+	}
+	if len(event.Processes) > 0 {
+		processes := make([]map[string]string, len(event.Processes))
+		for i, p := range event.Processes {
+			processes[i] = map[string]string{"message": p.Message}
+		}
+		result["processes"] = processes
+	}
+	if event.AdditionalContent != nil {
+		result["additionalContent"] = h.convertAdditionalContent(event.AdditionalContent)
+	}
+
+	return result
+}
+
+// convertAISearchRequest 转换 AI 搜索请求
+func (h *LexiangHandler) convertAISearchRequest(req *AISearchRequestSwagger) *lexiang.AISearchRequest {
+	searchReq := &lexiang.AISearchRequest{
+		Query: req.Query,
+		TopN:  req.TopN,
+	}
+
+	if len(req.Targets) > 0 {
+		searchReq.Targets = make([]lexiang.Target, len(req.Targets))
+		for i, t := range req.Targets {
+			searchReq.Targets[i] = lexiang.Target{
+				Type: lexiang.TargetType(t.Type),
+				ID:   t.ID,
+			}
+		}
+	}
+
+	return searchReq
+}
+
+// convertAISearchResponse 转换 AI 搜索响应
+func (h *LexiangHandler) convertAISearchResponse(resp *lexiang.AISearchResponse) *AISearchResponseSwagger {
+	if resp.Data == nil {
+		return &AISearchResponseSwagger{List: []AISearchResultItemSwagger{}}
+	}
+
+	result := &AISearchResponseSwagger{
+		List: make([]AISearchResultItemSwagger, len(resp.Data.List)),
+	}
+
+	for i, item := range resp.Data.List {
+		result.List[i] = AISearchResultItemSwagger{
+			Title:   item.Title,
+			Content: item.Content,
+			URL:     item.URL,
+		}
+	}
+
+	return result
+}

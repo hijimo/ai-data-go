@@ -135,6 +135,22 @@ type LexiangClient interface {
 	// pageToken: 分页游标（空字符串表示第一页）
 	// 返回反馈列表，包含关联的用户和节点信息（included 字段）
 	ListFeedbacks(ctx context.Context, spaceID string, limit int, pageToken string) (*FeedbackListResponse, error)
+
+	// AI 问答方法
+	// AIQA AI问答（非流式）
+	// req: AI问答请求参数，包含 query、session_id、qa_mode 等
+	// 返回完整的问答响应，包含答案内容和参考来源
+	AIQA(ctx context.Context, req *AIQARequest) (*AIQAResponse, error)
+
+	// AIQAStream AI问答（流式）
+	// req: AI问答请求参数
+	// 返回事件通道和错误通道，用于接收流式响应
+	AIQAStream(ctx context.Context, req *AIQARequest) (<-chan *AIQAStreamEvent, <-chan error)
+
+	// AISearch AI搜索
+	// req: AI搜索请求参数，包含 query、top_n、targets 等
+	// 返回排序后的文档列表
+	AISearch(ctx context.Context, req *AISearchRequest) (*AISearchResponse, error)
 }
 
 // lexiangClientImpl LexiangClient 的实现
